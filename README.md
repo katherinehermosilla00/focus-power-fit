@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Focus Power Fit
 
-## Getting Started
+Sistema web de gestión con enfoque CRM desarrollado para **Focus Power Fit**,
+orientado a digitalizar y centralizar procesos administrativos del gimnasio.
 
-First, run the development server:
+## Funcionalidades
+
+El proyecto contempla la gestión de:
+
+- Clientes.
+- Profesores.
+- Planes.
+- Horarios.
+- Asistencias.
+- Contratos digitalizados.
+- Registro administrativo de pagos.
+- Recordatorios de clases por correo electrónico.
+- Cuenta de cliente.
+- Chatbot de preguntas frecuentes.
+
+El dueño de Focus Power Fit será el único usuario con privilegios
+administrativos. Los clientes tendrán cuentas con acceso limitado a su
+información y los profesores no tendrán cuentas de acceso.
+
+## Tecnologías
+
+El proyecto contempla tecnologías como:
+
+- React
+- TypeScript
+- Next.js
+- Node.js
+- Express
+- MySQL
+- Sequelize
+- Git y GitHub
+
+Otras herramientas y tecnologías se incorporarán de acuerdo con las
+necesidades del desarrollo.
+
+## Diseño
+
+La interfaz sigue los requisitos entregados por el cliente:
+
+- Identidad visual principalmente negra y roja.
+- Diseño responsive.
+- Enfoque mobile-first.
+
+## Equipo
+
+| Integrante | Rol Scrum |
+|---|---|
+| Katherine Hermosilla | Scrum Master |
+| Martina Vergara | Product Owner |
+| Javier Vargas | Developer |
+
+Los tres integrantes pueden participar en las tareas técnicas del proyecto.
+
+## Metodología
+
+El proyecto utiliza **Scrum** como metodología ágil.
+
+El trabajo se organiza mediante:
+
+- Product Backlog
+- Sprint Backlog
+- Sprints
+- Sprint Planning
+- Seguimiento
+- Sprint Review
+- Sprint Retrospective
+
+## Ejecutar el proyecto
+
+Instalar las dependencias:
+
+```bash
+npm install
+```
+
+Iniciar el entorno de desarrollo:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Luego abrir:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`http://localhost:3000`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Documentación
 
-## Learn More
+La documentación técnica detallada del proyecto se encuentra en:
 
-To learn more about Next.js, take a look at the following resources:
+**`GUIA_PROYECTO.md`**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Estado
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+🚧 **Proyecto actualmente en desarrollo.**
 
-## Deploy on Vercel
+Las funcionalidades y tecnologías documentadas pueden actualizarse a medida
+que avance la implementación.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Alcance futuro
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Los pagos online no forman parte de la versión actual.
+
+Como evolución futura se considera integrar:
+
+- Webpay.
+- Mercado Pago.
