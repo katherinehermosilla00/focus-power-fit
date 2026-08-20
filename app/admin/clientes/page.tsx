@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 
+import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../auth/AuthContext";
@@ -22,17 +23,8 @@ type Cliente = {
   estado: EstadoCliente;
 };
 
-const clientesIniciales: Cliente[] = [
-  {
-    id: 1,
-    nombre: "Cliente Demo",
-    rut: "12.345.678-9",
-    email: "cliente@focuspowerfit.cl",
-    telefono: "+56 9 1234 5678",
-    plan: "Personal Training",
-    estado: "Activo",
-  },
-];
+const API_URL =
+  "http://localhost:3001/api/clientes";
 
 export default function ClientesPage() {
   const router = useRouter();
@@ -43,7 +35,7 @@ export default function ClientesPage() {
   } = useAuth();
 
   const [clientes, setClientes] =
-    useState<Cliente[]>(clientesIniciales);
+    useState<Cliente[]>([]);
 
   const [nombre, setNombre] =
     useState("");
@@ -69,6 +61,12 @@ export default function ClientesPage() {
   const [clienteDetalle, setClienteDetalle] =
     useState<Cliente | null>(null);
 
+  const [cargandoClientes, setCargandoClientes] =
+    useState(true);
+
+  /*
+   * PROTECCIÓN DE RUTA
+   */
   useEffect(() => {
     if (cargando) {
       return;
@@ -88,6 +86,74 @@ export default function ClientesPage() {
     router,
   ]);
 
+  /*
+   * CARGAR CLIENTES DESDE MYSQL
+   */
+  useEffect(() => {
+    if (
+      cargando ||
+      !usuario ||
+      usuario.rol !== "admin"
+    ) {
+      return;
+    }
+
+    const cargarClientes = async () => {
+      try {
+        setCargandoClientes(true);
+
+        const respuesta =
+          await axios.get<Cliente[]>(
+            API_URL
+          );
+
+        setClientes(
+          respuesta.data
+        );
+      } catch (error) {
+        console.error(
+          "Error al cargar clientes:",
+          error
+        );
+
+        alert(
+          "No se pudieron cargar los clientes."
+        );
+      } finally {
+        setCargandoClientes(false);
+      }
+    };
+
+    cargarClientes();
+  }, [
+    cargando,
+    usuario,
+  ]);
+
+  /*
+   * RECARGAR CLIENTES
+   */
+  const cargarClientes = async () => {
+    try {
+      const respuesta =
+        await axios.get<Cliente[]>(
+          API_URL
+        );
+
+      setClientes(
+        respuesta.data
+      );
+    } catch (error) {
+      console.error(
+        "Error al cargar clientes:",
+        error
+      );
+    }
+  };
+
+  /*
+   * LIMPIAR FORMULARIO
+   */
   const limpiarFormulario = () => {
     setNombre("");
     setRut("");
@@ -97,11 +163,17 @@ export default function ClientesPage() {
     setClienteEditandoId(null);
   };
 
-  const guardarCliente = (
+  /*
+   * REGISTRAR O EDITAR CLIENTE
+   */
+  const guardarCliente = async (
     e: FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
 
+    /*
+     * Validar correo duplicado
+     */
     const correoExiste = clientes.some(
       (cliente) =>
         cliente.email.toLowerCase() ===
@@ -116,6 +188,9 @@ export default function ClientesPage() {
       return;
     }
 
+    /*
+     * Validar RUT duplicado
+     */
     const rutExiste = clientes.some(
       (cliente) =>
         cliente.rut.toLowerCase() ===
@@ -130,69 +205,72 @@ export default function ClientesPage() {
       return;
     }
 
-    // EDITAR CLIENTE
-    if (clienteEditandoId !== null) {
-      setClientes(
-        (clientesActuales) =>
-          clientesActuales.map(
-            (cliente) =>
-              cliente.id === clienteEditandoId
-                ? {
-                    ...cliente,
-                    nombre,
-                    rut,
-                    email,
-                    telefono,
-                    plan,
-                  }
-                : cliente
-          )
+    try {
+      /*
+       * EDITAR CLIENTE
+       */
+      if (
+        clienteEditandoId !== null
+      ) {
+        await axios.put(
+          `${API_URL}/${clienteEditandoId}`,
+          {
+            nombre,
+            rut,
+            email,
+            telefono,
+            plan,
+          }
+        );
+
+        alert(
+          "Cliente actualizado correctamente."
+        );
+
+        limpiarFormulario();
+
+        await cargarClientes();
+
+        return;
+      }
+
+      /*
+       * CREAR CLIENTE
+       */
+      await axios.post(
+        API_URL,
+        {
+          nombre,
+          rut,
+          email,
+          telefono,
+          plan,
+        }
       );
 
       alert(
-        "Cliente actualizado correctamente."
+        "Cliente registrado correctamente."
       );
 
       limpiarFormulario();
 
-      return;
+      await cargarClientes();
+
+    } catch (error) {
+      console.error(
+        "Error al guardar cliente:",
+        error
+      );
+
+      alert(
+        "Ocurrió un error al guardar el cliente."
+      );
     }
-
-    // CREAR NUEVO CLIENTE
-
-    const nuevoId =
-      clientes.length > 0
-        ? Math.max(
-            ...clientes.map(
-              (cliente) => cliente.id
-            )
-          ) + 1
-        : 1;
-
-    const nuevoCliente: Cliente = {
-      id: nuevoId,
-      nombre,
-      rut,
-      email,
-      telefono,
-      plan,
-      estado: "Activo",
-    };
-
-    setClientes(
-      (clientesActuales) => [
-        ...clientesActuales,
-        nuevoCliente,
-      ]
-    );
-
-    alert(
-      "Cliente registrado correctamente."
-    );
-
-    limpiarFormulario();
   };
 
+  /*
+   * CARGAR CLIENTE EN FORMULARIO
+   */
   const editarCliente = (
     cliente: Cliente
   ) => {
@@ -216,34 +294,44 @@ export default function ClientesPage() {
     limpiarFormulario();
   };
 
-  const cambiarEstado = (
-    id: number
+  /*
+   * ACTIVAR / DESACTIVAR
+   */
+  const cambiarEstado = async (
+    cliente: Cliente
   ) => {
-    setClientes(
-      (clientesActuales) =>
-        clientesActuales.map(
-          (cliente) => {
-            if (
-              cliente.id !== id
-            ) {
-              return cliente;
-            }
+    const nuevoEstado:
+      EstadoCliente =
+        cliente.estado === "Activo"
+          ? "Inactivo"
+          : "Activo";
 
-            return {
-              ...cliente,
+    try {
+      await axios.put(
+        `${API_URL}/${cliente.id}`,
+        {
+          estado: nuevoEstado,
+        }
+      );
 
-              estado:
-                cliente.estado ===
-                "Activo"
-                  ? "Inactivo"
-                  : "Activo",
-            };
-          }
-        )
-    );
+      await cargarClientes();
+
+    } catch (error) {
+      console.error(
+        "Error al cambiar estado:",
+        error
+      );
+
+      alert(
+        "No se pudo cambiar el estado del cliente."
+      );
+    }
   };
 
-  const eliminarCliente = (
+  /*
+   * ELIMINAR CLIENTE
+   */
+  const eliminarCliente = async (
     id: number
   ) => {
     const confirmar =
@@ -255,27 +343,44 @@ export default function ClientesPage() {
       return;
     }
 
-    setClientes(
-      (clientesActuales) =>
-        clientesActuales.filter(
-          (cliente) =>
-            cliente.id !== id
-        )
-    );
+    try {
+      await axios.delete(
+        `${API_URL}/${id}`
+      );
 
-    if (
-      clienteEditandoId === id
-    ) {
-      limpiarFormulario();
-    }
+      if (
+        clienteEditandoId === id
+      ) {
+        limpiarFormulario();
+      }
 
-    if (
-      clienteDetalle?.id === id
-    ) {
-      setClienteDetalle(null);
+      if (
+        clienteDetalle?.id === id
+      ) {
+        setClienteDetalle(null);
+      }
+
+      await cargarClientes();
+
+      alert(
+        "Cliente eliminado correctamente."
+      );
+
+    } catch (error) {
+      console.error(
+        "Error al eliminar cliente:",
+        error
+      );
+
+      alert(
+        "No se pudo eliminar el cliente."
+      );
     }
   };
 
+  /*
+   * BUSCADOR
+   */
   const clientesFiltrados =
     clientes.filter(
       (cliente) => {
@@ -288,15 +393,19 @@ export default function ClientesPage() {
           cliente.nombre
             .toLowerCase()
             .includes(texto) ||
+
           cliente.rut
             .toLowerCase()
             .includes(texto) ||
+
           cliente.email
             .toLowerCase()
             .includes(texto) ||
+
           cliente.telefono
             .toLowerCase()
             .includes(texto) ||
+
           cliente.plan
             .toLowerCase()
             .includes(texto)
@@ -304,6 +413,9 @@ export default function ClientesPage() {
       }
     );
 
+  /*
+   * CARGANDO AUTENTICACIÓN
+   */
   if (cargando) {
     return (
       <main className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -314,6 +426,9 @@ export default function ClientesPage() {
     );
   }
 
+  /*
+   * SIN PERMISOS
+   */
   if (
     !usuario ||
     usuario.rol !== "admin"
@@ -335,20 +450,25 @@ export default function ClientesPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
 
         <div>
+
           <p className="text-gray-400">
             Panel administrativo
           </p>
 
           <h1 className="text-4xl font-black mt-1">
+
             Gestión de{" "}
+
             <span className="text-red-600">
               Clientes
             </span>
+
           </h1>
 
           <p className="text-gray-400 mt-2">
             Registra, consulta y administra los clientes de Focus Power Fit.
           </p>
+
         </div>
 
         <Link
@@ -480,7 +600,9 @@ export default function ClientesPage() {
 
                 <button
                   type="button"
-                  onClick={cancelarEdicion}
+                  onClick={
+                    cancelarEdicion
+                  }
                   className="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 py-3 rounded-xl"
                 >
                   Cancelar edición
@@ -490,7 +612,9 @@ export default function ClientesPage() {
 
                 <button
                   type="button"
-                  onClick={limpiarFormulario}
+                  onClick={
+                    limpiarFormulario
+                  }
                   className="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 py-3 rounded-xl"
                 >
                   Limpiar formulario
@@ -542,7 +666,13 @@ export default function ClientesPage() {
 
             </div>
 
-            {clientesFiltrados.length === 0 ? (
+            {cargandoClientes ? (
+
+              <div className="p-10 text-center text-gray-400">
+                Cargando clientes...
+              </div>
+
+            ) : clientesFiltrados.length === 0 ? (
 
               <div className="p-10 text-center text-gray-400">
                 No se encontraron clientes.
@@ -616,15 +746,12 @@ export default function ClientesPage() {
 
                             <span
                               className={
-                                cliente.estado ===
-                                "Activo"
+                                cliente.estado === "Activo"
                                   ? "text-green-500 font-bold"
                                   : "text-gray-500 font-bold"
                               }
                             >
-
                               {cliente.estado}
-
                             </span>
 
                           </td>
@@ -632,8 +759,6 @@ export default function ClientesPage() {
                           <td className="p-4">
 
                             <div className="flex flex-wrap gap-2">
-
-                              {/* VER */}
 
                               <button
                                 onClick={() =>
@@ -646,8 +771,6 @@ export default function ClientesPage() {
                                 Ver
                               </button>
 
-                              {/* EDITAR */}
-
                               <button
                                 onClick={() =>
                                   editarCliente(
@@ -659,25 +782,20 @@ export default function ClientesPage() {
                                 Editar
                               </button>
 
-                              {/* ESTADO */}
-
                               <button
                                 onClick={() =>
                                   cambiarEstado(
-                                    cliente.id
+                                    cliente
                                   )
                                 }
                                 className="border border-red-600 text-red-500 hover:bg-red-600 hover:text-white px-3 py-2 rounded-lg transition"
                               >
 
-                                {cliente.estado ===
-                                "Activo"
+                                {cliente.estado === "Activo"
                                   ? "Desactivar"
                                   : "Activar"}
 
                               </button>
-
-                              {/* ELIMINAR */}
 
                               <button
                                 onClick={() =>
@@ -819,20 +937,18 @@ export default function ClientesPage() {
 
       )}
 
-      {/* AVISO */}
+      {/* ESTADO DE CONEXIÓN */}
 
       <section className="mt-8 bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
 
         <h2 className="text-xl text-red-500 font-bold mb-2">
-          Versión de desarrollo
+          Base de datos
         </h2>
 
         <p className="text-gray-400">
-          Los clientes todavía se almacenan temporalmente
-          en el frontend. Al actualizar la página,
-          los cambios realizados se perderán.
-          Posteriormente este módulo será conectado
-          a la base de datos del sistema.
+          Los clientes registrados en este módulo
+          se almacenan en MySQL mediante la API
+          del backend de Focus Power Fit.
         </p>
 
       </section>
