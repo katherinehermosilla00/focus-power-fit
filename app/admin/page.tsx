@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../auth/AuthContext";
 
 export default function AdminPage() {
   const router = useRouter();
-  const { usuario, cargando, logout } = useAuth();
+  const { usuario, cargando } = useAuth();
 
   useEffect(() => {
     if (cargando) return;
@@ -22,109 +22,89 @@ export default function AdminPage() {
     }
   }, [usuario, cargando, router]);
 
-  const cerrarSesion = () => {
-    logout();
-    router.replace("/login");
-  };
-
   if (cargando) {
     return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p>Cargando...</p>
+      <main className="fpf-page flex min-h-screen items-center justify-center">
+        <p className="fpf-text-secondary">
+          Cargando panel administrativo...
+        </p>
       </main>
     );
   }
 
   if (!usuario || usuario.rol !== "admin") {
     return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p>Verificando acceso...</p>
+      <main className="fpf-page flex min-h-screen items-center justify-center">
+        <p className="fpf-text-secondary">
+          Verificando acceso...
+        </p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-black text-white p-6 md:p-10">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-14">
-        <div>
-          <p className="text-gray-400 text-lg">
-            Administrador
-          </p>
+    <main className="fpf-page min-h-screen p-6 md:p-10">
+      {/* ENCABEZADO */}
+      <header className="mb-10">
+        <p className="fpf-text-secondary">
+          Focus Power Fit
+        </p>
 
-          <h1 className="text-4xl md:text-5xl font-black mt-1">
-            FOCUS{" "}
-            <span className="text-red-600">
-              POWER FIT
-            </span>
-          </h1>
+        <h1 className="mt-2 text-4xl font-black md:text-5xl">
+          Panel{" "}
+          <span className="fpf-title-accent">
+            Administrativo
+          </span>
+        </h1>
 
-          <p className="text-gray-400 mt-2">
-            Bienvenido, {usuario.nombre}
-          </p>
-        </div>
-
-        <button
-          onClick={cerrarSesion}
-          className="bg-red-600 hover:bg-red-700 transition px-6 py-3 rounded-xl font-bold"
-        >
-          Cerrar sesión
-        </button>
+        <p className="fpf-text-secondary mt-3 max-w-2xl">
+          Gestiona los principales módulos de Focus Power Fit.
+        </p>
       </header>
 
-      <section>
-        <h2 className="text-3xl font-bold mb-8">
-          Panel Administrativo
-        </h2>
+      {/* MÓDULOS */}
+      <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <Tarjeta
+          titulo="Clientes"
+          descripcion="Registra, consulta y administra los clientes."
+          href="/admin/clientes"
+        />
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Tarjeta
-            titulo="Clientes"
-            descripcion="Administrar clientes existentes y nuevos."
-            href="/admin/clientes"
-          />
+        <Tarjeta
+          titulo="Profesores"
+          descripcion="Gestiona la información de los profesores."
+          href="/profesores"
+        />
 
-          <Tarjeta
-            titulo="Profesores"
-            descripcion="Administrar información de profesores."
-            href="/admin/profesores"
-          />
+        <Tarjeta
+          titulo="Sucursales"
+          descripcion="Gestiona las sucursales de Focus Power Fit."
+          href="/sucursales"
+        />
 
-          <Tarjeta
-            titulo="Planes"
-            descripcion="Administrar los planes del gimnasio."
-            href="/admin/planes"
-          />
+        <Tarjeta
+          titulo="Planes"
+          descripcion="Consulta y administra los planes disponibles."
+          href="/admin/planes"
+        />
 
-          <Tarjeta
-            titulo="Horarios"
-            descripcion="Gestionar horarios y clases."
-            href="/admin/horarios"
-          />
+        <Tarjeta
+          titulo="Sesiones"
+          descripcion="Gestiona las sesiones y horarios de entrenamiento."
+          href="/admin/sesiones"
+        />
 
-          <Tarjeta
-            titulo="Asistencia"
-            descripcion="Registrar asistencia de clientes."
-            href="/admin/asistencia"
-          />
+        <Tarjeta
+          titulo="Contratos"
+          descripcion="Administra los contratos asociados a los clientes."
+          href="/admin/contratos"
+        />
 
-          <Tarjeta
-            titulo="Contratos"
-            descripcion="Administrar copias digitales de contratos."
-            href="/admin/contratos"
-          />
-
-          <Tarjeta
-            titulo="Pagos"
-            descripcion="Registrar pagos realizados presencialmente."
-            href="/admin/pagos"
-          />
-
-          <Tarjeta
-            titulo="Recordatorios"
-            descripcion="Administrar recordatorios de clases por correo."
-            href="/admin/recordatorios"
-          />
-        </div>
+        <Tarjeta
+          titulo="Asistencia"
+          descripcion="Consulta y administra el registro de asistencias."
+          href="/admin/asistencia"
+        />
       </section>
     </main>
   );
@@ -140,15 +120,33 @@ function Tarjeta({
   href: string;
 }) {
   return (
-    <Link href={href}>
-      <div className="h-full bg-zinc-950 border border-zinc-800 hover:border-red-600 hover:-translate-y-1 transition-all rounded-xl p-6 cursor-pointer">
-        <h3 className="text-2xl font-bold text-red-500 mb-3">
-          {titulo}
-        </h3>
+    <Link
+      href={href}
+      className="
+        fpf-card
+        fpf-border-hover
+        group
+        block
+        min-h-45
+        p-6
+        transition
+        duration-200
+      "
+    >
+      <div className="flex h-full flex-col justify-between">
+        <div>
+          <h2 className="text-2xl font-bold transition">
+            {titulo}
+          </h2>
 
-        <p className="text-gray-400">
-          {descripcion}
-        </p>
+          <p className="fpf-text-secondary mt-3 leading-relaxed">
+            {descripcion}
+          </p>
+        </div>
+
+        <div className="mt-6 font-bold fpf-title-accent">
+          Ir al módulo →
+        </div>
       </div>
     </Link>
   );
