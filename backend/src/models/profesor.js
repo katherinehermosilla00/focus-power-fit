@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
+import Sucursal from "./sucursal.js";
 
 const Profesor = sequelize.define(
   "Profesor",
@@ -8,6 +9,15 @@ const Profesor = sequelize.define(
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
+    },
+
+    sucursalId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: Sucursal,
+        key: "id",
+      },
     },
 
     nombre: {
@@ -41,7 +51,10 @@ const Profesor = sequelize.define(
     },
 
     estado: {
-      type: DataTypes.ENUM("Activo", "Inactivo"),
+      type: DataTypes.ENUM(
+        "Activo",
+        "Inactivo"
+      ),
       allowNull: false,
       defaultValue: "Activo",
     },
@@ -51,5 +64,15 @@ const Profesor = sequelize.define(
     timestamps: true,
   }
 );
+
+Sucursal.hasMany(Profesor, {
+  foreignKey: "sucursalId",
+  as: "profesores",
+});
+
+Profesor.belongsTo(Sucursal, {
+  foreignKey: "sucursalId",
+  as: "sucursal",
+});
 
 export default Profesor;

@@ -39,7 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
+ 
 # Backend
 backend/node_modules/
 backend/uploads/
+
+# Datos reales de clientes
+backend/data/
+
+# Respaldos de base de datos
+*.sql

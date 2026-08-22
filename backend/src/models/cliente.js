@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
+import Sucursal from "./sucursal.js";
 
 const Cliente = sequelize.define(
   "Cliente",
@@ -10,28 +11,92 @@ const Cliente = sequelize.define(
       primaryKey: true,
     },
 
-    nombre: {
+    sucursalId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: Sucursal,
+        key: "id",
+      },
+    },
+
+    numeroCliente: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+
+    nombres: {
       type: DataTypes.STRING(120),
+      allowNull: false,
+    },
+
+    apellidos: {
+      type: DataTypes.STRING(150),
+      allowNull: true,
+    },
+
+    nombre: {
+      type: DataTypes.STRING(270),
       allowNull: false,
     },
 
     rut: {
       type: DataTypes.STRING(20),
-      allowNull: false,
-      unique: true,
+      allowNull: true,
     },
 
     email: {
       type: DataTypes.STRING(150),
-      allowNull: false,
-      unique: true,
-      validate: {
-        isEmail: true,
-      },
+      allowNull: true,
     },
 
     telefono: {
       type: DataTypes.STRING(30),
+      allowNull: true,
+    },
+
+    telefonoSecundario: {
+      type: DataTypes.STRING(30),
+      allowNull: true,
+    },
+
+    direccion: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+
+    comuna: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+
+    ciudad: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+
+    edad: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+
+    genero: {
+      type: DataTypes.ENUM(
+        "Femenino",
+        "Masculino",
+        "No informado"
+      ),
+      allowNull: false,
+      defaultValue: "No informado",
+    },
+
+    fechaNacimiento: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+
+    fechaCreacionOrigen: {
+      type: DataTypes.DATEONLY,
       allowNull: true,
     },
 
@@ -41,7 +106,10 @@ const Cliente = sequelize.define(
     },
 
     estado: {
-      type: DataTypes.ENUM("Activo", "Inactivo"),
+      type: DataTypes.ENUM(
+        "Activo",
+        "Inactivo"
+      ),
       allowNull: false,
       defaultValue: "Activo",
     },
@@ -52,4 +120,15 @@ const Cliente = sequelize.define(
   }
 );
 
-export default Cliente;
+// RELACIÓN CLIENTE ↔ SUCURSAL
+Sucursal.hasMany(Cliente, {
+  foreignKey: "sucursalId",
+  as: "clientes",
+});
+
+Cliente.belongsTo(Sucursal, {
+  foreignKey: "sucursalId",
+  as: "sucursal",
+});
+
+export default Cliente; 

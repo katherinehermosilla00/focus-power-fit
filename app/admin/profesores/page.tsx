@@ -13,25 +13,44 @@ import { useAuth } from "../../auth/AuthContext";
 
 type EstadoProfesor = "Activo" | "Inactivo";
 
+type Sucursal = {
+  id: number;
+  nombre: string;
+  comuna: string | null;
+  estado: "Activa" | "Inactiva";
+};
+
 type Profesor = {
   id: number;
+  sucursalId: number | null;
   nombre: string;
   rut: string;
   email: string;
-  telefono: string;
-  especialidad: string;
+  telefono: string | null;
+  especialidad: string | null;
   estado: EstadoProfesor;
+  sucursal?: Sucursal | null;
 };
 
-const API_URL =
+const API_PROFESORES =
   "http://localhost:3001/api/profesores";
+
+const API_SUCURSALES =
+  "http://localhost:3001/api/sucursales";
 
 export default function ProfesoresPage() {
   const router = useRouter();
-  const { usuario, cargando } = useAuth();
+
+  const {
+    usuario,
+    cargando,
+  } = useAuth();
 
   const [profesores, setProfesores] =
     useState<Profesor[]>([]);
+
+  const [sucursales, setSucursales] =
+    useState<Sucursal[]>([]);
 
   const [nombre, setNombre] =
     useState("");
@@ -48,23 +67,40 @@ export default function ProfesoresPage() {
   const [especialidad, setEspecialidad] =
     useState("");
 
+  const [sucursalId, setSucursalId] =
+    useState("");
+
   const [busqueda, setBusqueda] =
     useState("");
 
-  const [profesorEditandoId, setProfesorEditandoId] =
+  const [sucursalFiltro, setSucursalFiltro] =
+    useState("todas");
+
+  const [
+    profesorEditandoId,
+    setProfesorEditandoId,
+  ] =
     useState<number | null>(null);
 
-  const [profesorDetalle, setProfesorDetalle] =
+  const [
+    profesorDetalle,
+    setProfesorDetalle,
+  ] =
     useState<Profesor | null>(null);
 
-  const [cargandoProfesores, setCargandoProfesores] =
+  const [
+    cargandoProfesores,
+    setCargandoProfesores,
+  ] =
     useState(true);
 
   /*
    * PROTECCIÓN DE RUTA
    */
   useEffect(() => {
-    if (cargando) return;
+    if (cargando) {
+      return;
+    }
 
     if (!usuario) {
       router.replace("/login");
@@ -74,10 +110,14 @@ export default function ProfesoresPage() {
     if (usuario.rol !== "admin") {
       router.replace("/mi-cuenta");
     }
-  }, [usuario, cargando, router]);
+  }, [
+    usuario,
+    cargando,
+    router,
+  ]);
 
   /*
-   * CARGAR PROFESORES DESDE MYSQL
+   * CARGAR PROFESORES + SUCURSALES
    */
   useEffect(() => {
     if (
@@ -88,32 +128,49 @@ export default function ProfesoresPage() {
       return;
     }
 
-    const cargar = async () => {
+    const cargarDatos = async () => {
       try {
         setCargandoProfesores(true);
 
-        const respuesta =
-          await axios.get<Profesor[]>(
-            API_URL
-          );
+        const [
+          respuestaProfesores,
+          respuestaSucursales,
+        ] = await Promise.all([
+          axios.get<Profesor[]>(
+            API_PROFESORES
+          ),
 
-        setProfesores(respuesta.data);
+          axios.get<Sucursal[]>(
+            API_SUCURSALES
+          ),
+        ]);
+
+        setProfesores(
+          respuestaProfesores.data
+        );
+
+        setSucursales(
+          respuestaSucursales.data
+        );
       } catch (error) {
         console.error(
-          "Error al cargar profesores:",
+          "Error al cargar datos:",
           error
         );
 
         alert(
-          "No se pudieron cargar los profesores."
+          "No se pudieron cargar los profesores o las sucursales."
         );
       } finally {
         setCargandoProfesores(false);
       }
     };
 
-    cargar();
-  }, [cargando, usuario]);
+    cargarDatos();
+  }, [
+    cargando,
+    usuario,
+  ]);
 
   /*
    * RECARGAR PROFESORES
@@ -122,10 +179,12 @@ export default function ProfesoresPage() {
     try {
       const respuesta =
         await axios.get<Profesor[]>(
-          API_URL
+          API_PROFESORES
         );
 
-      setProfesores(respuesta.data);
+      setProfesores(
+        respuesta.data
+      );
     } catch (error) {
       console.error(
         "Error al cargar profesores:",
@@ -143,11 +202,13 @@ export default function ProfesoresPage() {
     setEmail("");
     setTelefono("");
     setEspecialidad("");
+    setSucursalId("");
+
     setProfesorEditandoId(null);
   };
 
   /*
-   * REGISTRAR O EDITAR PROFESOR
+   * REGISTRAR / EDITAR
    */
   const guardarProfesor = async (
     e: FormEvent<HTMLFormElement>
@@ -156,7 +217,8 @@ export default function ProfesoresPage() {
 
     const correoExiste = profesores.some(
       (profesor) =>
-        profesor.email.toLowerCase() ===
+        profesor.email
+          .toLowerCase() ===
           email.toLowerCase() &&
         profesor.id !== profesorEditandoId
     );
@@ -170,7 +232,8 @@ export default function ProfesoresPage() {
 
     const rutExiste = profesores.some(
       (profesor) =>
-        profesor.rut.toLowerCase() ===
+        profesor.rut
+          .toLowerCase() ===
           rut.toLowerCase() &&
         profesor.id !== profesorEditandoId
     );
@@ -182,20 +245,43 @@ export default function ProfesoresPage() {
       return;
     }
 
+    if (!sucursalId) {
+      alert(
+        "Debes seleccionar una sucursal."
+      );
+      return;
+    }
+
+    const datosProfesor = {
+      nombre:
+        nombre.trim(),
+
+      rut:
+        rut.trim(),
+
+      email:
+        email.trim(),
+
+      telefono:
+        telefono.trim() || null,
+
+      especialidad:
+        especialidad.trim() || null,
+
+      sucursalId:
+        Number(sucursalId),
+    };
+
     try {
       /*
-       * EDITAR PROFESOR
+       * EDITAR
        */
-      if (profesorEditandoId !== null) {
+      if (
+        profesorEditandoId !== null
+      ) {
         await axios.put(
-          `${API_URL}/${profesorEditandoId}`,
-          {
-            nombre,
-            rut,
-            email,
-            telefono,
-            especialidad,
-          }
+          `${API_PROFESORES}/${profesorEditandoId}`,
+          datosProfesor
         );
 
         alert(
@@ -203,22 +289,18 @@ export default function ProfesoresPage() {
         );
 
         limpiarFormulario();
+
         await cargarProfesores();
+
         return;
       }
 
       /*
-       * CREAR PROFESOR
+       * CREAR
        */
       await axios.post(
-        API_URL,
-        {
-          nombre,
-          rut,
-          email,
-          telefono,
-          especialidad,
-        }
+        API_PROFESORES,
+        datosProfesor
       );
 
       alert(
@@ -226,6 +308,7 @@ export default function ProfesoresPage() {
       );
 
       limpiarFormulario();
+
       await cargarProfesores();
 
     } catch (error) {
@@ -246,11 +329,33 @@ export default function ProfesoresPage() {
   const editarProfesor = (
     profesor: Profesor
   ) => {
-    setNombre(profesor.nombre);
-    setRut(profesor.rut);
-    setEmail(profesor.email);
-    setTelefono(profesor.telefono);
-    setEspecialidad(profesor.especialidad);
+    setNombre(
+      profesor.nombre
+    );
+
+    setRut(
+      profesor.rut
+    );
+
+    setEmail(
+      profesor.email
+    );
+
+    setTelefono(
+      profesor.telefono ?? ""
+    );
+
+    setEspecialidad(
+      profesor.especialidad ?? ""
+    );
+
+    setSucursalId(
+      profesor.sucursalId
+        ? String(
+            profesor.sucursalId
+          )
+        : ""
+    );
 
     setProfesorEditandoId(
       profesor.id
@@ -272,14 +377,15 @@ export default function ProfesoresPage() {
   const cambiarEstado = async (
     profesor: Profesor
   ) => {
-    const nuevoEstado: EstadoProfesor =
-      profesor.estado === "Activo"
-        ? "Inactivo"
-        : "Activo";
+    const nuevoEstado:
+      EstadoProfesor =
+        profesor.estado === "Activo"
+          ? "Inactivo"
+          : "Activo";
 
     try {
       await axios.put(
-        `${API_URL}/${profesor.id}`,
+        `${API_PROFESORES}/${profesor.id}`,
         {
           estado: nuevoEstado,
         }
@@ -300,7 +406,7 @@ export default function ProfesoresPage() {
   };
 
   /*
-   * ELIMINAR PROFESOR
+   * ELIMINAR
    */
   const eliminarProfesor = async (
     id: number
@@ -310,18 +416,24 @@ export default function ProfesoresPage() {
         "¿Seguro que deseas eliminar este profesor?"
       );
 
-    if (!confirmar) return;
+    if (!confirmar) {
+      return;
+    }
 
     try {
       await axios.delete(
-        `${API_URL}/${id}`
+        `${API_PROFESORES}/${id}`
       );
 
-      if (profesorEditandoId === id) {
+      if (
+        profesorEditandoId === id
+      ) {
         limpiarFormulario();
       }
 
-      if (profesorDetalle?.id === id) {
+      if (
+        profesorDetalle?.id === id
+      ) {
         setProfesorDetalle(null);
       }
 
@@ -344,51 +456,104 @@ export default function ProfesoresPage() {
   };
 
   /*
-   * BUSCADOR
+   * FILTRO + BUSCADOR
    */
   const profesoresFiltrados =
-    profesores.filter((profesor) => {
-      const texto =
-        busqueda.trim().toLowerCase();
+    profesores.filter(
+      (profesor) => {
+        const texto =
+          busqueda
+            .trim()
+            .toLowerCase();
 
-      return (
-        profesor.nombre
-          .toLowerCase()
-          .includes(texto) ||
+        const coincideSucursal =
+          sucursalFiltro ===
+            "todas" ||
+          profesor.sucursalId ===
+            Number(
+              sucursalFiltro
+            );
 
-        profesor.rut
-          .toLowerCase()
-          .includes(texto) ||
+        const coincideBusqueda =
+          !texto ||
 
-        profesor.email
-          .toLowerCase()
-          .includes(texto) ||
+          profesor.nombre
+            .toLowerCase()
+            .includes(texto) ||
 
-        profesor.telefono
-          .toLowerCase()
-          .includes(texto) ||
+          profesor.rut
+            .toLowerCase()
+            .includes(texto) ||
 
-        profesor.especialidad
-          .toLowerCase()
-          .includes(texto)
-      );
-    });
+          profesor.email
+            .toLowerCase()
+            .includes(texto) ||
 
+          (profesor.telefono ?? "")
+            .toLowerCase()
+            .includes(texto) ||
+
+          (profesor.especialidad ?? "")
+            .toLowerCase()
+            .includes(texto) ||
+
+          (profesor.sucursal?.nombre ?? "")
+            .toLowerCase()
+            .includes(texto);
+
+        return (
+          coincideSucursal &&
+          coincideBusqueda
+        );
+      }
+    );
+
+  /*
+   * CONTADORES
+   */
+  const totalPenalolen =
+    profesores.filter(
+      (profesor) =>
+        profesor.sucursalId === 1
+    ).length;
+
+  const totalLaReina =
+    profesores.filter(
+      (profesor) =>
+        profesor.sucursalId === 2
+    ).length;
+
+  const totalSinSucursal =
+    profesores.filter(
+      (profesor) =>
+        profesor.sucursalId === null
+    ).length;
+
+  /*
+   * CARGANDO
+   */
   if (cargando) {
     return (
       <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p>Cargando...</p>
+        <p>
+          Cargando...
+        </p>
       </main>
     );
   }
 
+  /*
+   * SIN PERMISOS
+   */
   if (
     !usuario ||
     usuario.rol !== "admin"
   ) {
     return (
       <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p>Verificando acceso...</p>
+        <p>
+          Verificando acceso...
+        </p>
       </main>
     );
   }
@@ -401,20 +566,25 @@ export default function ProfesoresPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
 
         <div>
+
           <p className="text-gray-400">
             Panel administrativo
           </p>
 
           <h1 className="text-4xl font-black mt-1">
+
             Gestión de{" "}
+
             <span className="text-red-600">
               Profesores
             </span>
+
           </h1>
 
           <p className="text-gray-400 mt-2">
             Registra, consulta y administra los profesores de Focus Power Fit.
           </p>
+
         </div>
 
         <Link
@@ -425,6 +595,32 @@ export default function ProfesoresPage() {
         </Link>
 
       </header>
+
+      {/* RESUMEN */}
+
+      <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
+        <Resumen
+          titulo="Total profesores"
+          valor={profesores.length}
+        />
+
+        <Resumen
+          titulo="Peñalolén"
+          valor={totalPenalolen}
+        />
+
+        <Resumen
+          titulo="La Reina"
+          valor={totalLaReina}
+        />
+
+        <Resumen
+          titulo="Sin sucursal"
+          valor={totalSinSucursal}
+        />
+
+      </section>
 
       {/* FORMULARIO + LISTADO */}
 
@@ -437,19 +633,25 @@ export default function ProfesoresPage() {
           <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
 
             <h2 className="text-2xl font-bold mb-2">
+
               {profesorEditandoId !== null
                 ? "Editar profesor"
                 : "Registrar profesor"}
+
             </h2>
 
             {profesorEditandoId !== null ? (
+
               <p className="text-yellow-500 text-sm mb-6">
                 Estás modificando un profesor existente.
               </p>
+
             ) : (
+
               <p className="text-gray-400 text-sm mb-6">
                 Ingresa los datos del profesor.
               </p>
+
             )}
 
             <form
@@ -484,6 +686,7 @@ export default function ProfesoresPage() {
                 value={telefono}
                 onChange={setTelefono}
                 placeholder="+56 9 1234 5678"
+                required={false}
               />
 
               <Campo
@@ -491,33 +694,84 @@ export default function ProfesoresPage() {
                 value={especialidad}
                 onChange={setEspecialidad}
                 placeholder="Ej: Personal Training"
+                required={false}
               />
+
+              {/* SUCURSAL */}
+
+              <div>
+
+                <label className="block mb-2 font-semibold">
+                  Sucursal
+                </label>
+
+                <select
+                  value={sucursalId}
+                  onChange={(e) =>
+                    setSucursalId(
+                      e.target.value
+                    )
+                  }
+                  required
+                  className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
+                >
+
+                  <option value="">
+                    Seleccionar sucursal
+                  </option>
+
+                  {sucursales.map(
+                    (sucursal) => (
+
+                      <option
+                        key={sucursal.id}
+                        value={sucursal.id}
+                      >
+                        {sucursal.nombre}
+                      </option>
+
+                    )
+                  )}
+
+                </select>
+
+              </div>
 
               <button
                 type="submit"
                 className="w-full bg-red-600 hover:bg-red-700 transition py-3 rounded-xl font-bold"
               >
+
                 {profesorEditandoId !== null
                   ? "Guardar cambios"
                   : "Registrar profesor"}
+
               </button>
 
               {profesorEditandoId !== null ? (
+
                 <button
                   type="button"
-                  onClick={cancelarEdicion}
+                  onClick={
+                    cancelarEdicion
+                  }
                   className="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 py-3 rounded-xl"
                 >
                   Cancelar edición
                 </button>
+
               ) : (
+
                 <button
                   type="button"
-                  onClick={limpiarFormulario}
+                  onClick={
+                    limpiarFormulario
+                  }
                   className="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 py-3 rounded-xl"
                 >
                   Limpiar formulario
                 </button>
+
               )}
 
             </form>
@@ -534,27 +788,75 @@ export default function ProfesoresPage() {
 
             <div className="p-6 border-b border-zinc-800">
 
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex flex-col gap-4">
 
                 <div>
+
                   <h2 className="text-2xl font-bold">
                     Profesores registrados
                   </h2>
 
                   <p className="text-gray-400 mt-1">
-                    Total: {profesores.length}
+                    Mostrando:{" "}
+                    {profesoresFiltrados.length}
+                    {" "}de{" "}
+                    {profesores.length}
                   </p>
+
                 </div>
 
-                <input
-                  type="text"
-                  value={busqueda}
-                  onChange={(e) =>
-                    setBusqueda(e.target.value)
-                  }
-                  placeholder="Buscar profesor..."
-                  className="bg-black border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-red-600"
-                />
+                <div className="grid md:grid-cols-2 gap-3">
+
+                  <select
+                    value={
+                      sucursalFiltro
+                    }
+                    onChange={(e) =>
+                      setSucursalFiltro(
+                        e.target.value
+                      )
+                    }
+                    className="bg-black border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-red-600"
+                  >
+
+                    <option value="todas">
+                      Todas las sucursales
+                    </option>
+
+                    {sucursales.map(
+                      (sucursal) => (
+
+                        <option
+                          key={
+                            sucursal.id
+                          }
+                          value={
+                            String(
+                              sucursal.id
+                            )
+                          }
+                        >
+                          {sucursal.nombre}
+                        </option>
+
+                      )
+                    )}
+
+                  </select>
+
+                  <input
+                    type="text"
+                    value={busqueda}
+                    onChange={(e) =>
+                      setBusqueda(
+                        e.target.value
+                      )
+                    }
+                    placeholder="Buscar profesor..."
+                    className="bg-black border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-red-600"
+                  />
+
+                </div>
 
               </div>
 
@@ -581,12 +883,17 @@ export default function ProfesoresPage() {
                   <thead className="bg-zinc-900">
 
                     <tr>
+
                       <th className="p-4">
                         Nombre
                       </th>
 
                       <th className="p-4">
                         RUT
+                      </th>
+
+                      <th className="p-4">
+                        Sucursal
                       </th>
 
                       <th className="p-4">
@@ -600,6 +907,7 @@ export default function ProfesoresPage() {
                       <th className="p-4">
                         Acciones
                       </th>
+
                     </tr>
 
                   </thead>
@@ -630,15 +938,28 @@ export default function ProfesoresPage() {
                             {profesor.rut}
                           </td>
 
+                          <td className="p-4">
+
+                            <span className="text-red-400 font-semibold">
+                              {profesor
+                                .sucursal
+                                ?.nombre ||
+                                "Sin sucursal"}
+                            </span>
+
+                          </td>
+
                           <td className="p-4 text-gray-300">
-                            {profesor.especialidad}
+                            {profesor.especialidad ||
+                              "No informada"}
                           </td>
 
                           <td className="p-4">
 
                             <span
                               className={
-                                profesor.estado === "Activo"
+                                profesor.estado ===
+                                "Activo"
                                   ? "text-green-500 font-bold"
                                   : "text-gray-500 font-bold"
                               }
@@ -682,9 +1003,12 @@ export default function ProfesoresPage() {
                                 }
                                 className="border border-red-600 text-red-500 hover:bg-red-600 hover:text-white px-3 py-2 rounded-lg transition"
                               >
-                                {profesor.estado === "Activo"
+
+                                {profesor.estado ===
+                                "Activo"
                                   ? "Desactivar"
                                   : "Activar"}
+
                               </button>
 
                               <button
@@ -732,6 +1056,7 @@ export default function ProfesoresPage() {
             <div className="flex items-start justify-between gap-4 mb-6">
 
               <div>
+
                 <p className="text-gray-400">
                   Información del profesor
                 </p>
@@ -739,6 +1064,7 @@ export default function ProfesoresPage() {
                 <h2 className="text-3xl font-black">
                   {profesorDetalle.nombre}
                 </h2>
+
               </div>
 
               <button
@@ -756,27 +1082,46 @@ export default function ProfesoresPage() {
 
               <Detalle
                 titulo="RUT"
-                valor={profesorDetalle.rut}
+                valor={
+                  profesorDetalle.rut
+                }
               />
 
               <Detalle
                 titulo="Correo electrónico"
-                valor={profesorDetalle.email}
+                valor={
+                  profesorDetalle.email
+                }
               />
 
               <Detalle
                 titulo="Teléfono"
-                valor={profesorDetalle.telefono}
+                valor={
+                  profesorDetalle.telefono
+                }
               />
 
               <Detalle
                 titulo="Especialidad"
-                valor={profesorDetalle.especialidad}
+                valor={
+                  profesorDetalle.especialidad
+                }
+              />
+
+              <Detalle
+                titulo="Sucursal"
+                valor={
+                  profesorDetalle
+                    .sucursal
+                    ?.nombre
+                }
               />
 
               <Detalle
                 titulo="Estado"
-                valor={profesorDetalle.estado}
+                valor={
+                  profesorDetalle.estado
+                }
               />
 
             </div>
@@ -789,7 +1134,9 @@ export default function ProfesoresPage() {
                     profesorDetalle
                   );
 
-                  setProfesorDetalle(null);
+                  setProfesorDetalle(
+                    null
+                  );
                 }}
                 className="bg-red-600 hover:bg-red-700 py-3 rounded-xl font-bold"
               >
@@ -813,7 +1160,7 @@ export default function ProfesoresPage() {
 
       )}
 
-      {/* ESTADO DE CONEXIÓN */}
+      {/* BASE DE DATOS */}
 
       <section className="mt-8 bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
 
@@ -822,9 +1169,8 @@ export default function ProfesoresPage() {
         </h2>
 
         <p className="text-gray-400">
-          Los profesores registrados en este módulo
-          se almacenan en MySQL mediante la API
-          del backend de Focus Power Fit.
+          Los profesores se almacenan en MySQL y
+          pueden asociarse a su sucursal correspondiente.
         </p>
 
       </section>
@@ -839,12 +1185,16 @@ function Campo({
   onChange,
   type = "text",
   placeholder = "",
+  required = true,
 }: {
   label: string;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (
+    value: string
+  ) => void;
   type?: string;
   placeholder?: string;
+  required?: boolean;
 }) {
   return (
     <div>
@@ -857,10 +1207,12 @@ function Campo({
         type={type}
         value={value}
         onChange={(e) =>
-          onChange(e.target.value)
+          onChange(
+            e.target.value
+          )
         }
         placeholder={placeholder}
-        required
+        required={required}
         className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
       />
 
@@ -873,7 +1225,10 @@ function Detalle({
   valor,
 }: {
   titulo: string;
-  valor: string;
+  valor:
+    | string
+    | null
+    | undefined;
 }) {
   return (
     <div className="bg-black border border-zinc-800 rounded-xl p-4">
@@ -883,6 +1238,28 @@ function Detalle({
       </p>
 
       <p className="font-semibold">
+        {valor || "No informado"}
+      </p>
+
+    </div>
+  );
+}
+
+function Resumen({
+  titulo,
+  valor,
+}: {
+  titulo: string;
+  valor: number;
+}) {
+  return (
+    <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5">
+
+      <p className="text-gray-400">
+        {titulo}
+      </p>
+
+      <p className="text-3xl font-black text-red-500 mt-1">
         {valor}
       </p>
 

@@ -15,6 +15,7 @@ import asistenciasRoutes from "./routes/asistencias.js";
 import contratosRoutes from "./routes/contratos.js";
 import pagosRoutes from "./routes/pagos.js";
 import recordatoriosRoutes from "./routes/recordatorios.js";
+import sucursalesRoutes from "./routes/sucursales.js";
 
 // MODELOS
 import "./models/cliente.js";
@@ -26,85 +27,44 @@ import "./models/asistencia.js";
 import "./models/contrato.js";
 import "./models/pago.js";
 import "./models/recordatorio.js";
+import "./models/sucursal.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-/*
- * MIDDLEWARES
- */
+// MIDDLEWARES
 app.use(cors());
 app.use(express.json());
 
-/*
- * ARCHIVOS PÚBLICOS
- * Permite abrir las copias digitales de contratos
- * desde:
- * /uploads/contratos/archivo.pdf
- */
+// ARCHIVOS PÚBLICOS
 app.use(
   "/uploads",
   express.static(
-    path.join(
-      process.cwd(),
-      "uploads"
-    )
+    path.join(process.cwd(), "uploads")
   )
 );
 
-/*
- * RUTAS API
- */
+// RUTAS API
 app.use("/api/clientes", clientesRoutes);
-
-app.use(
-  "/api/profesores",
-  profesoresRoutes
-);
-
+app.use("/api/profesores", profesoresRoutes);
 app.use("/api/planes", planesRoutes);
-
-app.use(
-  "/api/horarios",
-  horariosRoutes
-);
-
-app.use(
-  "/api/asignaciones",
-  asignacionesRoutes
-);
-
-app.use(
-  "/api/asistencias",
-  asistenciasRoutes
-);
-
-app.use(
-  "/api/contratos",
-  contratosRoutes
-);
-
+app.use("/api/horarios", horariosRoutes);
+app.use("/api/asignaciones", asignacionesRoutes);
+app.use("/api/asistencias", asistenciasRoutes);
+app.use("/api/contratos", contratosRoutes);
 app.use("/api/pagos", pagosRoutes);
+app.use("/api/recordatorios", recordatoriosRoutes);
+app.use("/api/sucursales", sucursalesRoutes);
 
-app.use(
-  "/api/recordatorios",
-  recordatoriosRoutes
-);
-
-/*
- * RUTA PRINCIPAL
- */
+// RUTA PRINCIPAL
 app.get("/", (req, res) => {
   res.json({
     ok: true,
-    mensaje:
-      "Backend Focus Power Fit funcionando",
+    mensaje: "Backend Focus Power Fit funcionando",
   });
 });
 
-/*
- * HEALTH CHECK
- */
+// HEALTH CHECK
 app.get("/health", async (req, res) => {
   try {
     await sequelize.authenticate();
@@ -128,9 +88,7 @@ app.get("/health", async (req, res) => {
   }
 });
 
-/*
- * INICIAR SERVIDOR
- */
+// INICIAR SERVIDOR
 const iniciarServidor = async () => {
   try {
     await sequelize.authenticate();

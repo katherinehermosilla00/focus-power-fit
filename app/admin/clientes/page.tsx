@@ -13,18 +13,52 @@ import { useAuth } from "../../auth/AuthContext";
 
 type EstadoCliente = "Activo" | "Inactivo";
 
-type Cliente = {
+type Sucursal = {
   id: number;
   nombre: string;
-  rut: string;
-  email: string;
-  telefono: string;
-  plan: string;
-  estado: EstadoCliente;
+  comuna: string | null;
+  estado: "Activa" | "Inactiva";
 };
 
-const API_URL =
+type Cliente = {
+  id: number;
+
+  sucursalId: number | null;
+
+  numeroCliente: string | null;
+
+  nombres: string | null;
+  apellidos: string | null;
+  nombre: string;
+
+  rut: string | null;
+  email: string | null;
+
+  telefono: string | null;
+  telefonoSecundario: string | null;
+
+  direccion: string | null;
+  comuna: string | null;
+  ciudad: string | null;
+
+  edad: number | null;
+  genero: string | null;
+
+  fechaNacimiento: string | null;
+  fechaCreacionOrigen: string | null;
+
+  plan: string | null;
+
+  estado: EstadoCliente;
+
+  sucursal?: Sucursal | null;
+};
+
+const API_CLIENTES =
   "http://localhost:3001/api/clientes";
+
+const API_SUCURSALES =
+  "http://localhost:3001/api/sucursales";
 
 export default function ClientesPage() {
   const router = useRouter();
@@ -34,8 +68,19 @@ export default function ClientesPage() {
     cargando,
   } = useAuth();
 
+  /*
+   * DATOS PRINCIPALES
+   */
+
   const [clientes, setClientes] =
     useState<Cliente[]>([]);
+
+  const [sucursales, setSucursales] =
+    useState<Sucursal[]>([]);
+
+  /*
+   * FORMULARIO
+   */
 
   const [nombre, setNombre] =
     useState("");
@@ -52,21 +97,45 @@ export default function ClientesPage() {
   const [plan, setPlan] =
     useState("");
 
+  const [sucursalId, setSucursalId] =
+    useState("");
+
+  /*
+   * BUSCADOR Y FILTROS
+   */
+
   const [busqueda, setBusqueda] =
     useState("");
 
-  const [clienteEditandoId, setClienteEditandoId] =
+  const [sucursalFiltro, setSucursalFiltro] =
+    useState("todas");
+
+  /*
+   * EDICIÓN Y DETALLE
+   */
+
+  const [
+    clienteEditandoId,
+    setClienteEditandoId,
+  ] =
     useState<number | null>(null);
 
-  const [clienteDetalle, setClienteDetalle] =
+  const [
+    clienteDetalle,
+    setClienteDetalle,
+  ] =
     useState<Cliente | null>(null);
 
-  const [cargandoClientes, setCargandoClientes] =
+  const [
+    cargandoClientes,
+    setCargandoClientes,
+  ] =
     useState(true);
 
   /*
    * PROTECCIÓN DE RUTA
    */
+
   useEffect(() => {
     if (cargando) {
       return;
@@ -87,8 +156,9 @@ export default function ClientesPage() {
   ]);
 
   /*
-   * CARGAR CLIENTES DESDE MYSQL
+   * CARGAR DATOS
    */
+
   useEffect(() => {
     if (
       cargando ||
@@ -98,33 +168,45 @@ export default function ClientesPage() {
       return;
     }
 
-    const cargarClientes = async () => {
+    const cargarDatos = async () => {
       try {
         setCargandoClientes(true);
 
-        const respuesta =
-          await axios.get<Cliente[]>(
-            API_URL
-          );
+        const [
+          respuestaClientes,
+          respuestaSucursales,
+        ] = await Promise.all([
+          axios.get<Cliente[]>(
+            API_CLIENTES
+          ),
+
+          axios.get<Sucursal[]>(
+            API_SUCURSALES
+          ),
+        ]);
 
         setClientes(
-          respuesta.data
+          respuestaClientes.data
+        );
+
+        setSucursales(
+          respuestaSucursales.data
         );
       } catch (error) {
         console.error(
-          "Error al cargar clientes:",
+          "Error al cargar datos:",
           error
         );
 
         alert(
-          "No se pudieron cargar los clientes."
+          "No se pudieron cargar los clientes o las sucursales."
         );
       } finally {
         setCargandoClientes(false);
       }
     };
 
-    cargarClientes();
+    cargarDatos();
   }, [
     cargando,
     usuario,
@@ -133,11 +215,12 @@ export default function ClientesPage() {
   /*
    * RECARGAR CLIENTES
    */
+
   const cargarClientes = async () => {
     try {
       const respuesta =
         await axios.get<Cliente[]>(
-          API_URL
+          API_CLIENTES
         );
 
       setClientes(
@@ -154,73 +237,86 @@ export default function ClientesPage() {
   /*
    * LIMPIAR FORMULARIO
    */
+
   const limpiarFormulario = () => {
     setNombre("");
     setRut("");
     setEmail("");
     setTelefono("");
     setPlan("");
+    setSucursalId("");
+
     setClienteEditandoId(null);
   };
 
   /*
-   * REGISTRAR O EDITAR CLIENTE
+   * REGISTRAR / EDITAR
    */
+
   const guardarCliente = async (
     e: FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
 
-    /*
-     * Validar correo duplicado
-     */
-    const correoExiste = clientes.some(
-      (cliente) =>
-        cliente.email.toLowerCase() ===
-          email.toLowerCase() &&
-        cliente.id !== clienteEditandoId
-    );
-
-    if (correoExiste) {
+    if (!nombre.trim()) {
       alert(
-        "Ya existe un cliente con ese correo."
+        "Debes ingresar el nombre del cliente."
       );
+
+      return;
+    }
+
+    if (!sucursalId) {
+      alert(
+        "Debes seleccionar una sucursal."
+      );
+
       return;
     }
 
     /*
-     * Validar RUT duplicado
+     * Ya no validamos RUT/email como únicos
+     * globalmente porque existen clientes que
+     * aparecen en más de una sucursal.
      */
-    const rutExiste = clientes.some(
-      (cliente) =>
-        cliente.rut.toLowerCase() ===
-          rut.toLowerCase() &&
-        cliente.id !== clienteEditandoId
-    );
 
-    if (rutExiste) {
-      alert(
-        "Ya existe un cliente con ese RUT."
-      );
-      return;
-    }
+    const datosCliente = {
+      nombre: nombre.trim(),
+
+      /*
+       * El modelo nuevo también utiliza
+       * nombres. Por ahora usamos el nombre
+       * completo para mantener compatibilidad.
+       */
+      nombres: nombre.trim(),
+
+      rut:
+        rut.trim() || null,
+
+      email:
+        email.trim() || null,
+
+      telefono:
+        telefono.trim() || null,
+
+      plan:
+        plan || null,
+
+      sucursalId:
+        Number(sucursalId),
+    };
 
     try {
       /*
-       * EDITAR CLIENTE
+       * EDITAR
        */
+
       if (
         clienteEditandoId !== null
       ) {
         await axios.put(
-          `${API_URL}/${clienteEditandoId}`,
-          {
-            nombre,
-            rut,
-            email,
-            telefono,
-            plan,
-          }
+          `${API_CLIENTES}/${clienteEditandoId}`,
+          datosCliente
         );
 
         alert(
@@ -235,17 +331,12 @@ export default function ClientesPage() {
       }
 
       /*
-       * CREAR CLIENTE
+       * CREAR
        */
+
       await axios.post(
-        API_URL,
-        {
-          nombre,
-          rut,
-          email,
-          telefono,
-          plan,
-        }
+        API_CLIENTES,
+        datosCliente
       );
 
       alert(
@@ -269,16 +360,39 @@ export default function ClientesPage() {
   };
 
   /*
-   * CARGAR CLIENTE EN FORMULARIO
+   * EDITAR CLIENTE
    */
+
   const editarCliente = (
     cliente: Cliente
   ) => {
-    setNombre(cliente.nombre);
-    setRut(cliente.rut);
-    setEmail(cliente.email);
-    setTelefono(cliente.telefono);
-    setPlan(cliente.plan);
+    setNombre(
+      cliente.nombre ?? ""
+    );
+
+    setRut(
+      cliente.rut ?? ""
+    );
+
+    setEmail(
+      cliente.email ?? ""
+    );
+
+    setTelefono(
+      cliente.telefono ?? ""
+    );
+
+    setPlan(
+      cliente.plan ?? ""
+    );
+
+    setSucursalId(
+      cliente.sucursalId
+        ? String(
+            cliente.sucursalId
+          )
+        : ""
+    );
 
     setClienteEditandoId(
       cliente.id
@@ -297,6 +411,7 @@ export default function ClientesPage() {
   /*
    * ACTIVAR / DESACTIVAR
    */
+
   const cambiarEstado = async (
     cliente: Cliente
   ) => {
@@ -308,7 +423,7 @@ export default function ClientesPage() {
 
     try {
       await axios.put(
-        `${API_URL}/${cliente.id}`,
+        `${API_CLIENTES}/${cliente.id}`,
         {
           estado: nuevoEstado,
         }
@@ -329,8 +444,9 @@ export default function ClientesPage() {
   };
 
   /*
-   * ELIMINAR CLIENTE
+   * ELIMINAR
    */
+
   const eliminarCliente = async (
     id: number
   ) => {
@@ -345,7 +461,7 @@ export default function ClientesPage() {
 
     try {
       await axios.delete(
-        `${API_URL}/${id}`
+        `${API_CLIENTES}/${id}`
       );
 
       if (
@@ -379,8 +495,9 @@ export default function ClientesPage() {
   };
 
   /*
-   * BUSCADOR
+   * BUSCADOR + FILTRO SUCURSAL
    */
+
   const clientesFiltrados =
     clientes.filter(
       (cliente) => {
@@ -389,33 +506,72 @@ export default function ClientesPage() {
             .trim()
             .toLowerCase();
 
+        const coincideSucursal =
+          sucursalFiltro ===
+            "todas" ||
+          cliente.sucursalId ===
+            Number(
+              sucursalFiltro
+            );
+
+        const coincideBusqueda =
+          !texto ||
+
+          (cliente.nombre ?? "")
+            .toLowerCase()
+            .includes(texto) ||
+
+          (cliente.rut ?? "")
+            .toLowerCase()
+            .includes(texto) ||
+
+          (cliente.email ?? "")
+            .toLowerCase()
+            .includes(texto) ||
+
+          (cliente.telefono ?? "")
+            .toLowerCase()
+            .includes(texto) ||
+
+          (cliente.plan ?? "")
+            .toLowerCase()
+            .includes(texto) ||
+
+          (cliente.numeroCliente ?? "")
+            .toLowerCase()
+            .includes(texto) ||
+
+          (cliente.sucursal?.nombre ?? "")
+            .toLowerCase()
+            .includes(texto);
+
         return (
-          cliente.nombre
-            .toLowerCase()
-            .includes(texto) ||
-
-          cliente.rut
-            .toLowerCase()
-            .includes(texto) ||
-
-          cliente.email
-            .toLowerCase()
-            .includes(texto) ||
-
-          cliente.telefono
-            .toLowerCase()
-            .includes(texto) ||
-
-          cliente.plan
-            .toLowerCase()
-            .includes(texto)
+          coincideSucursal &&
+          coincideBusqueda
         );
       }
     );
 
   /*
-   * CARGANDO AUTENTICACIÓN
+   * CONTADORES
    */
+
+  const totalPenalolen =
+    clientes.filter(
+      (cliente) =>
+        cliente.sucursalId === 1
+    ).length;
+
+  const totalLaReina =
+    clientes.filter(
+      (cliente) =>
+        cliente.sucursalId === 2
+    ).length;
+
+  /*
+   * CARGANDO
+   */
+
   if (cargando) {
     return (
       <main className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -429,6 +585,7 @@ export default function ClientesPage() {
   /*
    * SIN PERMISOS
    */
+
   if (
     !usuario ||
     usuario.rol !== "admin"
@@ -480,6 +637,27 @@ export default function ClientesPage() {
 
       </header>
 
+      {/* RESUMEN SUCURSALES */}
+
+      <section className="grid sm:grid-cols-3 gap-4 mb-8">
+
+        <Resumen
+          titulo="Total clientes"
+          valor={clientes.length}
+        />
+
+        <Resumen
+          titulo="Peñalolén"
+          valor={totalPenalolen}
+        />
+
+        <Resumen
+          titulo="La Reina"
+          valor={totalLaReina}
+        />
+
+      </section>
+
       {/* FORMULARIO + LISTADO */}
 
       <section className="grid lg:grid-cols-3 gap-8">
@@ -498,16 +676,18 @@ export default function ClientesPage() {
 
             </h2>
 
-            {clienteEditandoId !== null && (
+            {clienteEditandoId !== null ? (
+
               <p className="text-yellow-500 text-sm mb-6">
                 Estás modificando un cliente existente.
               </p>
-            )}
 
-            {clienteEditandoId === null && (
+            ) : (
+
               <p className="text-gray-400 text-sm mb-6">
-                Ingresa los datos del cliente.
+                Ingresa los datos principales del cliente.
               </p>
+
             )}
 
             <form
@@ -527,6 +707,7 @@ export default function ClientesPage() {
                 value={rut}
                 onChange={setRut}
                 placeholder="Ej: 12.345.678-9"
+                required={false}
               />
 
               <Campo
@@ -535,6 +716,7 @@ export default function ClientesPage() {
                 onChange={setEmail}
                 type="email"
                 placeholder="correo@ejemplo.cl"
+                required={false}
               />
 
               <Campo
@@ -542,7 +724,50 @@ export default function ClientesPage() {
                 value={telefono}
                 onChange={setTelefono}
                 placeholder="+56 9 1234 5678"
+                required={false}
               />
+
+              {/* SUCURSAL */}
+
+              <div>
+
+                <label className="block mb-2 font-semibold">
+                  Sucursal
+                </label>
+
+                <select
+                  value={sucursalId}
+                  onChange={(e) =>
+                    setSucursalId(
+                      e.target.value
+                    )
+                  }
+                  required
+                  className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
+                >
+
+                  <option value="">
+                    Seleccionar sucursal
+                  </option>
+
+                  {sucursales.map(
+                    (sucursal) => (
+
+                      <option
+                        key={sucursal.id}
+                        value={sucursal.id}
+                      >
+                        {sucursal.nombre}
+                      </option>
+
+                    )
+                  )}
+
+                </select>
+
+              </div>
+
+              {/* PLAN */}
 
               <div>
 
@@ -557,12 +782,11 @@ export default function ClientesPage() {
                       e.target.value
                     )
                   }
-                  required
                   className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
                 >
 
                   <option value="">
-                    Seleccionar plan
+                    Sin plan asignado
                   </option>
 
                   <option value="Personal Training">
@@ -636,7 +860,7 @@ export default function ClientesPage() {
 
             <div className="p-6 border-b border-zinc-800">
 
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex flex-col gap-4">
 
                 <div>
 
@@ -645,22 +869,70 @@ export default function ClientesPage() {
                   </h2>
 
                   <p className="text-gray-400 mt-1">
-                    Total: {clientes.length}
+                    Mostrando:{" "}
+                    {clientesFiltrados.length}
+                    {" "}de{" "}
+                    {clientes.length}
                   </p>
 
                 </div>
 
-                <input
-                  type="text"
-                  value={busqueda}
-                  onChange={(e) =>
-                    setBusqueda(
-                      e.target.value
-                    )
-                  }
-                  placeholder="Buscar cliente..."
-                  className="bg-black border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-red-600"
-                />
+                <div className="grid md:grid-cols-2 gap-3">
+
+                  {/* FILTRO SUCURSAL */}
+
+                  <select
+                    value={
+                      sucursalFiltro
+                    }
+                    onChange={(e) =>
+                      setSucursalFiltro(
+                        e.target.value
+                      )
+                    }
+                    className="bg-black border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-red-600"
+                  >
+
+                    <option value="todas">
+                      Todas las sucursales
+                    </option>
+
+                    {sucursales.map(
+                      (sucursal) => (
+
+                        <option
+                          key={
+                            sucursal.id
+                          }
+                          value={
+                            String(
+                              sucursal.id
+                            )
+                          }
+                        >
+                          {sucursal.nombre}
+                        </option>
+
+                      )
+                    )}
+
+                  </select>
+
+                  {/* BUSCADOR */}
+
+                  <input
+                    type="text"
+                    value={busqueda}
+                    onChange={(e) =>
+                      setBusqueda(
+                        e.target.value
+                      )
+                    }
+                    placeholder="Buscar cliente..."
+                    className="bg-black border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-red-600"
+                  />
+
+                </div>
 
               </div>
 
@@ -697,6 +969,10 @@ export default function ClientesPage() {
                       </th>
 
                       <th className="p-4">
+                        Sucursal
+                      </th>
+
+                      <th className="p-4">
                         Plan
                       </th>
 
@@ -729,24 +1005,39 @@ export default function ClientesPage() {
                             </p>
 
                             <p className="text-gray-500 text-sm">
-                              {cliente.email}
+                              {cliente.email ||
+                                "Sin correo"}
                             </p>
 
                           </td>
 
                           <td className="p-4 text-gray-300">
-                            {cliente.rut}
+                            {cliente.rut ||
+                              "Sin RUT"}
+                          </td>
+
+                          <td className="p-4">
+
+                            <span className="text-red-400 font-semibold">
+                              {cliente
+                                .sucursal
+                                ?.nombre ||
+                                "Sin sucursal"}
+                            </span>
+
                           </td>
 
                           <td className="p-4 text-gray-300">
-                            {cliente.plan}
+                            {cliente.plan ||
+                              "Sin plan"}
                           </td>
 
                           <td className="p-4">
 
                             <span
                               className={
-                                cliente.estado === "Activo"
+                                cliente.estado ===
+                                "Activo"
                                   ? "text-green-500 font-bold"
                                   : "text-gray-500 font-bold"
                               }
@@ -791,7 +1082,8 @@ export default function ClientesPage() {
                                 className="border border-red-600 text-red-500 hover:bg-red-600 hover:text-white px-3 py-2 rounded-lg transition"
                               >
 
-                                {cliente.estado === "Activo"
+                                {cliente.estado ===
+                                "Activo"
                                   ? "Desactivar"
                                   : "Activar"}
 
@@ -835,9 +1127,9 @@ export default function ClientesPage() {
 
       {clienteDetalle && (
 
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
 
-          <div className="bg-zinc-950 border border-red-600 rounded-2xl max-w-lg w-full p-7">
+          <div className="bg-zinc-950 border border-red-600 rounded-2xl max-w-2xl w-full p-7 my-8">
 
             <div className="flex items-start justify-between gap-4 mb-6">
 
@@ -864,7 +1156,23 @@ export default function ClientesPage() {
 
             </div>
 
-            <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+
+              <Detalle
+                titulo="N° cliente"
+                valor={
+                  clienteDetalle.numeroCliente
+                }
+              />
+
+              <Detalle
+                titulo="Sucursal"
+                valor={
+                  clienteDetalle
+                    .sucursal
+                    ?.nombre
+                }
+              />
 
               <Detalle
                 titulo="RUT"
@@ -884,6 +1192,62 @@ export default function ClientesPage() {
                 titulo="Teléfono"
                 valor={
                   clienteDetalle.telefono
+                }
+              />
+
+              <Detalle
+                titulo="Teléfono secundario"
+                valor={
+                  clienteDetalle
+                    .telefonoSecundario
+                }
+              />
+
+              <Detalle
+                titulo="Dirección"
+                valor={
+                  clienteDetalle.direccion
+                }
+              />
+
+              <Detalle
+                titulo="Comuna"
+                valor={
+                  clienteDetalle.comuna
+                }
+              />
+
+              <Detalle
+                titulo="Ciudad"
+                valor={
+                  clienteDetalle.ciudad
+                }
+              />
+
+              <Detalle
+                titulo="Edad"
+                valor={
+                  clienteDetalle.edad !==
+                  null
+                    ? String(
+                        clienteDetalle.edad
+                      )
+                    : null
+                }
+              />
+
+              <Detalle
+                titulo="Género"
+                valor={
+                  clienteDetalle.genero
+                }
+              />
+
+              <Detalle
+                titulo="Fecha nacimiento"
+                valor={
+                  clienteDetalle
+                    .fechaNacimiento
                 }
               />
 
@@ -937,7 +1301,7 @@ export default function ClientesPage() {
 
       )}
 
-      {/* ESTADO DE CONEXIÓN */}
+      {/* BASE DE DATOS */}
 
       <section className="mt-8 bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
 
@@ -946,9 +1310,10 @@ export default function ClientesPage() {
         </h2>
 
         <p className="text-gray-400">
-          Los clientes registrados en este módulo
-          se almacenan en MySQL mediante la API
-          del backend de Focus Power Fit.
+          Los clientes de Peñalolén y La Reina
+          se almacenan en MySQL y están
+          relacionados con su sucursal
+          correspondiente.
         </p>
 
       </section>
@@ -957,20 +1322,28 @@ export default function ClientesPage() {
   );
 }
 
+/*
+ * CAMPO
+ */
+
 function Campo({
   label,
   value,
   onChange,
   type = "text",
   placeholder = "",
+  required = true,
 }: {
   label: string;
   value: string;
+
   onChange: (
     value: string
   ) => void;
+
   type?: string;
   placeholder?: string;
+  required?: boolean;
 }) {
   return (
     <div>
@@ -988,7 +1361,7 @@ function Campo({
           )
         }
         placeholder={placeholder}
-        required
+        required={required}
         className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
       />
 
@@ -996,12 +1369,19 @@ function Campo({
   );
 }
 
+/*
+ * DETALLE
+ */
+
 function Detalle({
   titulo,
   valor,
 }: {
   titulo: string;
-  valor: string;
+  valor:
+    | string
+    | null
+    | undefined;
 }) {
   return (
     <div className="bg-black border border-zinc-800 rounded-xl p-4">
@@ -1011,6 +1391,32 @@ function Detalle({
       </p>
 
       <p className="font-semibold">
+        {valor || "No informado"}
+      </p>
+
+    </div>
+  );
+}
+
+/*
+ * TARJETA RESUMEN
+ */
+
+function Resumen({
+  titulo,
+  valor,
+}: {
+  titulo: string;
+  valor: number;
+}) {
+  return (
+    <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5">
+
+      <p className="text-gray-400">
+        {titulo}
+      </p>
+
+      <p className="text-3xl font-black text-red-500 mt-1">
         {valor}
       </p>
 
