@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../auth/AuthContext";
 
-type EstadoCliente = "Activo" | "Inactivo";
+type EstadoProfesor = "Activo" | "Inactivo";
 
 type Sucursal = {
   id: number;
@@ -20,47 +20,25 @@ type Sucursal = {
   estado: "Activa" | "Inactiva";
 };
 
-type Cliente = {
+type Profesor = {
   id: number;
-
   sucursalId: number | null;
-
-  numeroCliente: string | null;
-
-  nombres: string | null;
-  apellidos: string | null;
   nombre: string;
-
-  rut: string | null;
-  email: string | null;
-
+  rut: string;
+  email: string;
   telefono: string | null;
-  telefonoSecundario: string | null;
-
-  direccion: string | null;
-  comuna: string | null;
-  ciudad: string | null;
-
-  edad: number | null;
-  genero: string | null;
-
-  fechaNacimiento: string | null;
-  fechaCreacionOrigen: string | null;
-
-  plan: string | null;
-
-  estado: EstadoCliente;
-
+  especialidad: string | null;
+  estado: EstadoProfesor;
   sucursal?: Sucursal | null;
 };
 
-const API_CLIENTES =
-  "http://localhost:3001/api/clientes";
+const API_PROFESORES =
+  "http://localhost:3001/api/profesores";
 
 const API_SUCURSALES =
   "http://localhost:3001/api/sucursales";
 
-export default function ClientesPage() {
+export default function ProfesoresPage() {
   const router = useRouter();
 
   const {
@@ -68,19 +46,11 @@ export default function ClientesPage() {
     cargando,
   } = useAuth();
 
-  /*
-   * DATOS PRINCIPALES
-   */
-
-  const [clientes, setClientes] =
-    useState<Cliente[]>([]);
+  const [profesores, setProfesores] =
+    useState<Profesor[]>([]);
 
   const [sucursales, setSucursales] =
     useState<Sucursal[]>([]);
-
-  /*
-   * FORMULARIO
-   */
 
   const [nombre, setNombre] =
     useState("");
@@ -94,15 +64,11 @@ export default function ClientesPage() {
   const [telefono, setTelefono] =
     useState("");
 
-  const [plan, setPlan] =
+  const [especialidad, setEspecialidad] =
     useState("");
 
   const [sucursalId, setSucursalId] =
     useState("");
-
-  /*
-   * BUSCADOR Y FILTROS
-   */
 
   const [busqueda, setBusqueda] =
     useState("");
@@ -110,32 +76,27 @@ export default function ClientesPage() {
   const [sucursalFiltro, setSucursalFiltro] =
     useState("todas");
 
-  /*
-   * EDICIÓN Y DETALLE
-   */
-
   const [
-    clienteEditandoId,
-    setClienteEditandoId,
+    profesorEditandoId,
+    setProfesorEditandoId,
   ] =
     useState<number | null>(null);
 
   const [
-    clienteDetalle,
-    setClienteDetalle,
+    profesorDetalle,
+    setProfesorDetalle,
   ] =
-    useState<Cliente | null>(null);
+    useState<Profesor | null>(null);
 
   const [
-    cargandoClientes,
-    setCargandoClientes,
+    cargandoProfesores,
+    setCargandoProfesores,
   ] =
     useState(true);
 
   /*
    * PROTECCIÓN DE RUTA
    */
-
   useEffect(() => {
     if (cargando) {
       return;
@@ -156,9 +117,8 @@ export default function ClientesPage() {
   ]);
 
   /*
-   * CARGAR DATOS
+   * CARGAR PROFESORES + SUCURSALES
    */
-
   useEffect(() => {
     if (
       cargando ||
@@ -170,14 +130,14 @@ export default function ClientesPage() {
 
     const cargarDatos = async () => {
       try {
-        setCargandoClientes(true);
+        setCargandoProfesores(true);
 
         const [
-          respuestaClientes,
+          respuestaProfesores,
           respuestaSucursales,
         ] = await Promise.all([
-          axios.get<Cliente[]>(
-            API_CLIENTES
+          axios.get<Profesor[]>(
+            API_PROFESORES
           ),
 
           axios.get<Sucursal[]>(
@@ -185,8 +145,8 @@ export default function ClientesPage() {
           ),
         ]);
 
-        setClientes(
-          respuestaClientes.data
+        setProfesores(
+          respuestaProfesores.data
         );
 
         setSucursales(
@@ -199,10 +159,10 @@ export default function ClientesPage() {
         );
 
         alert(
-          "No se pudieron cargar los clientes o las sucursales."
+          "No se pudieron cargar los profesores o las sucursales."
         );
       } finally {
-        setCargandoClientes(false);
+        setCargandoProfesores(false);
       }
     };
 
@@ -213,22 +173,21 @@ export default function ClientesPage() {
   ]);
 
   /*
-   * RECARGAR CLIENTES
+   * RECARGAR PROFESORES
    */
-
-  const cargarClientes = async () => {
+  const cargarProfesores = async () => {
     try {
       const respuesta =
-        await axios.get<Cliente[]>(
-          API_CLIENTES
+        await axios.get<Profesor[]>(
+          API_PROFESORES
         );
 
-      setClientes(
+      setProfesores(
         respuesta.data
       );
     } catch (error) {
       console.error(
-        "Error al cargar clientes:",
+        "Error al cargar profesores:",
         error
       );
     }
@@ -237,32 +196,52 @@ export default function ClientesPage() {
   /*
    * LIMPIAR FORMULARIO
    */
-
   const limpiarFormulario = () => {
     setNombre("");
     setRut("");
     setEmail("");
     setTelefono("");
-    setPlan("");
+    setEspecialidad("");
     setSucursalId("");
 
-    setClienteEditandoId(null);
+    setProfesorEditandoId(null);
   };
 
   /*
    * REGISTRAR / EDITAR
    */
-
-  const guardarCliente = async (
+  const guardarProfesor = async (
     e: FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
 
-    if (!nombre.trim()) {
-      alert(
-        "Debes ingresar el nombre del cliente."
-      );
+    const correoExiste = profesores.some(
+      (profesor) =>
+        profesor.email
+          .toLowerCase() ===
+          email.toLowerCase() &&
+        profesor.id !== profesorEditandoId
+    );
 
+    if (correoExiste) {
+      alert(
+        "Ya existe un profesor con ese correo."
+      );
+      return;
+    }
+
+    const rutExiste = profesores.some(
+      (profesor) =>
+        profesor.rut
+          .toLowerCase() ===
+          rut.toLowerCase() &&
+        profesor.id !== profesorEditandoId
+    );
+
+    if (rutExiste) {
+      alert(
+        "Ya existe un profesor con ese RUT."
+      );
       return;
     }
 
@@ -270,37 +249,24 @@ export default function ClientesPage() {
       alert(
         "Debes seleccionar una sucursal."
       );
-
       return;
     }
 
-    /*
-     * Ya no validamos RUT/email como únicos
-     * globalmente porque existen clientes que
-     * aparecen en más de una sucursal.
-     */
-
-    const datosCliente = {
-      nombre: nombre.trim(),
-
-      /*
-       * El modelo nuevo también utiliza
-       * nombres. Por ahora usamos el nombre
-       * completo para mantener compatibilidad.
-       */
-      nombres: nombre.trim(),
+    const datosProfesor = {
+      nombre:
+        nombre.trim(),
 
       rut:
-        rut.trim() || null,
+        rut.trim(),
 
       email:
-        email.trim() || null,
+        email.trim(),
 
       telefono:
         telefono.trim() || null,
 
-      plan:
-        plan || null,
+      especialidad:
+        especialidad.trim() || null,
 
       sucursalId:
         Number(sucursalId),
@@ -310,22 +276,21 @@ export default function ClientesPage() {
       /*
        * EDITAR
        */
-
       if (
-        clienteEditandoId !== null
+        profesorEditandoId !== null
       ) {
         await axios.put(
-          `${API_CLIENTES}/${clienteEditandoId}`,
-          datosCliente
+          `${API_PROFESORES}/${profesorEditandoId}`,
+          datosProfesor
         );
 
         alert(
-          "Cliente actualizado correctamente."
+          "Profesor actualizado correctamente."
         );
 
         limpiarFormulario();
 
-        await cargarClientes();
+        await cargarProfesores();
 
         return;
       }
@@ -333,69 +298,67 @@ export default function ClientesPage() {
       /*
        * CREAR
        */
-
       await axios.post(
-        API_CLIENTES,
-        datosCliente
+        API_PROFESORES,
+        datosProfesor
       );
 
       alert(
-        "Cliente registrado correctamente."
+        "Profesor registrado correctamente."
       );
 
       limpiarFormulario();
 
-      await cargarClientes();
+      await cargarProfesores();
 
     } catch (error) {
       console.error(
-        "Error al guardar cliente:",
+        "Error al guardar profesor:",
         error
       );
 
       alert(
-        "Ocurrió un error al guardar el cliente."
+        "Ocurrió un error al guardar el profesor."
       );
     }
   };
 
   /*
-   * EDITAR CLIENTE
+   * EDITAR PROFESOR
    */
-
-  const editarCliente = (
-    cliente: Cliente
+  const editarProfesor = (
+    profesor: Profesor
   ) => {
     setNombre(
-      cliente.nombre ?? ""
+      profesor.nombre
     );
 
     setRut(
-      cliente.rut ?? ""
+      profesor.rut
     );
 
     setEmail(
-      cliente.email ?? ""
+      profesor.email
     );
 
     setTelefono(
-      cliente.telefono ?? ""
+      profesor.telefono ?? ""
     );
 
-    setPlan(
-      cliente.plan ?? ""
+    setEspecialidad(
+      profesor.especialidad ?? ""
     );
 
     setSucursalId(
-      cliente.sucursalId
+      profesor.sucursalId
         ? String(
-            cliente.sucursalId
+            profesor.sucursalId
           )
         : ""
     );
 
-    setClienteEditandoId(
-      cliente.id
+    setProfesorEditandoId(
+      profesor.id
     );
 
     window.scrollTo({
@@ -411,25 +374,24 @@ export default function ClientesPage() {
   /*
    * ACTIVAR / DESACTIVAR
    */
-
   const cambiarEstado = async (
-    cliente: Cliente
+    profesor: Profesor
   ) => {
     const nuevoEstado:
-      EstadoCliente =
-        cliente.estado === "Activo"
+      EstadoProfesor =
+        profesor.estado === "Activo"
           ? "Inactivo"
           : "Activo";
 
     try {
       await axios.put(
-        `${API_CLIENTES}/${cliente.id}`,
+        `${API_PROFESORES}/${profesor.id}`,
         {
           estado: nuevoEstado,
         }
       );
 
-      await cargarClientes();
+      await cargarProfesores();
 
     } catch (error) {
       console.error(
@@ -438,7 +400,7 @@ export default function ClientesPage() {
       );
 
       alert(
-        "No se pudo cambiar el estado del cliente."
+        "No se pudo cambiar el estado del profesor."
       );
     }
   };
@@ -446,13 +408,12 @@ export default function ClientesPage() {
   /*
    * ELIMINAR
    */
-
-  const eliminarCliente = async (
+  const eliminarProfesor = async (
     id: number
   ) => {
     const confirmar =
       window.confirm(
-        "¿Seguro que deseas eliminar este cliente?"
+        "¿Seguro que deseas eliminar este profesor?"
       );
 
     if (!confirmar) {
@@ -461,46 +422,45 @@ export default function ClientesPage() {
 
     try {
       await axios.delete(
-        `${API_CLIENTES}/${id}`
+        `${API_PROFESORES}/${id}`
       );
 
       if (
-        clienteEditandoId === id
+        profesorEditandoId === id
       ) {
         limpiarFormulario();
       }
 
       if (
-        clienteDetalle?.id === id
+        profesorDetalle?.id === id
       ) {
-        setClienteDetalle(null);
+        setProfesorDetalle(null);
       }
 
-      await cargarClientes();
+      await cargarProfesores();
 
       alert(
-        "Cliente eliminado correctamente."
+        "Profesor eliminado correctamente."
       );
 
     } catch (error) {
       console.error(
-        "Error al eliminar cliente:",
+        "Error al eliminar profesor:",
         error
       );
 
       alert(
-        "No se pudo eliminar el cliente."
+        "No se pudo eliminar el profesor."
       );
     }
   };
 
   /*
-   * BUSCADOR + FILTRO SUCURSAL
+   * FILTRO + BUSCADOR
    */
-
-  const clientesFiltrados =
-    clientes.filter(
-      (cliente) => {
+  const profesoresFiltrados =
+    profesores.filter(
+      (profesor) => {
         const texto =
           busqueda
             .trim()
@@ -509,7 +469,7 @@ export default function ClientesPage() {
         const coincideSucursal =
           sucursalFiltro ===
             "todas" ||
-          cliente.sucursalId ===
+          profesor.sucursalId ===
             Number(
               sucursalFiltro
             );
@@ -517,31 +477,27 @@ export default function ClientesPage() {
         const coincideBusqueda =
           !texto ||
 
-          (cliente.nombre ?? "")
+          profesor.nombre
             .toLowerCase()
             .includes(texto) ||
 
-          (cliente.rut ?? "")
+          profesor.rut
             .toLowerCase()
             .includes(texto) ||
 
-          (cliente.email ?? "")
+          profesor.email
             .toLowerCase()
             .includes(texto) ||
 
-          (cliente.telefono ?? "")
+          (profesor.telefono ?? "")
             .toLowerCase()
             .includes(texto) ||
 
-          (cliente.plan ?? "")
+          (profesor.especialidad ?? "")
             .toLowerCase()
             .includes(texto) ||
 
-          (cliente.numeroCliente ?? "")
-            .toLowerCase()
-            .includes(texto) ||
-
-          (cliente.sucursal?.nombre ?? "")
+          (profesor.sucursal?.nombre ?? "")
             .toLowerCase()
             .includes(texto);
 
@@ -555,23 +511,27 @@ export default function ClientesPage() {
   /*
    * CONTADORES
    */
-
   const totalPenalolen =
-    clientes.filter(
-      (cliente) =>
-        cliente.sucursalId === 1
+    profesores.filter(
+      (profesor) =>
+        profesor.sucursalId === 1
     ).length;
 
   const totalLaReina =
-    clientes.filter(
-      (cliente) =>
-        cliente.sucursalId === 2
+    profesores.filter(
+      (profesor) =>
+        profesor.sucursalId === 2
+    ).length;
+
+  const totalSinSucursal =
+    profesores.filter(
+      (profesor) =>
+        profesor.sucursalId === null
     ).length;
 
   /*
    * CARGANDO
    */
-
   if (cargando) {
     return (
       <main className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -585,7 +545,6 @@ export default function ClientesPage() {
   /*
    * SIN PERMISOS
    */
-
   if (
     !usuario ||
     usuario.rol !== "admin"
@@ -617,13 +576,13 @@ export default function ClientesPage() {
             Gestión de{" "}
 
             <span className="text-red-600">
-              Clientes
+              Profesores
             </span>
 
           </h1>
 
           <p className="text-gray-400 mt-2">
-            Registra, consulta y administra los clientes de Focus Power Fit.
+            Registra, consulta y administra los profesores de Focus Power Fit.
           </p>
 
         </div>
@@ -637,13 +596,13 @@ export default function ClientesPage() {
 
       </header>
 
-      {/* RESUMEN SUCURSALES */}
+      {/* RESUMEN */}
 
-      <section className="grid sm:grid-cols-3 gap-4 mb-8">
+      <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
 
         <Resumen
-          titulo="Total clientes"
-          valor={clientes.length}
+          titulo="Total profesores"
+          valor={profesores.length}
         />
 
         <Resumen
@@ -654,6 +613,11 @@ export default function ClientesPage() {
         <Resumen
           titulo="La Reina"
           valor={totalLaReina}
+        />
+
+        <Resumen
+          titulo="Sin sucursal"
+          valor={totalSinSucursal}
         />
 
       </section>
@@ -670,28 +634,28 @@ export default function ClientesPage() {
 
             <h2 className="text-2xl font-bold mb-2">
 
-              {clienteEditandoId !== null
-                ? "Editar cliente"
-                : "Registrar cliente"}
+              {profesorEditandoId !== null
+                ? "Editar profesor"
+                : "Registrar profesor"}
 
             </h2>
 
-            {clienteEditandoId !== null ? (
+            {profesorEditandoId !== null ? (
 
               <p className="text-yellow-500 text-sm mb-6">
-                Estás modificando un cliente existente.
+                Estás modificando un profesor existente.
               </p>
 
             ) : (
 
               <p className="text-gray-400 text-sm mb-6">
-                Ingresa los datos principales del cliente.
+                Ingresa los datos del profesor.
               </p>
 
             )}
 
             <form
-              onSubmit={guardarCliente}
+              onSubmit={guardarProfesor}
               className="space-y-5"
             >
 
@@ -699,7 +663,7 @@ export default function ClientesPage() {
                 label="Nombre completo"
                 value={nombre}
                 onChange={setNombre}
-                placeholder="Ej: Juan Pérez"
+                placeholder="Ej: Pedro González"
               />
 
               <Campo
@@ -707,7 +671,6 @@ export default function ClientesPage() {
                 value={rut}
                 onChange={setRut}
                 placeholder="Ej: 12.345.678-9"
-                required={false}
               />
 
               <Campo
@@ -716,7 +679,6 @@ export default function ClientesPage() {
                 onChange={setEmail}
                 type="email"
                 placeholder="correo@ejemplo.cl"
-                required={false}
               />
 
               <Campo
@@ -724,6 +686,14 @@ export default function ClientesPage() {
                 value={telefono}
                 onChange={setTelefono}
                 placeholder="+56 9 1234 5678"
+                required={false}
+              />
+
+              <Campo
+                label="Especialidad"
+                value={especialidad}
+                onChange={setEspecialidad}
+                placeholder="Ej: Personal Training"
                 required={false}
               />
 
@@ -767,60 +737,18 @@ export default function ClientesPage() {
 
               </div>
 
-              {/* PLAN */}
-
-              <div>
-
-                <label className="block mb-2 font-semibold">
-                  Plan
-                </label>
-
-                <select
-                  value={plan}
-                  onChange={(e) =>
-                    setPlan(
-                      e.target.value
-                    )
-                  }
-                  className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
-                >
-
-                  <option value="">
-                    Sin plan asignado
-                  </option>
-
-                  <option value="Personal Training">
-                    Personal Training
-                  </option>
-
-                  <option value="Plan Mensual">
-                    Plan Mensual
-                  </option>
-
-                  <option value="Plan Trimestral">
-                    Plan Trimestral
-                  </option>
-
-                  <option value="Plan Semestral">
-                    Plan Semestral
-                  </option>
-
-                </select>
-
-              </div>
-
               <button
                 type="submit"
                 className="w-full bg-red-600 hover:bg-red-700 transition py-3 rounded-xl font-bold"
               >
 
-                {clienteEditandoId !== null
+                {profesorEditandoId !== null
                   ? "Guardar cambios"
-                  : "Registrar cliente"}
+                  : "Registrar profesor"}
 
               </button>
 
-              {clienteEditandoId !== null ? (
+              {profesorEditandoId !== null ? (
 
                 <button
                   type="button"
@@ -865,21 +793,19 @@ export default function ClientesPage() {
                 <div>
 
                   <h2 className="text-2xl font-bold">
-                    Clientes registrados
+                    Profesores registrados
                   </h2>
 
                   <p className="text-gray-400 mt-1">
                     Mostrando:{" "}
-                    {clientesFiltrados.length}
+                    {profesoresFiltrados.length}
                     {" "}de{" "}
-                    {clientes.length}
+                    {profesores.length}
                   </p>
 
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-3">
-
-                  {/* FILTRO SUCURSAL */}
 
                   <select
                     value={
@@ -918,8 +844,6 @@ export default function ClientesPage() {
 
                   </select>
 
-                  {/* BUSCADOR */}
-
                   <input
                     type="text"
                     value={busqueda}
@@ -928,7 +852,7 @@ export default function ClientesPage() {
                         e.target.value
                       )
                     }
-                    placeholder="Buscar cliente..."
+                    placeholder="Buscar profesor..."
                     className="bg-black border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-red-600"
                   />
 
@@ -938,16 +862,16 @@ export default function ClientesPage() {
 
             </div>
 
-            {cargandoClientes ? (
+            {cargandoProfesores ? (
 
               <div className="p-10 text-center text-gray-400">
-                Cargando clientes...
+                Cargando profesores...
               </div>
 
-            ) : clientesFiltrados.length === 0 ? (
+            ) : profesoresFiltrados.length === 0 ? (
 
               <div className="p-10 text-center text-gray-400">
-                No se encontraron clientes.
+                No se encontraron profesores.
               </div>
 
             ) : (
@@ -973,7 +897,7 @@ export default function ClientesPage() {
                       </th>
 
                       <th className="p-4">
-                        Plan
+                        Especialidad
                       </th>
 
                       <th className="p-4">
@@ -990,36 +914,34 @@ export default function ClientesPage() {
 
                   <tbody>
 
-                    {clientesFiltrados.map(
-                      (cliente) => (
+                    {profesoresFiltrados.map(
+                      (profesor) => (
 
                         <tr
-                          key={cliente.id}
+                          key={profesor.id}
                           className="border-t border-zinc-800 hover:bg-zinc-900/50"
                         >
 
                           <td className="p-4">
 
                             <p className="font-semibold">
-                              {cliente.nombre}
+                              {profesor.nombre}
                             </p>
 
                             <p className="text-gray-500 text-sm">
-                              {cliente.email ||
-                                "Sin correo"}
+                              {profesor.email}
                             </p>
 
                           </td>
 
                           <td className="p-4 text-gray-300">
-                            {cliente.rut ||
-                              "Sin RUT"}
+                            {profesor.rut}
                           </td>
 
                           <td className="p-4">
 
                             <span className="text-red-400 font-semibold">
-                              {cliente
+                              {profesor
                                 .sucursal
                                 ?.nombre ||
                                 "Sin sucursal"}
@@ -1028,21 +950,21 @@ export default function ClientesPage() {
                           </td>
 
                           <td className="p-4 text-gray-300">
-                            {cliente.plan ||
-                              "Sin plan"}
+                            {profesor.especialidad ||
+                              "No informada"}
                           </td>
 
                           <td className="p-4">
 
                             <span
                               className={
-                                cliente.estado ===
+                                profesor.estado ===
                                 "Activo"
                                   ? "text-green-500 font-bold"
                                   : "text-gray-500 font-bold"
                               }
                             >
-                              {cliente.estado}
+                              {profesor.estado}
                             </span>
 
                           </td>
@@ -1053,8 +975,8 @@ export default function ClientesPage() {
 
                               <button
                                 onClick={() =>
-                                  setClienteDetalle(
-                                    cliente
+                                  setProfesorDetalle(
+                                    profesor
                                   )
                                 }
                                 className="border border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-lg transition"
@@ -1064,8 +986,8 @@ export default function ClientesPage() {
 
                               <button
                                 onClick={() =>
-                                  editarCliente(
-                                    cliente
+                                  editarProfesor(
+                                    profesor
                                   )
                                 }
                                 className="border border-yellow-600 text-yellow-400 hover:bg-yellow-600 hover:text-black px-3 py-2 rounded-lg transition"
@@ -1076,13 +998,13 @@ export default function ClientesPage() {
                               <button
                                 onClick={() =>
                                   cambiarEstado(
-                                    cliente
+                                    profesor
                                   )
                                 }
                                 className="border border-red-600 text-red-500 hover:bg-red-600 hover:text-white px-3 py-2 rounded-lg transition"
                               >
 
-                                {cliente.estado ===
+                                {profesor.estado ===
                                 "Activo"
                                   ? "Desactivar"
                                   : "Activar"}
@@ -1091,8 +1013,8 @@ export default function ClientesPage() {
 
                               <button
                                 onClick={() =>
-                                  eliminarCliente(
-                                    cliente.id
+                                  eliminarProfesor(
+                                    profesor.id
                                   )
                                 }
                                 className="border border-zinc-600 text-gray-300 hover:bg-zinc-800 px-3 py-2 rounded-lg transition"
@@ -1123,31 +1045,31 @@ export default function ClientesPage() {
 
       </section>
 
-      {/* DETALLE CLIENTE */}
+      {/* DETALLE PROFESOR */}
 
-      {clienteDetalle && (
+      {profesorDetalle && (
 
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
 
-          <div className="bg-zinc-950 border border-red-600 rounded-2xl max-w-2xl w-full p-7 my-8">
+          <div className="bg-zinc-950 border border-red-600 rounded-2xl max-w-lg w-full p-7">
 
             <div className="flex items-start justify-between gap-4 mb-6">
 
               <div>
 
                 <p className="text-gray-400">
-                  Información del cliente
+                  Información del profesor
                 </p>
 
                 <h2 className="text-3xl font-black">
-                  {clienteDetalle.nombre}
+                  {profesorDetalle.nombre}
                 </h2>
 
               </div>
 
               <button
                 onClick={() =>
-                  setClienteDetalle(null)
+                  setProfesorDetalle(null)
                 }
                 className="text-gray-400 hover:text-white text-2xl"
               >
@@ -1156,112 +1078,49 @@ export default function ClientesPage() {
 
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-
-              <Detalle
-                titulo="N° cliente"
-                valor={
-                  clienteDetalle.numeroCliente
-                }
-              />
-
-              <Detalle
-                titulo="Sucursal"
-                valor={
-                  clienteDetalle
-                    .sucursal
-                    ?.nombre
-                }
-              />
+            <div className="space-y-4">
 
               <Detalle
                 titulo="RUT"
                 valor={
-                  clienteDetalle.rut
+                  profesorDetalle.rut
                 }
               />
 
               <Detalle
                 titulo="Correo electrónico"
                 valor={
-                  clienteDetalle.email
+                  profesorDetalle.email
                 }
               />
 
               <Detalle
                 titulo="Teléfono"
                 valor={
-                  clienteDetalle.telefono
+                  profesorDetalle.telefono
                 }
               />
 
               <Detalle
-                titulo="Teléfono secundario"
+                titulo="Especialidad"
                 valor={
-                  clienteDetalle
-                    .telefonoSecundario
+                  profesorDetalle.especialidad
                 }
               />
 
               <Detalle
-                titulo="Dirección"
+                titulo="Sucursal"
                 valor={
-                  clienteDetalle.direccion
-                }
-              />
-
-              <Detalle
-                titulo="Comuna"
-                valor={
-                  clienteDetalle.comuna
-                }
-              />
-
-              <Detalle
-                titulo="Ciudad"
-                valor={
-                  clienteDetalle.ciudad
-                }
-              />
-
-              <Detalle
-                titulo="Edad"
-                valor={
-                  clienteDetalle.edad !==
-                  null
-                    ? String(
-                        clienteDetalle.edad
-                      )
-                    : null
-                }
-              />
-
-              <Detalle
-                titulo="Género"
-                valor={
-                  clienteDetalle.genero
-                }
-              />
-
-              <Detalle
-                titulo="Fecha nacimiento"
-                valor={
-                  clienteDetalle
-                    .fechaNacimiento
-                }
-              />
-
-              <Detalle
-                titulo="Plan"
-                valor={
-                  clienteDetalle.plan
+                  profesorDetalle
+                    .sucursal
+                    ?.nombre
                 }
               />
 
               <Detalle
                 titulo="Estado"
                 valor={
-                  clienteDetalle.estado
+                  profesorDetalle.estado
                 }
               />
 
@@ -1271,22 +1130,22 @@ export default function ClientesPage() {
 
               <button
                 onClick={() => {
-                  editarCliente(
-                    clienteDetalle
+                  editarProfesor(
+                    profesorDetalle
                   );
 
-                  setClienteDetalle(
+                  setProfesorDetalle(
                     null
                   );
                 }}
                 className="bg-red-600 hover:bg-red-700 py-3 rounded-xl font-bold"
               >
-                Editar cliente
+                Editar profesor
               </button>
 
               <button
                 onClick={() =>
-                  setClienteDetalle(null)
+                  setProfesorDetalle(null)
                 }
                 className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 py-3 rounded-xl"
               >
@@ -1310,10 +1169,8 @@ export default function ClientesPage() {
         </h2>
 
         <p className="text-gray-400">
-          Los clientes de Peñalolén y La Reina
-          se almacenan en MySQL y están
-          relacionados con su sucursal
-          correspondiente.
+          Los profesores se almacenan en MySQL y
+          pueden asociarse a su sucursal correspondiente.
         </p>
 
       </section>
@@ -1321,10 +1178,6 @@ export default function ClientesPage() {
     </main>
   );
 }
-
-/*
- * CAMPO
- */
 
 function Campo({
   label,
@@ -1336,11 +1189,9 @@ function Campo({
 }: {
   label: string;
   value: string;
-
   onChange: (
     value: string
   ) => void;
-
   type?: string;
   placeholder?: string;
   required?: boolean;
@@ -1369,10 +1220,6 @@ function Campo({
   );
 }
 
-/*
- * DETALLE
- */
-
 function Detalle({
   titulo,
   valor,
@@ -1397,10 +1244,6 @@ function Detalle({
     </div>
   );
 }
-
-/*
- * TARJETA RESUMEN
- */
 
 function Resumen({
   titulo,

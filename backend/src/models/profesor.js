@@ -1,13 +1,23 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
+import Sucursal from "./sucursal.js";
 
-const Cliente = sequelize.define(
-  "Cliente",
+const Profesor = sequelize.define(
+  "Profesor",
   {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
+    },
+
+    sucursalId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: Sucursal,
+        key: "id",
+      },
     },
 
     nombre: {
@@ -35,21 +45,34 @@ const Cliente = sequelize.define(
       allowNull: true,
     },
 
-    plan: {
-      type: DataTypes.STRING(100),
+    especialidad: {
+      type: DataTypes.STRING(120),
       allowNull: true,
     },
 
     estado: {
-      type: DataTypes.ENUM("Activo", "Inactivo"),
+      type: DataTypes.ENUM(
+        "Activo",
+        "Inactivo"
+      ),
       allowNull: false,
       defaultValue: "Activo",
     },
   },
   {
-    tableName: "clientes",
+    tableName: "profesores",
     timestamps: true,
   }
 );
 
-export default Cliente;
+Sucursal.hasMany(Profesor, {
+  foreignKey: "sucursalId",
+  as: "profesores",
+});
+
+Profesor.belongsTo(Sucursal, {
+  foreignKey: "sucursalId",
+  as: "sucursal",
+});
+
+export default Profesor;
