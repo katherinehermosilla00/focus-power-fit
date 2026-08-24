@@ -1,4 +1,8 @@
 import express from "express";
+import {
+  verificarToken,
+  verificarRol,
+} from "../authMiddleware.js";
 
 import {
   obtenerClientes,
@@ -9,9 +13,32 @@ import {
 
 const router = express.Router();
 
-router.get("/", obtenerClientes);
-router.post("/", crearCliente);
-router.put("/:id", actualizarCliente);
-router.delete("/:id", eliminarCliente);
+router.get(
+  "/",
+  verificarToken,
+  verificarRol("admin"),
+  obtenerClientes
+);
+
+router.post(
+  "/",
+  verificarToken,
+  verificarRol("admin"),
+  crearCliente
+);
+
+router.put(
+  "/:id",
+  verificarToken,
+  verificarRol("admin"),
+  actualizarCliente
+);
+
+router.delete(
+  "/:id",
+  verificarToken,
+  verificarRol("admin"),
+  eliminarCliente
+);
 
 export default router;
