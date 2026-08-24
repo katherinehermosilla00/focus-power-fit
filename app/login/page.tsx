@@ -6,7 +6,6 @@ import { useAuth } from "../auth/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
-
   const { usuario, cargando, login } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -23,12 +22,11 @@ export default function LoginPage() {
     }
   }, [usuario, cargando, router]);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     setError("");
 
-    const correcto = login(email, password);
+    const correcto = await login(email, password);
 
     if (!correcto) {
       setError("Correo o contraseña incorrectos.");
@@ -46,29 +44,19 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center px-4">
-
       <div className="w-full max-w-md bg-zinc-950 border border-red-600 rounded-2xl p-8 shadow-2xl">
-
         <div className="text-center mb-8">
-
           <h1 className="text-4xl font-black">
             FOCUS <span className="text-red-600">POWER FIT</span>
           </h1>
-
-          <p className="text-gray-400 mt-3">
-            Inicia sesión en tu cuenta
-          </p>
-
+          <p className="text-gray-400 mt-3">Inicia sesión en tu cuenta</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-
           <div>
-
             <label className="block mb-2 text-sm font-semibold">
               Correo electrónico
             </label>
-
             <input
               type="email"
               value={email}
@@ -77,15 +65,12 @@ export default function LoginPage() {
               required
               className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
             />
-
           </div>
 
           <div>
-
             <label className="block mb-2 text-sm font-semibold">
               Contraseña
             </label>
-
             <input
               type="password"
               value={password}
@@ -94,7 +79,6 @@ export default function LoginPage() {
               required
               className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
             />
-
           </div>
 
           {error && (
@@ -109,27 +93,8 @@ export default function LoginPage() {
           >
             Iniciar sesión
           </button>
-
         </form>
-
-        <div className="mt-8 border-t border-zinc-800 pt-5 text-sm text-gray-400">
-
-          <p className="font-bold text-white mb-2">
-            Usuarios temporales para desarrollo
-          </p>
-
-          <p>Administrador: admin@focuspowerfit.cl</p>
-          <p>Contraseña: Admin123</p>
-
-          <br />
-
-          <p>Cliente: cliente@focuspowerfit.cl</p>
-          <p>Contraseña: Cliente123</p>
-
-        </div>
-
       </div>
-
     </main>
   );
 }
