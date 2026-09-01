@@ -1,5 +1,9 @@
 node_modules/
 .env
+<<<<<<< HEAD
 # Datos reales / importaciones locales
 backend/data/
 *.sql
+=======
+backend/.env
+>>>>>>> origin/main

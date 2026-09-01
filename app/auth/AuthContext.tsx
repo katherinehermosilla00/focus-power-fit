@@ -8,9 +8,10 @@ import {
   ReactNode,
 } from "react";
 
-type Rol = "admin" | "cliente";
+type Rol = "admin" | "cliente" | "profesor";
 
 type Usuario = {
+  id?: number;
   nombre: string;
   email: string;
   rol: Rol;
@@ -18,93 +19,87 @@ type Usuario = {
 
 type AuthContextType = {
   usuario: Usuario | null;
+  token: string | null;
   cargando: boolean;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const usuariosDemo = [
-  {
-    nombre: "Dueño Focus Power Fit",
-    email: "admin@focuspowerfit.cl",
-    password: "Admin123",
-    rol: "admin" as Rol,
-  },
-  {
-    nombre: "Cliente Demo",
-    email: "cliente@focuspowerfit.cl",
-    password: "Cliente123",
-    rol: "cliente" as Rol,
-  },
-];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-  const cargarUsuario = () => {
     try {
-      const usuarioGuardado = localStorage.getItem(
-        "focusPowerFitUsuario"
-      );
+      const tokenGuardado = localStorage.getItem("focusPowerFitToken");
+      const usuarioGuardado = localStorage.getItem("focusPowerFitUsuario");
 
-      if (usuarioGuardado) {
+      if (tokenGuardado && usuarioGuardado) {
+        setToken(tokenGuardado);
         setUsuario(JSON.parse(usuarioGuardado));
       }
     } catch (error) {
       console.error("Error al cargar la sesión:", error);
+      localStorage.removeItem("focusPowerFitToken");
       localStorage.removeItem("focusPowerFitUsuario");
     } finally {
       setCargando(false);
     }
-  };
+  }, []);
 
-  const timeout = setTimeout(cargarUsuario, 0);
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const respuesta = await fetch("http://localhost:3001/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-  return () => clearTimeout(timeout);
-    }, []);
+      const data = await respuesta.json();
 
-  const login = (email: string, password: string) => {
-    const encontrado = usuariosDemo.find(
-      (u) => u.email === email && u.password === password
-    );
+      if (!respuesta.ok) {
+        return false;
+      }
 
-    if (!encontrado) {
+      const usuarioLogueado: Usuario = {
+        id: data.user.id,
+        nombre: data.user.nombre,
+        email: data.user.email,
+        rol: data.user.rol,
+      };
+
+      localStorage.setItem("focusPowerFitToken", data.token);
+      localStorage.setItem(
+        "focusPowerFitUsuario",
+        JSON.stringify(usuarioLogueado)
+      );
+
+      setToken(data.token);
+      setUsuario(usuarioLogueado);
+
+      return true;
+    } catch (error) {
+      console.error("Error al iniciar sesión:", error);
       return false;
     }
-
-    const usuarioSeguro: Usuario = {
-      nombre: encontrado.nombre,
-      email: encontrado.email,
-      rol: encontrado.rol,
-    };
-
-    localStorage.setItem(
-      "focusPowerFitUsuario",
-      JSON.stringify(usuarioSeguro)
-    );
-
-    setUsuario(usuarioSeguro);
-
-    return true;
   };
 
   const logout = () => {
+    localStorage.removeItem("focusPowerFitToken");
     localStorage.removeItem("focusPowerFitUsuario");
+
+    setToken(null);
     setUsuario(null);
   };
 
   return (
     <AuthContext.Provider
-      value={{
-        usuario,
-        cargando,
-        login,
-        logout,
-      }}
+      value={{ usuario, token, cargando, login, logout }}
     >
       {children}
     </AuthContext.Provider>

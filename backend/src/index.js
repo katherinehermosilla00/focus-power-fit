@@ -29,6 +29,8 @@ import "./models/pago.js";
 import "./models/recordatorio.js";
 import "./models/sucursal.js";
 
+import authRoutes from "./auth.js";
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
