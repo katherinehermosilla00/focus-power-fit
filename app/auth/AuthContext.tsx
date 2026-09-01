@@ -22,6 +22,13 @@ type AuthContextType = {
   token: string | null;
   cargando: boolean;
   login: (email: string, password: string) => Promise<boolean>;
+  register: (
+    nombre: string,
+    email: string,
+    password: string,
+    rut?: string,
+    telefono?: string
+  ) => Promise<boolean>;
   logout: () => void;
 };
 
@@ -89,6 +96,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const register = async (
+    nombre: string,
+    email: string,
+    password: string,
+    rut?: string,
+    telefono?: string
+  ): Promise<boolean> => {
+    try {
+      const respuesta = await fetch("http://localhost:3001/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nombre,
+          email,
+          password,
+          rut,
+          telefono,
+        }),
+      });
+
+      const data = await respuesta.json();
+
+      if (!respuesta.ok) {
+        return false;
+      }
+
+      const usuarioRegistrado: Usuario = {
+        id: data.user.id,
+        nombre: data.user.nombre,
+        email: data.user.email,
+        rol: data.user.rol,
+      };
+
+      localStorage.setItem("focusPowerFitToken", data.token);
+      localStorage.setItem(
+        "focusPowerFitUsuario",
+        JSON.stringify(usuarioRegistrado)
+      );
+
+      setToken(data.token);
+      setUsuario(usuarioRegistrado);
+
+      return true;
+    } catch (error) {
+      console.error("Error al registrar usuario:", error);
+      return false;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem("focusPowerFitToken");
     localStorage.removeItem("focusPowerFitUsuario");
@@ -99,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ usuario, token, cargando, login, logout }}
+      value={{ usuario, token, cargando, login, register, logout }}
     >
       {children}
     </AuthContext.Provider>
