@@ -38,6 +38,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+
 /*
  * ARCHIVOS PÚBLICOS
  * Permite abrir las copias digitales de contratos
@@ -103,6 +104,8 @@ app.get("/", (req, res) => {
       "Backend Focus Power Fit funcionando",
   });
 });
+
+app.use("/api/auth", authRoutes);
 
 /*
  * HEALTH CHECK

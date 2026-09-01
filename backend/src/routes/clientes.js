@@ -9,6 +9,8 @@ import {
   crearCliente,
   actualizarCliente,
   eliminarCliente,
+  obtenerMiDashboard,
+  obtenerMiContrato,
 } from "../controllers/clienteController.js";
 
 const router = express.Router();
@@ -18,6 +20,20 @@ router.get(
   verificarToken,
   verificarRol("admin"),
   obtenerClientes
+);
+
+router.get(
+  "/mi-dashboard",
+  verificarToken,
+  verificarRol("cliente"),
+  obtenerMiDashboard
+);
+
+router.get(
+  "/mi-contrato",
+  verificarToken,
+  verificarRol("cliente"),
+  obtenerMiContrato
 );
 
 router.post(
