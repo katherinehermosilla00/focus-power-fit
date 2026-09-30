@@ -140,9 +140,8 @@ export const eliminarCliente = async (req, res) => {
 
 export const obtenerMiDashboard = async (req, res) => {
   try {
-    const clienteId = req.usuario.id;
-
-    const cliente = await Cliente.findByPk(clienteId, {
+    const cliente = await Cliente.findOne({
+      where: { email: req.usuario.email },
       attributes: ["id", "nombre", "email", "rut", "telefono", "estado"],
     });
 
@@ -152,6 +151,8 @@ export const obtenerMiDashboard = async (req, res) => {
         mensaje: "Cliente no encontrado",
       });
     }
+
+    const clienteId = cliente.id;
 
     const asignacion = await Asignacion.findOne({
       where: {
@@ -225,10 +226,20 @@ export const obtenerMiDashboard = async (req, res) => {
 
 export const obtenerMiContrato = async (req, res) => {
   try {
-    const clienteId = req.usuario.id;
+    const cliente = await Cliente.findOne({
+      where: { email: req.usuario.email },
+      attributes: ["id"],
+    });
+
+    if (!cliente) {
+      return res.status(404).json({
+        ok: false,
+        mensaje: "No existe un cliente asociado a esta cuenta",
+      });
+    }
 
     const contrato = await Contrato.findOne({
-      where: { clienteId },
+      where: { clienteId: cliente.id },
       order: [["createdAt", "DESC"]],
     });
 

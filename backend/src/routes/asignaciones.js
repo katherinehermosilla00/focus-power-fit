@@ -1,4 +1,8 @@
 import express from "express";
+import {
+  verificarToken,
+  verificarRol,
+} from "../authMiddleware.js";
 
 import {
   obtenerAsignaciones,
@@ -8,6 +12,8 @@ import {
 } from "../controllers/asignacionController.js";
 
 const router = express.Router();
+
+router.use(verificarToken, verificarRol("admin"));
 
 router.get("/", obtenerAsignaciones);
 router.post("/", crearAsignacion);

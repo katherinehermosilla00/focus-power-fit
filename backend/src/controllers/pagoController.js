@@ -85,7 +85,9 @@ export const crearPago = async (req, res) => {
     }
 
     if (
-      !monto ||
+      monto === undefined ||
+      monto === null ||
+      Number(monto) <= 0 ||
       !fechaPago ||
       !fechaVencimiento ||
       !metodoPago
@@ -96,6 +98,14 @@ export const crearPago = async (req, res) => {
           "Monto, fecha de pago, fecha de vencimiento y método de pago son obligatorios",
       });
     }
+
+      if (fechaVencimiento < fechaPago) {
+        return res.status(400).json({
+          ok: false,
+          mensaje:
+            "La fecha de vencimiento no puede ser anterior a la fecha de pago",
+        });
+      }
 
     const pago = await Pago.create({
       clienteId,

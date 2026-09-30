@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import path from "path";
+import { fileURLToPath } from "url";
 
 import sequelize from "./config/database.js";
 
@@ -163,4 +164,8 @@ const iniciarServidor = async () => {
   }
 };
 
-iniciarServidor();
+export default app;
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  iniciarServidor();
+}

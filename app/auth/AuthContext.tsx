@@ -17,18 +17,27 @@ type Usuario = {
   rol: Rol;
 };
 
+type ResultadoLogin = {
+  ok: boolean;
+  mensaje?: string;
+};
+
+type DatosRegistro = {
+  nombre: string;
+  apellidos: string;
+  email: string;
+  password: string;
+  rut: string;
+  telefono: string;
+};
+
 type AuthContextType = {
   usuario: Usuario | null;
   token: string | null;
   cargando: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (
-    nombre: string,
-    email: string,
-    password: string,
-    rut?: string,
-    telefono?: string
-  ) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<ResultadoLogin>;
+  register: (datos: DatosRegistro) => Promise<ResultadoLogin>;
+  verifyRegistration: (email: string, codigo: string) => Promise<ResultadoLogin>;
   logout: () => void;
 };
 
@@ -57,7 +66,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<ResultadoLogin> => {
     try {
       const respuesta = await fetch("http://localhost:3001/api/auth/login", {
         method: "POST",
@@ -70,7 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await respuesta.json();
 
       if (!respuesta.ok) {
-        return false;
+        return {
+          ok: false,
+          mensaje: data.mensaje || "No se pudo iniciar sesión.",
+        };
       }
 
       const usuarioLogueado: Usuario = {
@@ -89,39 +104,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(data.token);
       setUsuario(usuarioLogueado);
 
-      return true;
+      return { ok: true };
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
-      return false;
+      return {
+        ok: false,
+        mensaje: "No se pudo conectar con el servidor. Intenta nuevamente.",
+      };
     }
   };
 
-  const register = async (
-    nombre: string,
-    email: string,
-    password: string,
-    rut?: string,
-    telefono?: string
-  ): Promise<boolean> => {
+  const register = async (datos: DatosRegistro): Promise<ResultadoLogin> => {
     try {
       const respuesta = await fetch("http://localhost:3001/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          nombre,
-          email,
-          password,
-          rut,
-          telefono,
-        }),
+        body: JSON.stringify(datos),
       });
 
       const data = await respuesta.json();
 
       if (!respuesta.ok) {
-        return false;
+        return {
+          ok: false,
+          mensaje: data.mensaje || "No se pudo iniciar el registro.",
+        };
+      }
+
+      return {
+        ok: true,
+        mensaje: data.mensaje || "Revisa tu correo para ingresar el código.",
+      };
+    } catch (error) {
+      console.error("Error al iniciar registro:", error);
+      return {
+        ok: false,
+        mensaje: "No se pudo conectar con el servidor. Intenta nuevamente.",
+      };
+    }
+  };
+
+  const verifyRegistration = async (
+    email: string,
+    codigo: string
+  ): Promise<ResultadoLogin> => {
+    try {
+      const respuesta = await fetch(
+        "http://localhost:3001/api/auth/register/verify",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, codigo }),
+        }
+      );
+
+      const data = await respuesta.json();
+
+      if (!respuesta.ok) {
+        return {
+          ok: false,
+          mensaje: data.mensaje || "No se pudo verificar el correo.",
+        };
       }
 
       const usuarioRegistrado: Usuario = {
@@ -140,10 +187,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(data.token);
       setUsuario(usuarioRegistrado);
 
-      return true;
+      return { ok: true };
     } catch (error) {
-      console.error("Error al registrar usuario:", error);
-      return false;
+      console.error("Error al verificar correo:", error);
+      return {
+        ok: false,
+        mensaje: "No se pudo conectar con el servidor. Intenta nuevamente.",
+      };
     }
   };
 
@@ -157,7 +207,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ usuario, token, cargando, login, register, logout }}
+      value={{
+        usuario,
+        token,
+        cargando,
+        login,
+        register,
+        verifyRegistration,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

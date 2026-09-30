@@ -3,6 +3,7 @@ import Cliente from "../models/cliente.js";
 import Plan from "../models/plan.js";
 import Horario from "../models/horario.js";
 import Profesor from "../models/profesor.js";
+import { Op } from "sequelize";
 
 export const obtenerAsignaciones = async (req, res) => {
   try {
@@ -72,6 +73,14 @@ export const crearAsignacion = async (req, res) => {
       observaciones,
     } = req.body;
 
+    if (!clienteId || !planId || !horarioId || !fechaInicio) {
+      return res.status(400).json({
+        ok: false,
+        mensaje:
+          "Cliente, plan, horario y fecha de inicio son obligatorios",
+      });
+    }
+
     const cliente =
       await Cliente.findByPk(clienteId);
 
@@ -92,6 +101,13 @@ export const crearAsignacion = async (req, res) => {
       });
     }
 
+    if (plan.estado !== "Activo") {
+      return res.status(400).json({
+        ok: false,
+        mensaje: "No se puede asignar un plan inactivo",
+      });
+    }
+
     const horario =
       await Horario.findByPk(horarioId);
 
@@ -99,6 +115,27 @@ export const crearAsignacion = async (req, res) => {
       return res.status(404).json({
         ok: false,
         mensaje: "Horario no encontrado",
+      });
+    }
+
+    if (horario.estado !== "Activo") {
+      return res.status(400).json({
+        ok: false,
+        mensaje: "No se puede asignar un horario inactivo",
+      });
+    }
+
+    const asignacionActiva = await Asignacion.findOne({
+      where: {
+        clienteId,
+        estado: "Activa",
+      },
+    });
+
+    if (asignacionActiva) {
+      return res.status(409).json({
+        ok: false,
+        mensaje: "El cliente ya tiene una asignación activa",
       });
     }
 
@@ -146,7 +183,64 @@ export const actualizarAsignacion = async (
       });
     }
 
-    await asignacion.update(req.body);
+    const datos = {
+      clienteId: req.body.clienteId ?? asignacion.clienteId,
+      planId: req.body.planId ?? asignacion.planId,
+      horarioId: req.body.horarioId ?? asignacion.horarioId,
+      fechaInicio: req.body.fechaInicio ?? asignacion.fechaInicio,
+      fechaTermino: req.body.fechaTermino ?? asignacion.fechaTermino,
+      estado: req.body.estado ?? asignacion.estado,
+      observaciones:
+        req.body.observaciones ?? asignacion.observaciones,
+    };
+
+    const [cliente, plan, horario] = await Promise.all([
+      Cliente.findByPk(datos.clienteId),
+      Plan.findByPk(datos.planId),
+      Horario.findByPk(datos.horarioId),
+    ]);
+
+    if (!cliente || !plan || !horario) {
+      return res.status(404).json({
+        ok: false,
+        mensaje: "Cliente, plan u horario no encontrado",
+      });
+    }
+
+    if (datos.estado === "Activa" && horario.estado !== "Activo") {
+      return res.status(400).json({
+        ok: false,
+        mensaje: "No se puede asignar un horario inactivo",
+      });
+    }
+
+    if (datos.estado === "Activa" && plan.estado !== "Activo") {
+      return res.status(400).json({
+        ok: false,
+        mensaje: "No se puede asignar un plan inactivo",
+      });
+    }
+
+    if (datos.estado === "Activa") {
+      const otraAsignacionActiva = await Asignacion.findOne({
+        where: {
+          clienteId: datos.clienteId,
+          estado: "Activa",
+          id: {
+            [Op.ne]: id,
+          },
+        },
+      });
+
+      if (otraAsignacionActiva) {
+        return res.status(409).json({
+          ok: false,
+          mensaje: "El cliente ya tiene otra asignación activa",
+        });
+      }
+    }
+
+    await asignacion.update(datos);
 
     res.json(asignacion);
   } catch (error) {

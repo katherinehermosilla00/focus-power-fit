@@ -32,6 +32,7 @@ export default function ClientesPage() {
   const {
     usuario,
     cargando,
+    token,
   } = useAuth();
 
   const [clientes, setClientes] =
@@ -63,6 +64,12 @@ export default function ClientesPage() {
 
   const [cargandoClientes, setCargandoClientes] =
     useState(true);
+
+  const configAutenticacion = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
 
   /*
    * PROTECCIÓN DE RUTA
@@ -104,7 +111,12 @@ export default function ClientesPage() {
 
         const respuesta =
           await axios.get<Cliente[]>(
-            API_URL
+            API_URL,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
           );
 
         setClientes(
@@ -128,6 +140,7 @@ export default function ClientesPage() {
   }, [
     cargando,
     usuario,
+    token,
   ]);
 
   /*
@@ -137,7 +150,8 @@ export default function ClientesPage() {
     try {
       const respuesta =
         await axios.get<Cliente[]>(
-          API_URL
+          API_URL,
+          configAutenticacion
         );
 
       setClientes(
@@ -220,7 +234,8 @@ export default function ClientesPage() {
             email,
             telefono,
             plan,
-          }
+          },
+          configAutenticacion
         );
 
         alert(
@@ -245,7 +260,8 @@ export default function ClientesPage() {
           email,
           telefono,
           plan,
-        }
+        },
+        configAutenticacion
       );
 
       alert(
@@ -311,7 +327,8 @@ export default function ClientesPage() {
         `${API_URL}/${cliente.id}`,
         {
           estado: nuevoEstado,
-        }
+        },
+        configAutenticacion
       );
 
       await cargarClientes();
@@ -345,7 +362,8 @@ export default function ClientesPage() {
 
     try {
       await axios.delete(
-        `${API_URL}/${id}`
+        `${API_URL}/${id}`,
+        configAutenticacion
       );
 
       if (

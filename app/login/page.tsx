@@ -26,10 +26,10 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    const correcto = await login(email, password);
+    const resultado = await login(email, password);
 
-    if (!correcto) {
-      setError("Correo o contraseña incorrectos.");
+    if (!resultado.ok) {
+      setError(resultado.mensaje || "No se pudo iniciar sesión.");
       return;
     }
   };
