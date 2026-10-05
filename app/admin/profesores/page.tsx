@@ -7,9 +7,9 @@ import {
 } from "react";
 
 import axios from "axios";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../auth/AuthContext";
+import AdminSectionHeader from "../components/AdminSectionHeader";
 
 type EstadoProfesor = "Activo" | "Inactivo";
 
@@ -28,7 +28,7 @@ const API_URL =
 
 export default function ProfesoresPage() {
   const router = useRouter();
-  const { usuario, cargando } = useAuth();
+  const { usuario, token, cargando } = useAuth();
 
   const [profesores, setProfesores] =
     useState<Profesor[]>([]);
@@ -83,7 +83,8 @@ export default function ProfesoresPage() {
     if (
       cargando ||
       !usuario ||
-      usuario.rol !== "admin"
+      usuario.rol !== "admin" ||
+      !token
     ) {
       return;
     }
@@ -94,7 +95,12 @@ export default function ProfesoresPage() {
 
         const respuesta =
           await axios.get<Profesor[]>(
-            API_URL
+            API_URL,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
           );
 
         setProfesores(respuesta.data);
@@ -113,16 +119,23 @@ export default function ProfesoresPage() {
     };
 
     cargar();
-  }, [cargando, usuario]);
+  }, [cargando, token, usuario]);
 
   /*
    * RECARGAR PROFESORES
    */
   const cargarProfesores = async () => {
+    if (!token) return;
+
     try {
       const respuesta =
         await axios.get<Profesor[]>(
-          API_URL
+          API_URL,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
 
       setProfesores(respuesta.data);
@@ -153,6 +166,7 @@ export default function ProfesoresPage() {
     e: FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
+    if (!token) return;
 
     const correoExiste = profesores.some(
       (profesor) =>
@@ -195,6 +209,11 @@ export default function ProfesoresPage() {
             email,
             telefono,
             especialidad,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
         );
 
@@ -218,6 +237,11 @@ export default function ProfesoresPage() {
           email,
           telefono,
           especialidad,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
@@ -272,6 +296,8 @@ export default function ProfesoresPage() {
   const cambiarEstado = async (
     profesor: Profesor
   ) => {
+    if (!token) return;
+
     const nuevoEstado: EstadoProfesor =
       profesor.estado === "Activo"
         ? "Inactivo"
@@ -282,6 +308,11 @@ export default function ProfesoresPage() {
         `${API_URL}/${profesor.id}`,
         {
           estado: nuevoEstado,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
@@ -305,6 +336,8 @@ export default function ProfesoresPage() {
   const eliminarProfesor = async (
     id: number
   ) => {
+    if (!token) return;
+
     const confirmar =
       window.confirm(
         "¿Seguro que deseas eliminar este profesor?"
@@ -314,7 +347,12 @@ export default function ProfesoresPage() {
 
     try {
       await axios.delete(
-        `${API_URL}/${id}`
+        `${API_URL}/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       if (profesorEditandoId === id) {
@@ -394,37 +432,12 @@ export default function ProfesoresPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white p-6 md:p-10">
-
-      {/* HEADER */}
-
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-
-        <div>
-          <p className="text-gray-400">
-            Panel administrativo
-          </p>
-
-          <h1 className="text-4xl font-black mt-1">
-            Gestión de{" "}
-            <span className="text-red-600">
-              Profesores
-            </span>
-          </h1>
-
-          <p className="text-gray-400 mt-2">
-            Registra, consulta y administra los profesores de Focus Power Fit.
-          </p>
-        </div>
-
-        <Link
-          href="/admin"
-          className="bg-zinc-900 border border-zinc-700 hover:border-red-600 px-5 py-3 rounded-xl font-bold transition"
-        >
-          Volver al panel
-        </Link>
-
-      </header>
+    <main className="min-h-screen bg-[#080808] text-white p-6 md:p-10">
+      <AdminSectionHeader
+        titulo="Gestión de"
+        destacado="Profesores"
+        descripcion="Registra, consulta y administra los profesores de Focus Power Fit."
+      />
 
       {/* FORMULARIO + LISTADO */}
 
@@ -434,7 +447,7 @@ export default function ProfesoresPage() {
 
         <div>
 
-          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 sm:p-8">
 
             <h2 className="text-2xl font-bold mb-2">
               {profesorEditandoId !== null
@@ -530,7 +543,7 @@ export default function ProfesoresPage() {
 
         <div className="lg:col-span-2">
 
-          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950">
 
             <div className="p-6 border-b border-zinc-800">
 
@@ -815,7 +828,7 @@ export default function ProfesoresPage() {
 
       {/* ESTADO DE CONEXIÓN */}
 
-      <section className="mt-8 bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
+      <section className="mt-8 rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6">
 
         <h2 className="text-xl text-red-500 font-bold mb-2">
           Base de datos

@@ -1,4 +1,5 @@
 import express from "express";
+import { verificarToken, verificarRol } from "../authMiddleware.js";
 
 import {
   obtenerRecordatorios,
@@ -8,6 +9,8 @@ import {
 } from "../controllers/recordatorioController.js";
 
 const router = express.Router();
+
+router.use(verificarToken, verificarRol("admin"));
 
 router.get("/", obtenerRecordatorios);
 router.post("/", crearRecordatorio);

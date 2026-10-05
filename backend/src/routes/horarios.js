@@ -1,4 +1,5 @@
 import express from "express";
+import { verificarToken, verificarRol } from "../authMiddleware.js";
 
 import {
   obtenerHorarios,
@@ -8,6 +9,8 @@ import {
 } from "../controllers/horarioController.js";
 
 const router = express.Router();
+
+router.use(verificarToken, verificarRol("admin"));
 
 router.get("/", obtenerHorarios);
 router.post("/", crearHorario);

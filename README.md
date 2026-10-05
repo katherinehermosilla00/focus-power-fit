@@ -56,6 +56,12 @@ La interfaz sigue los requisitos entregados por el cliente:
 
 Los tres integrantes pueden participar en las tareas técnicas del proyecto.
 
+Los recordatorios de clase se programan automáticamente para enviarse 24 horas
+antes de las sesiones de clientes con asignación activa. El backend consulta los
+recordatorios pendientes cada minuto y los envía mediante el servicio de correo
+configurado en las variables `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_SECURE`,
+`EMAIL_USER`, `EMAIL_PASS` y `EMAIL_FROM`.
+
 ## Metodología
 
 El proyecto utiliza **Scrum** como metodología ágil.

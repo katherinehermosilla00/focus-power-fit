@@ -1,5 +1,24 @@
 import Profesor from "../models/profesor.js";
 
+export const obtenerProfesoresPublicos = async (req, res) => {
+  try {
+    const profesores = await Profesor.findAll({
+      where: { estado: "Activo" },
+      attributes: ["id", "nombre", "especialidad"],
+      order: [["nombre", "ASC"]],
+    });
+
+    res.json(profesores);
+  } catch (error) {
+    console.error("Error al obtener profesores públicos:", error.message);
+
+    res.status(500).json({
+      ok: false,
+      mensaje: "Error al obtener profesores",
+    });
+  }
+};
+
 export const obtenerProfesores = async (req, res) => {
   try {
     const profesores = await Profesor.findAll({

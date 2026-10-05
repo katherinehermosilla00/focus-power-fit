@@ -1,10 +1,10 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import axios from "axios";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../auth/AuthContext";
+import AdminSectionHeader from "../components/AdminSectionHeader";
 
 type EstadoPlan = "Activo" | "Inactivo";
 type ModalidadPlan = "Individual" | "Compartido";
@@ -49,7 +49,7 @@ export default function PlanesPage() {
     }
   }, [cargando, router, usuario]);
 
-  const cargarPlanes = async () => {
+  const cargarPlanes = useCallback(async () => {
     if (!token) return;
 
     try {
@@ -64,13 +64,13 @@ export default function PlanesPage() {
     } finally {
       setCargandoPlanes(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (!cargando && usuario?.rol === "admin" && token) {
-      cargarPlanes();
+      void Promise.resolve().then(cargarPlanes);
     }
-  }, [cargando, token, usuario]);
+  }, [cargando, cargarPlanes, token, usuario]);
 
   const limpiarFormulario = () => {
     setNombre("");
@@ -160,20 +160,15 @@ export default function PlanesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white p-6 md:p-10">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-        <div>
-          <p className="text-gray-400">Panel administrativo</p>
-          <h1 className="text-4xl font-black mt-1">Gestión de <span className="text-red-600">Planes</span></h1>
-          <p className="text-gray-400 mt-2">Crea y administra los planes de entrenamiento.</p>
-        </div>
-        <Link href="/admin" className="bg-zinc-900 border border-zinc-700 hover:border-red-600 px-5 py-3 rounded-xl font-bold transition">
-          Volver al panel
-        </Link>
-      </header>
+    <main className="min-h-screen bg-[#080808] text-white p-6 md:p-10">
+      <AdminSectionHeader
+        titulo="Gestión de"
+        destacado="Planes"
+        descripcion="Crea y administra los planes de entrenamiento."
+      />
 
       <section className="grid lg:grid-cols-3 gap-8">
-        <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 sm:p-8">
           <h2 className="text-2xl font-bold mb-6">{planEditandoId !== null ? "Editar plan" : "Registrar plan"}</h2>
           <form onSubmit={guardarPlan} className="space-y-5">
             <Campo label="Nombre" value={nombre} onChange={setNombre} placeholder="Ej: Plan mensual" required />
@@ -199,7 +194,7 @@ export default function PlanesPage() {
           </form>
         </div>
 
-        <div className="lg:col-span-2 bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden">
+        <div className="lg:col-span-2 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950">
           <div className="p-6 border-b border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div><h2 className="text-2xl font-bold">Planes registrados</h2><p className="text-gray-400 mt-1">Total: {planes.length}</p></div>
             <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar plan..." className="bg-black border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-red-600" />

@@ -16,6 +16,7 @@ import asistenciasRoutes from "./routes/asistencias.js";
 import contratosRoutes from "./routes/contratos.js";
 import pagosRoutes from "./routes/pagos.js";
 import recordatoriosRoutes from "./routes/recordatorios.js";
+import sucursalesRoutes from "./routes/sucursales.js";
 
 // MODELOS
 import "./models/cliente.js";
@@ -27,6 +28,7 @@ import "./models/asistencia.js";
 import "./models/contrato.js";
 import "./models/pago.js";
 import "./models/recordatorio.js";
+import "./models/sucursal.js";
 
 import authRoutes from "./auth.js";
 
@@ -94,6 +96,8 @@ app.use(
   "/api/recordatorios",
   recordatoriosRoutes
 );
+
+app.use("/api/sucursales", sucursalesRoutes);
 
 /*
  * RUTA PRINCIPAL

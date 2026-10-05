@@ -4,7 +4,7 @@ import { createHash, randomInt, timingSafeEqual } from "node:crypto";
 import sequelize from "./config/database.js";
 import { enviarCorreo } from "./config/mailer.js";
 import Usuario from "./models/Usuario.js";
-import Cliente from "./models/Cliente.js";
+import Cliente from "./models/cliente.js";
 
 const registrosPendientes = new Map();
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;

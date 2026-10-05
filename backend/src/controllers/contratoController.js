@@ -1,6 +1,66 @@
 import fs from "fs";
+import path from "path";
 import Contrato from "../models/contrato.js";
 import Cliente from "../models/cliente.js";
+
+export const obtenerArchivoContrato = async (req, res) => {
+  try {
+    const contrato = await Contrato.findByPk(req.params.id);
+
+    if (!contrato) {
+      return res.status(404).json({
+        ok: false,
+        mensaje: "Contrato no encontrado",
+      });
+    }
+
+    if (req.usuario.rol !== "admin") {
+      const cliente = await Cliente.findOne({
+        where: { email: req.usuario.email },
+        attributes: ["id"],
+      });
+
+      if (!cliente || cliente.id !== contrato.clienteId) {
+        return res.status(403).json({
+          ok: false,
+          mensaje: "No tienes permiso para acceder a este contrato",
+        });
+      }
+    }
+
+    const nombreArchivo = path.basename(contrato.rutaArchivo);
+    const rutaArchivo = path.resolve(
+      process.cwd(),
+      "uploads",
+      "contratos",
+      nombreArchivo
+    );
+    const carpetaContratos = path.resolve(
+      process.cwd(),
+      "uploads",
+      "contratos"
+    );
+
+    if (
+      path.dirname(rutaArchivo) !== carpetaContratos ||
+      !fs.existsSync(rutaArchivo)
+    ) {
+      return res.status(404).json({
+        ok: false,
+        mensaje: "Archivo de contrato no encontrado",
+      });
+    }
+
+    return res.download(rutaArchivo, contrato.nombreArchivo);
+  } catch (error) {
+    console.error("Error al obtener archivo de contrato:", error.message);
+
+    return res.status(500).json({
+      ok: false,
+      mensaje: "No se pudo obtener el archivo del contrato",
+    });
+  }
+};
 
 // OBTENER TODOS LOS CONTRATOS
 export const obtenerContratos = async (req, res) => {

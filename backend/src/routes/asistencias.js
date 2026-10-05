@@ -1,4 +1,8 @@
 import express from "express";
+import {
+  verificarToken,
+  verificarRol,
+} from "../authMiddleware.js";
 
 import {
   obtenerAsistencias,
@@ -8,6 +12,8 @@ import {
 } from "../controllers/asistenciaController.js";
 
 const router = express.Router();
+
+router.use(verificarToken, verificarRol("admin"));
 
 router.get("/", obtenerAsistencias);
 router.post("/", crearAsistencia);

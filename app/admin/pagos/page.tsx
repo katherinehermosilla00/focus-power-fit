@@ -1,10 +1,10 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../auth/AuthContext";
+import AdminSectionHeader from "../components/AdminSectionHeader";
 
 type Cliente = {
   id: number;
@@ -15,6 +15,13 @@ type Cliente = {
 type Plan = {
   id: number;
   nombre: string;
+};
+
+type Asignacion = {
+  clienteId: number;
+  planId: number;
+  estado: "Activa" | "Finalizada" | "Congelada";
+  plan: Plan | null;
 };
 
 type Pago = {
@@ -37,9 +44,10 @@ export default function PagosPage() {
   const router = useRouter();
   const { usuario, cargando, token } = useAuth();
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [planes, setPlanes] = useState<Plan[]>([]);
+  const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
   const [pagos, setPagos] = useState<Pago[]>([]);
   const [clienteId, setClienteId] = useState("");
+  const [busquedaRutCliente, setBusquedaRutCliente] = useState("");
   const [planId, setPlanId] = useState("");
   const [monto, setMonto] = useState("");
   const [fechaPago, setFechaPago] = useState(
@@ -52,11 +60,14 @@ export default function PagosPage() {
   const [guardando, setGuardando] = useState(false);
   const [cargandoDatos, setCargandoDatos] = useState(true);
 
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
+  const config = useMemo(
+    () => ({
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }),
+    [token]
+  );
 
   useEffect(() => {
     if (cargando) return;
@@ -74,15 +85,15 @@ export default function PagosPage() {
     const cargarDatos = async () => {
       try {
         setCargandoDatos(true);
-        const [clientesRespuesta, planesRespuesta, pagosRespuesta] =
+        const [clientesRespuesta, asignacionesRespuesta, pagosRespuesta] =
           await Promise.all([
             axios.get<Cliente[]>(`${API_URL}/clientes`, config),
-            axios.get<Plan[]>(`${API_URL}/planes`, config),
+            axios.get<Asignacion[]>(`${API_URL}/asignaciones`, config),
             axios.get<Pago[]>(`${API_URL}/pagos`, config),
           ]);
 
         setClientes(clientesRespuesta.data);
-        setPlanes(planesRespuesta.data);
+        setAsignaciones(asignacionesRespuesta.data);
         setPagos(pagosRespuesta.data);
       } catch (error) {
         console.error("Error al cargar información de pagos:", error);
@@ -93,7 +104,7 @@ export default function PagosPage() {
     };
 
     cargarDatos();
-  }, [cargando, usuario, token]);
+  }, [cargando, config, usuario, token]);
 
   const cargarPagos = async () => {
     const respuesta = await axios.get<Pago[]>(`${API_URL}/pagos`, config);
@@ -102,6 +113,7 @@ export default function PagosPage() {
 
   const limpiarFormulario = () => {
     setClienteId("");
+    setBusquedaRutCliente("");
     setPlanId("");
     setMonto("");
     setFechaPago(new Date().toISOString().slice(0, 10));
@@ -162,6 +174,40 @@ export default function PagosPage() {
     );
   });
 
+  const rutBuscado = busquedaRutCliente
+    .trim()
+    .replace(/[.\-\s]/g, "")
+    .toLowerCase();
+  const clientesFiltrados = clientes.filter((cliente) =>
+    cliente.rut
+      .replace(/[.\-\s]/g, "")
+      .toLowerCase()
+      .includes(rutBuscado)
+  );
+  const clienteSeleccionado = clientes.find(
+    (cliente) => String(cliente.id) === clienteId
+  );
+  const opcionesCliente = clienteSeleccionado &&
+    !clientesFiltrados.some((cliente) => cliente.id === clienteSeleccionado.id)
+    ? [clienteSeleccionado, ...clientesFiltrados]
+    : clientesFiltrados;
+  const planesAsociados = asignaciones
+    .flatMap((asignacion) => {
+      if (
+        String(asignacion.clienteId) !== clienteId ||
+        asignacion.estado !== "Activa" ||
+        !asignacion.plan
+      ) {
+        return [];
+      }
+
+      return [asignacion.plan];
+    })
+    .filter(
+      (plan, indice, planesUnicos) =>
+        planesUnicos.findIndex((otroPlan) => otroPlan.id === plan.id) === indice
+    );
+
   if (cargando || !usuario || usuario.rol !== "admin") {
     return (
       <main className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -171,56 +217,71 @@ export default function PagosPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white p-6 md:p-10">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-        <div>
-          <p className="text-gray-400">Panel administrativo</p>
-          <h1 className="text-4xl font-black mt-1">
-            Registro de <span className="text-red-600">Pagos</span>
-          </h1>
-          <p className="text-gray-400 mt-2">
-            Registra pagos realizados presencialmente o fuera de la plataforma.
-          </p>
-        </div>
-
-        <Link
-          href="/admin"
-          className="bg-zinc-900 border border-zinc-700 hover:border-red-600 px-5 py-3 rounded-xl font-bold transition"
-        >
-          Volver al panel
-        </Link>
-      </header>
+    <main className="min-h-screen bg-[#080808] text-white p-6 md:p-10">
+      <AdminSectionHeader
+        titulo="Registro de"
+        destacado="Pagos"
+        descripcion="Registra pagos realizados presencialmente o fuera de la plataforma."
+      />
 
       <section className="grid lg:grid-cols-3 gap-8">
-        <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 sm:p-8">
           <h2 className="text-2xl font-bold mb-2">Registrar pago externo</h2>
           <p className="text-gray-400 text-sm mb-6">
             Ingresa los datos administrativos del pago realizado.
           </p>
 
           <form onSubmit={registrarPago} className="space-y-5">
+            <div>
+              <label htmlFor="busqueda-rut-cliente" className="block mb-2 font-semibold">
+                Buscar cliente por RUT
+              </label>
+              <input
+                id="busqueda-rut-cliente"
+                type="search"
+                value={busquedaRutCliente}
+                onChange={(e) => setBusquedaRutCliente(e.target.value)}
+                placeholder="Ej: 12.345.678-9"
+                className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
+              />
+            </div>
+
             <CampoSelect
               label="Cliente"
               value={clienteId}
-              onChange={setClienteId}
+              onChange={(value) => {
+                setClienteId(value);
+                setPlanId("");
+              }}
               placeholder="Seleccionar cliente"
               required
             >
-              {clientes.map((cliente) => (
+              {opcionesCliente.map((cliente) => (
                 <option key={cliente.id} value={cliente.id}>
                   {cliente.nombre} - {cliente.rut}
                 </option>
               ))}
+              {clientesFiltrados.length === 0 && (
+                <option value="" disabled>
+                  No se encontraron clientes con ese RUT
+                </option>
+              )}
             </CampoSelect>
 
             <CampoSelect
               label="Plan pagado"
               value={planId}
               onChange={setPlanId}
-              placeholder="Seleccionar plan"
+              placeholder={
+                clienteId
+                  ? planesAsociados.length > 0
+                    ? "Seleccionar plan asociado"
+                    : "Cliente sin plan activo asociado"
+                  : "Selecciona primero un cliente"
+              }
               required
             >
-              {planes.map((plan) => (
+              {planesAsociados.map((plan) => (
                 <option key={plan.id} value={plan.id}>
                   {plan.nombre}
                 </option>
@@ -296,7 +357,7 @@ export default function PagosPage() {
           </form>
         </div>
 
-        <div className="lg:col-span-2 bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden">
+        <div className="lg:col-span-2 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950">
           <div className="p-6 border-b border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl font-bold">Pagos registrados</h2>

@@ -10,7 +10,7 @@ const [{ default: app }, { default: sequelize }, { default: Usuario }, { default
     import('../index.js'),
     import('../config/database.js'),
     import('../models/Usuario.js'),
-    import('../models/Cliente.js'),
+    import('../models/cliente.js'),
   ]);
 
 const adminData = {

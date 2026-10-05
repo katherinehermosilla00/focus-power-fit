@@ -7,9 +7,9 @@ import {
 } from "react";
 
 import axios from "axios";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../auth/AuthContext";
+import AdminSectionHeader from "../components/AdminSectionHeader";
 
 type EstadoCliente = "Activo" | "Inactivo";
 
@@ -461,42 +461,12 @@ export default function ClientesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white p-6 md:p-10">
-
-      {/* HEADER */}
-
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-
-        <div>
-
-          <p className="text-gray-400">
-            Panel administrativo
-          </p>
-
-          <h1 className="text-4xl font-black mt-1">
-
-            Gestión de{" "}
-
-            <span className="text-red-600">
-              Clientes
-            </span>
-
-          </h1>
-
-          <p className="text-gray-400 mt-2">
-            Registra, consulta y administra los clientes de Focus Power Fit.
-          </p>
-
-        </div>
-
-        <Link
-          href="/admin"
-          className="bg-zinc-900 border border-zinc-700 hover:border-red-600 px-5 py-3 rounded-xl font-bold transition"
-        >
-          Volver al panel
-        </Link>
-
-      </header>
+    <main className="min-h-screen bg-[#080808] text-white p-6 md:p-10">
+      <AdminSectionHeader
+        titulo="Gestión de"
+        destacado="Clientes"
+        descripcion="Registra, consulta y administra los clientes de Focus Power Fit."
+      />
 
       {/* FORMULARIO + LISTADO */}
 
@@ -506,7 +476,7 @@ export default function ClientesPage() {
 
         <div>
 
-          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 sm:p-8">
 
             <h2 className="text-2xl font-bold mb-2">
 
@@ -650,7 +620,7 @@ export default function ClientesPage() {
 
         <div className="lg:col-span-2">
 
-          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950">
 
             <div className="p-6 border-b border-zinc-800">
 
@@ -957,7 +927,7 @@ export default function ClientesPage() {
 
       {/* ESTADO DE CONEXIÓN */}
 
-      <section className="mt-8 bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
+      <section className="mt-8 rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6">
 
         <h2 className="text-xl text-red-500 font-bold mb-2">
           Base de datos
