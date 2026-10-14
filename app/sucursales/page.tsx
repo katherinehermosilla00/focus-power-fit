@@ -293,7 +293,7 @@ export default function Sucursales() {
                     className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
                   />
 
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-transparent" />
+                  <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/90 via-black/15 to-transparent" />
 
                   <div className="absolute bottom-0 left-0 right-0 p-6">
                     <p
@@ -500,7 +500,7 @@ export default function Sucursales() {
               src={`https://www.google.com/maps?q=${encodeURIComponent(
                 sucursalMapa.direccionMapa
               )}&output=embed`}
-              className="block h-[50vh] min-h-[280px] w-full border-0"
+              className="block h-[50vh] min-h-70 w-full border-0"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               allowFullScreen
