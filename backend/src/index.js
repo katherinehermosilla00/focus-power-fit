@@ -1,8 +1,8 @@
-
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import path from "path";
+import { fileURLToPath } from "url";
 
 import sequelize from "./config/database.js";
 
@@ -17,7 +17,6 @@ import contratosRoutes from "./routes/contratos.js";
 import pagosRoutes from "./routes/pagos.js";
 import recordatoriosRoutes from "./routes/recordatorios.js";
 import sucursalesRoutes from "./routes/sucursales.js";
-import authRoutes from "./auth.js";
 
 // MODELOS
 import "./models/cliente.js";
@@ -31,41 +30,91 @@ import "./models/pago.js";
 import "./models/recordatorio.js";
 import "./models/sucursal.js";
 
+import authRoutes from "./auth.js";
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// MIDDLEWARES
+/*
+ * MIDDLEWARES
+ */
 app.use(cors());
 app.use(express.json());
 
-// ARCHIVOS PÚBLICOS
+
+/*
+ * ARCHIVOS PÚBLICOS
+ * Permite abrir las copias digitales de contratos
+ * desde:
+ * /uploads/contratos/archivo.pdf
+ */
 app.use(
   "/uploads",
-  express.static(path.join(process.cwd(), "uploads"))
+  express.static(
+    path.join(
+      process.cwd(),
+      "uploads"
+    )
+  )
 );
 
-// RUTAS API
-app.use("/api/auth", authRoutes);
+/*
+ * RUTAS API
+ */
 app.use("/api/clientes", clientesRoutes);
-app.use("/api/profesores", profesoresRoutes);
+
+app.use(
+  "/api/profesores",
+  profesoresRoutes
+);
+
 app.use("/api/planes", planesRoutes);
-app.use("/api/horarios", horariosRoutes);
-app.use("/api/asignaciones", asignacionesRoutes);
-app.use("/api/asistencias", asistenciasRoutes);
-app.use("/api/contratos", contratosRoutes);
+
+app.use(
+  "/api/horarios",
+  horariosRoutes
+);
+
+app.use(
+  "/api/asignaciones",
+  asignacionesRoutes
+);
+
+app.use(
+  "/api/asistencias",
+  asistenciasRoutes
+);
+
+app.use(
+  "/api/contratos",
+  contratosRoutes
+);
+
 app.use("/api/pagos", pagosRoutes);
-app.use("/api/recordatorios", recordatoriosRoutes);
+
+app.use(
+  "/api/recordatorios",
+  recordatoriosRoutes
+);
+
 app.use("/api/sucursales", sucursalesRoutes);
 
-// RUTA PRINCIPAL
+/*
+ * RUTA PRINCIPAL
+ */
 app.get("/", (req, res) => {
   res.json({
     ok: true,
-    mensaje: "Backend Focus Power Fit funcionando",
+    mensaje:
+      "Backend Focus Power Fit funcionando",
   });
 });
 
-// HEALTH CHECK
+app.use("/api/auth", authRoutes);
+
+/*
+ * HEALTH CHECK
+ */
 app.get("/health", async (req, res) => {
   try {
     await sequelize.authenticate();
@@ -76,7 +125,10 @@ app.get("/health", async (req, res) => {
       database: "conectada",
     });
   } catch (error) {
-    console.error("Error MySQL:", error.message);
+    console.error(
+      "Error MySQL:",
+      error.message
+    );
 
     res.status(500).json({
       ok: false,
@@ -86,16 +138,22 @@ app.get("/health", async (req, res) => {
   }
 });
 
-// INICIAR SERVIDOR
+/*
+ * INICIAR SERVIDOR
+ */
 const iniciarServidor = async () => {
   try {
     await sequelize.authenticate();
 
-    console.log("MySQL conectado correctamente");
+    console.log(
+      "MySQL conectado correctamente"
+    );
 
     await sequelize.sync();
 
-    console.log("Modelos sincronizados correctamente");
+    console.log(
+      "Modelos sincronizados correctamente"
+    );
 
     app.listen(PORT, () => {
       console.log(
@@ -110,4 +168,8 @@ const iniciarServidor = async () => {
   }
 };
 
-iniciarServidor();
+export default app;
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  iniciarServidor();
+}

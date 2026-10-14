@@ -254,3 +254,32 @@ export const eliminarProfesor = async (
     });
   }
 };
+
+export const obtenerProfesoresPublicos = async (req, res) => {
+  try {
+    const profesores = await Profesor.findAll({
+      where: { estado: "Activo" },
+      attributes: ["id", "nombre", "especialidad", "sucursalId"],
+      include: [
+        {
+          model: Sucursal,
+          as: "sucursal",
+          attributes: ["id", "nombre"],
+        },
+      ],
+      order: [["nombre", "ASC"]],
+    });
+
+    res.json(profesores);
+  } catch (error) {
+    console.error(
+      "Error al obtener profesores publicos:",
+      error.message
+    );
+
+    res.status(500).json({
+      ok: false,
+      mensaje: "Error al obtener profesores",
+    });
+  }
+};

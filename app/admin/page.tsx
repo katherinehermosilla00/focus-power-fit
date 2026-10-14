@@ -31,6 +31,11 @@ const navegacion: {
   { nombre: "Clientes", ruta: "/admin/clientes", icono: "clientes" },
   { nombre: "Entrenadores", ruta: "/admin/profesores", icono: "entrenadores" },
   { nombre: "Planes", ruta: "/admin/planes", icono: "planes" },
+  {
+    nombre: "Asignaciones",
+    ruta: "/admin/asignaciones",
+    icono: "calendario",
+  },
   { nombre: "Asistencias", ruta: "/admin/asistencia", icono: "asistencias" },
   {
     nombre: "Sucursales",

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,7 +29,7 @@ type Profesor = {
 };
 
 const API_PROFESORES = "http://localhost:3001/api/profesores";
-const API_SUCURSALES = "http://localhost:3001/api/sucursales";
+const API_SUCURSALES = "http://localhost:3001/api/sucursales/admin";
 
 const colores = {
   fondo: "var(--background)",
@@ -78,7 +78,16 @@ function AvatarProfesor({
 
 export default function ProfesoresPage() {
   const router = useRouter();
-  const { usuario, cargando } = useAuth();
+  const { usuario, token, cargando } = useAuth();
+
+  const authConfig = useMemo(
+    () => ({
+      headers: token
+        ? { Authorization: `Bearer ${token}` }
+        : {},
+    }),
+    [token]
+  );
 
   const [profesores, setProfesores] = useState<Profesor[]>([]);
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
@@ -117,7 +126,7 @@ export default function ProfesoresPage() {
 
   // CARGAR DATOS
   useEffect(() => {
-    if (cargando || !usuario || usuario.rol !== "admin") return;
+    if (cargando || !usuario || usuario.rol !== "admin" || !token) return;
 
     let activo = true;
 
@@ -128,8 +137,8 @@ export default function ProfesoresPage() {
 
         const [respuestaProfesores, respuestaSucursales] =
           await Promise.all([
-            axios.get<Profesor[]>(API_PROFESORES),
-            axios.get<Sucursal[]>(API_SUCURSALES),
+            axios.get<Profesor[]>(API_PROFESORES, authConfig),
+            axios.get<Sucursal[]>(API_SUCURSALES, authConfig),
           ]);
 
         if (!activo) return;
@@ -154,10 +163,10 @@ export default function ProfesoresPage() {
     return () => {
       activo = false;
     };
-  }, [usuario, cargando]);
+  }, [usuario, cargando, token, authConfig]);
 
   const cargarProfesores = async () => {
-    const respuesta = await axios.get<Profesor[]>(API_PROFESORES);
+    const respuesta = await axios.get<Profesor[]>(API_PROFESORES, authConfig);
     setProfesores(respuesta.data);
   };
 
@@ -217,11 +226,12 @@ export default function ProfesoresPage() {
       if (profesorEditandoId !== null) {
         await axios.put(
           `${API_PROFESORES}/${profesorEditandoId}`,
-          datosProfesor
+          datosProfesor,
+          authConfig
         );
         alert("Profesor actualizado correctamente.");
       } else {
-        await axios.post(API_PROFESORES, datosProfesor);
+        await axios.post(API_PROFESORES, datosProfesor, authConfig);
         alert("Profesor registrado correctamente.");
       }
 
@@ -260,7 +270,7 @@ export default function ProfesoresPage() {
     try {
       await axios.put(`${API_PROFESORES}/${profesor.id}`, {
         estado: nuevoEstado,
-      });
+      }, authConfig);
 
       await cargarProfesores();
       setProfesorDetalle(null);
@@ -277,7 +287,7 @@ export default function ProfesoresPage() {
     }
 
     try {
-      await axios.delete(`${API_PROFESORES}/${id}`);
+      await axios.delete(`${API_PROFESORES}/${id}`, authConfig);
 
       if (profesorEditandoId === id) limpiarFormulario();
       if (profesorDetalle?.id === id) setProfesorDetalle(null);

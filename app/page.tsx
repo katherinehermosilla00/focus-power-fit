@@ -1,6 +1,9 @@
+"use client";
+
 
 
 import Link from "next/link";
+import { useAuth } from "./auth/AuthContext";
 
 import styles from "./page.module.css";
 
@@ -383,6 +386,8 @@ function TablaPlanes({
 }
 
 export default function Home() {
+  const { usuario, cargando } = useAuth();
+  const destinoCuenta = usuario?.rol === "admin" ? "/admin" : "/mi-cuenta";
 
   return (
 
@@ -446,15 +451,7 @@ export default function Home() {
 
           </li>
 
-          <li>
 
-            <Link href="/registro" className={styles.navLink}>
-
-              Registro
-
-            </Link>
-
-          </li>
 
           <li>
             <Link href="/terminos" className={styles.navLink}>
@@ -462,15 +459,27 @@ export default function Home() {
             </Link>
           </li>
 
-          <li>
 
-            <Link href="/login" className={styles.loginButton}>
-
-              Iniciar sesión
-
-            </Link>
-
-          </li>
+{!cargando && usuario ? (
+  <li>
+    <Link href={destinoCuenta} className={styles.loginButton}>
+      {usuario.rol === "admin" ? "Administración" : "Mi Cuenta"}
+    </Link>
+  </li>
+) : !cargando ? (
+  <>
+    <li>
+      <Link href="/registro" className={styles.navLink}>
+        Registro
+      </Link>
+    </li>
+    <li>
+      <Link href="/login" className={styles.loginButton}>
+        Iniciar sesión
+      </Link>
+    </li>
+  </>
+) : null}
 
         </ul>
 

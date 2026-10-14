@@ -97,6 +97,12 @@ La interfaz considera los requisitos visuales y de usabilidad definidos para Foc
 
 Los tres integrantes pueden participar en las tareas técnicas del proyecto, manteniendo las responsabilidades correspondientes a sus roles Scrum.
 
+Los recordatorios de clase se programan automáticamente para enviarse 24 horas
+antes de las sesiones de clientes con asignación activa. El backend consulta los
+recordatorios pendientes cada minuto y los envía mediante el servicio de correo
+configurado en las variables `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_SECURE`,
+`EMAIL_USER`, `EMAIL_PASS` y `EMAIL_FROM`.
+
 ## Metodología
 
 El proyecto utiliza **Scrum** como marco de trabajo ágil.

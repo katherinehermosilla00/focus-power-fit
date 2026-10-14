@@ -42,6 +42,16 @@ export const verificarRol = (...rolesPermitidos) => {
       });
     }
 
+    if (req.usuario.rol === "admin") {
+      res.on("finish", () => {
+        if (res.statusCode >= 200 && res.statusCode < 400) {
+          console.log(
+            `[ADMIN] ${req.usuario.email} realizó ${req.method} ${req.originalUrl} (${res.statusCode})`
+          );
+        }
+      });
+    }
+
     next();
   };
 };

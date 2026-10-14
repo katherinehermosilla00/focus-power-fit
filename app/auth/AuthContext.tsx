@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -5,7 +6,7 @@ import {
   useContext,
   useEffect,
   useState,
-  ReactNode,
+  type ReactNode,
 } from "react";
 
 type Rol = "admin" | "cliente" | "profesor";
@@ -17,11 +18,30 @@ type Usuario = {
   rol: Rol;
 };
 
+type ResultadoLogin = {
+  ok: boolean;
+  mensaje?: string;
+};
+
+type DatosRegistro = {
+  nombre: string;
+  apellidos: string;
+  email: string;
+  password: string;
+  rut: string;
+  telefono: string;
+};
+
 type AuthContextType = {
   usuario: Usuario | null;
   token: string | null;
   cargando: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<ResultadoLogin>;
+  register: (datos: DatosRegistro) => Promise<ResultadoLogin>;
+  verifyRegistration: (
+    email: string,
+    codigo: string
+  ) => Promise<ResultadoLogin>;
   logout: () => void;
 };
 
@@ -35,30 +55,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelado = false;
 
-    queueMicrotask(() => {
-      if (cancelado) return;
+    try {
+      const tokenGuardado = localStorage.getItem("focusPowerFitToken");
+      const usuarioGuardado = localStorage.getItem("focusPowerFitUsuario");
 
-      try {
-        const tokenGuardado = localStorage.getItem("focusPowerFitToken");
-        const usuarioGuardado = localStorage.getItem("focusPowerFitUsuario");
+      const usuarioRecuperado =
+        tokenGuardado && usuarioGuardado
+          ? (JSON.parse(usuarioGuardado) as Usuario)
+          : null;
 
-        if (tokenGuardado && usuarioGuardado) {
-          const usuarioParseado: Usuario = JSON.parse(usuarioGuardado);
+      queueMicrotask(() => {
+        if (cancelado) return;
 
+        if (tokenGuardado && usuarioRecuperado) {
           setToken(tokenGuardado);
-          setUsuario(usuarioParseado);
-        } else {
-          localStorage.removeItem("focusPowerFitToken");
-          localStorage.removeItem("focusPowerFitUsuario");
+          setUsuario(usuarioRecuperado);
         }
-      } catch (error) {
-        console.error("Error al cargar la sesión:", error);
-        localStorage.removeItem("focusPowerFitToken");
-        localStorage.removeItem("focusPowerFitUsuario");
-      } finally {
+
         setCargando(false);
-      }
-    });
+      });
+    } catch (error) {
+      console.error("Error al cargar la sesión:", error);
+
+      localStorage.removeItem("focusPowerFitToken");
+      localStorage.removeItem("focusPowerFitUsuario");
+
+      queueMicrotask(() => {
+        if (!cancelado) {
+          setCargando(false);
+        }
+      });
+    }
 
     return () => {
       cancelado = true;
@@ -68,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (
     email: string,
     password: string
-  ): Promise<boolean> => {
+  ): Promise<ResultadoLogin> => {
     try {
       const respuesta = await fetch("http://localhost:3001/api/auth/login", {
         method: "POST",
@@ -81,7 +108,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await respuesta.json();
 
       if (!respuesta.ok) {
-        return false;
+        return {
+          ok: false,
+          mensaje: data.mensaje || "No se pudo iniciar sesión.",
+        };
       }
 
       const usuarioLogueado: Usuario = {
@@ -100,10 +130,101 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(data.token);
       setUsuario(usuarioLogueado);
 
-      return true;
+      return { ok: true };
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
-      return false;
+
+      return {
+        ok: false,
+        mensaje: "No se pudo conectar con el servidor. Intenta nuevamente.",
+      };
+    }
+  };
+
+  const register = async (
+    datos: DatosRegistro
+  ): Promise<ResultadoLogin> => {
+    try {
+      const respuesta = await fetch("http://localhost:3001/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(datos),
+      });
+
+      const data = await respuesta.json();
+
+      if (!respuesta.ok) {
+        return {
+          ok: false,
+          mensaje: data.mensaje || "No se pudo iniciar el registro.",
+        };
+      }
+
+      return {
+        ok: true,
+        mensaje: data.mensaje || "Revisa tu correo para ingresar el código.",
+      };
+    } catch (error) {
+      console.error("Error al iniciar registro:", error);
+
+      return {
+        ok: false,
+        mensaje: "No se pudo conectar con el servidor. Intenta nuevamente.",
+      };
+    }
+  };
+
+  const verifyRegistration = async (
+    email: string,
+    codigo: string
+  ): Promise<ResultadoLogin> => {
+    try {
+      const respuesta = await fetch(
+        "http://localhost:3001/api/auth/register/verify",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, codigo }),
+        }
+      );
+
+      const data = await respuesta.json();
+
+      if (!respuesta.ok) {
+        return {
+          ok: false,
+          mensaje: data.mensaje || "No se pudo verificar el correo.",
+        };
+      }
+
+      const usuarioRegistrado: Usuario = {
+        id: data.user.id,
+        nombre: data.user.nombre,
+        email: data.user.email,
+        rol: data.user.rol,
+      };
+
+      localStorage.setItem("focusPowerFitToken", data.token);
+      localStorage.setItem(
+        "focusPowerFitUsuario",
+        JSON.stringify(usuarioRegistrado)
+      );
+
+      setToken(data.token);
+      setUsuario(usuarioRegistrado);
+
+      return { ok: true };
+    } catch (error) {
+      console.error("Error al verificar correo:", error);
+
+      return {
+        ok: false,
+        mensaje: "No se pudo conectar con el servidor. Intenta nuevamente.",
+      };
     }
   };
 
@@ -117,7 +238,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ usuario, token, cargando, login, logout }}
+      value={{
+        usuario,
+        token,
+        cargando,
+        login,
+        register,
+        verifyRegistration,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

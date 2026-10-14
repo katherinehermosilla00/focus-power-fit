@@ -1,4 +1,8 @@
 import express from "express";
+import {
+  verificarToken,
+  verificarRol,
+} from "../authMiddleware.js";
 
 import {
   obtenerPagos,
@@ -9,6 +13,8 @@ import {
 } from "../controllers/pagoController.js";
 
 const router = express.Router();
+
+router.use(verificarToken, verificarRol("admin"));
 
 router.get("/", obtenerPagos);
 

@@ -48,7 +48,7 @@ type Cliente = {
 };
 
 const API_CLIENTES = "http://localhost:3001/api/clientes";
-const API_SUCURSALES = "http://localhost:3001/api/sucursales";
+const API_SUCURSALES = "http://localhost:3001/api/sucursales/admin";
 const POR_PAGINA = 20;
 
 const api = axios.create();

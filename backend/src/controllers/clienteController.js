@@ -1,3 +1,8 @@
+import Asignacion from "../models/asignacion.js";
+import Profesor from "../models/profesor.js";
+import Plan from "../models/plan.js";
+import Horario from "../models/horario.js";
+import Contrato from "../models/contrato.js";
 import Cliente from "../models/cliente.js";
 import Sucursal from "../models/sucursal.js";
 
@@ -394,6 +399,144 @@ export const eliminarCliente = async (
         "No se pudo eliminar el cliente",
       error:
         error.message,
+    });
+  }
+};
+
+export const obtenerMiDashboard = async (req, res) => {
+  try {
+    const cliente = await Cliente.findOne({
+      where: { email: req.usuario.email },
+      attributes: ["id", "nombre", "email", "rut", "telefono", "estado"],
+    });
+
+    if (!cliente) {
+      return res.status(404).json({
+        ok: false,
+        mensaje: "Cliente no encontrado",
+      });
+    }
+
+    const clienteId = cliente.id;
+
+    const asignacion = await Asignacion.findOne({
+      where: {
+        clienteId,
+        estado: "Activa",
+      },
+      include: [
+        {
+          model: Plan,
+          as: "plan",
+          attributes: [
+            "id",
+            "nombre",
+            "descripcion",
+            "duracionMeses",
+            "modalidad",
+            "precio",
+          ],
+        },
+        {
+          model: Horario,
+          as: "horario",
+          attributes: ["id", "diaSemana", "horaInicio", "horaFin", "modalidad"],
+          include: [
+            {
+              model: Profesor,
+              as: "profesor",
+              attributes: ["id", "nombre", "especialidad", "email", "telefono"],
+            },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    const contrato = await Contrato.findOne({
+      where: {
+        clienteId,
+      },
+      order: [["createdAt", "DESC"]],
+    });
+
+    return res.status(200).json({
+      ok: true,
+      cliente,
+      plan: asignacion?.plan ?? null,
+      profesor: asignacion?.horario?.profesor ?? null,
+      horario: asignacion?.horario ?? null,
+      contrato: contrato
+        ? {
+            id: contrato.id,
+            nombreArchivo: contrato.nombreArchivo,
+            rutaArchivo: contrato.rutaArchivo,
+            fechaInicio: contrato.fechaInicio,
+            fechaTermino: contrato.fechaTermino,
+            estado: contrato.estado,
+            observaciones: contrato.observaciones,
+          }
+        : null,
+    });
+  } catch (error) {
+    console.error("Error al obtener dashboard del cliente:", error.message);
+
+    return res.status(500).json({
+      ok: false,
+      mensaje: "No se pudo cargar la informaci├│n del cliente",
+      error: error.message,
+    });
+  }
+};
+
+export const obtenerMiContrato = async (req, res) => {
+  try {
+    const cliente = await Cliente.findOne({
+      where: { email: req.usuario.email },
+      attributes: ["id"],
+    });
+
+    if (!cliente) {
+      return res.status(404).json({
+        ok: false,
+        mensaje: "No existe un cliente asociado a esta cuenta",
+      });
+    }
+
+    const contrato = await Contrato.findOne({
+      where: { clienteId: cliente.id },
+      order: [["createdAt", "DESC"]],
+    });
+
+    if (!contrato) {
+      return res.status(404).json({
+        ok: false,
+        mensaje: "El cliente no tiene contrato asociado",
+      });
+    }
+
+    const baseUrl = process.env.BACKEND_URL || "http://localhost:3001";
+
+    return res.status(200).json({
+      ok: true,
+      contrato: {
+        id: contrato.id,
+        nombreArchivo: contrato.nombreArchivo,
+        rutaArchivo: contrato.rutaArchivo,
+        fechaInicio: contrato.fechaInicio,
+        fechaTermino: contrato.fechaTermino,
+        estado: contrato.estado,
+        observaciones: contrato.observaciones,
+        url: `${baseUrl}${contrato.rutaArchivo}`,
+      },
+    });
+  } catch (error) {
+    console.error("Error al obtener contrato del cliente:", error.message);
+
+    return res.status(500).json({
+      ok: false,
+      mensaje: "No se pudo obtener el contrato del cliente",
+      error: error.message,
     });
   }
 };

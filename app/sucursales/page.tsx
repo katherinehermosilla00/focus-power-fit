@@ -1,8 +1,20 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import axios from "axios";
+
+type SucursalAPI = {
+  id: number;
+  nombre: string;
+  direccion: string | null;
+  comuna: string;
+  ciudad?: string | null;
+  horarioAtencion?: string | null;
+  telefono: string | null;
+  estado?: string;
+};
 import Image from "next/image";
 
 type Sucursal = {
@@ -82,6 +94,54 @@ function IconoReloj() {
 }
 
 export default function Sucursales() {
+  const [sucursalesAPI, setSucursalesAPI] = useState<SucursalAPI[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+
+  const cargarSucursales = useCallback(async () => {
+    setCargando(true);
+    setError("");
+
+    try {
+      const respuesta = await axios.get<SucursalAPI[]>(
+        "http://localhost:3001/api/sucursales"
+      );
+
+      if (!Array.isArray(respuesta.data)) {
+        throw new Error("Respuesta de sucursales inválida");
+      }
+
+      setSucursalesAPI(respuesta.data);
+    } catch (errorCarga) {
+      console.error("Error al cargar sucursales:", errorCarga);
+      setError("No pudimos actualizar las sucursales. Intenta nuevamente.");
+    } finally {
+      setCargando(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(cargarSucursales);
+  }, [cargarSucursales]);
+  const sucursalesMostradas: Sucursal[] = sucursales.map((sucursal) => {
+    const actualizada = sucursalesAPI.find(
+      (item) =>
+        item.nombre.trim().toLocaleLowerCase("es-CL") ===
+        sucursal.nombre.trim().toLocaleLowerCase("es-CL")
+    );
+
+    if (!actualizada) {
+      return sucursal;
+    }
+
+    const direccion = actualizada.direccion?.trim() || sucursal.direccion;
+
+    return {
+      ...sucursal,
+      direccion,
+      direccionMapa: `${direccion}, ${actualizada.comuna}, Santiago, Chile`,
+    };
+  });
   const [sucursalMapa, setSucursalMapa] =
     useState<Sucursal | null>(null);
 
@@ -124,6 +184,29 @@ export default function Sucursales() {
       className="min-h-screen text-white"
       style={{ backgroundColor: "var(--background)" }}
     >
+      {(cargando || error) && (
+        <div
+          className="mx-auto mt-6 flex max-w-6xl flex-wrap items-center justify-between gap-3 rounded-xl border p-4"
+          role={error ? "alert" : "status"}
+        >
+          <p className="text-sm">
+            {cargando
+              ? "Cargando información actualizada de sucursales..."
+              : error}
+          </p>
+
+          {error && !cargando && (
+            <button
+              type="button"
+              onClick={() => void cargarSucursales()}
+              className="rounded-lg border px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
+            >
+              Reintentar
+            </button>
+          )}
+        </div>
+      )}
+
       {/* =========================================
           BARRA DE NAVEGACIÓN
           ========================================= */}
@@ -266,7 +349,7 @@ export default function Sucursales() {
           aria-label="Sucursales de Focus Power Fit"
           className="grid items-stretch gap-7 lg:grid-cols-2"
         >
-          {sucursales.map((suc) => {
+          {sucursalesMostradas.map((suc) => {
             const destino = encodeURIComponent(
               suc.direccionMapa
             );

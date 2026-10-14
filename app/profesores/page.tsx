@@ -1,8 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import Link from "next/link";
+import axios from "axios";
+
+type ProfesorAPI = {
+  id: number;
+  nombre: string;
+  especialidad: string | null;
+  sucursalId: number | null;
+  sucursal?: {
+    id: number;
+    nombre: string;
+  } | null;
+};
 
 type Profesor = {
 
@@ -594,6 +606,76 @@ function SeccionProfesores({
 }
 
 export default function Profesores() {
+  const [profesoresAPI, setProfesoresAPI] = useState<ProfesorAPI[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+
+  const cargarProfesores = useCallback(async () => {
+    setCargando(true);
+    setError("");
+
+    try {
+      const respuesta = await axios.get<ProfesorAPI[]>(
+        "http://localhost:3001/api/profesores/publicos"
+      );
+
+      if (!Array.isArray(respuesta.data)) {
+        throw new Error("Respuesta de profesores inválida");
+      }
+
+      setProfesoresAPI(respuesta.data);
+    } catch (errorCarga) {
+      console.error("Error al cargar profesores:", errorCarga);
+      setError("No pudimos cargar los profesores. Intenta nuevamente.");
+    } finally {
+      setCargando(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(cargarProfesores);
+  }, [cargarProfesores]);
+  const combinarProfesores = (
+    existentes: Profesor[],
+    nuevos: ProfesorAPI[]
+  ): Profesor[] => {
+    const resultado = [...existentes];
+
+    for (const profesor of nuevos) {
+      const yaExiste = resultado.some(
+        (actual) =>
+          actual.nombre.trim().toLocaleLowerCase("es-CL") ===
+          profesor.nombre.trim().toLocaleLowerCase("es-CL")
+      );
+
+      if (!yaExiste) {
+        resultado.push({
+          nombre: profesor.nombre,
+          rol: profesor.especialidad || "Personal Trainer",
+        });
+      }
+    }
+
+    return resultado;
+  };
+
+  const profesoresLaReinaMostrados = combinarProfesores(
+    profesoresLaReina,
+    profesoresAPI.filter(
+      (profesor) =>
+        profesor.sucursal?.nombre?.trim().toLocaleLowerCase("es-CL") ===
+        "la reina"
+    )
+  );
+
+  const profesoresPenalolenMostrados = combinarProfesores(
+    profesoresPenalolen,
+    profesoresAPI.filter(
+      (profesor) =>
+        profesor.sucursal?.nombre?.trim().toLocaleLowerCase("es-CL") ===
+        "peñalolén"
+    )
+  );
 
   return (
 
@@ -610,6 +692,27 @@ export default function Profesores() {
       }}
 
     >
+      {(cargando || error) && (
+        <div
+          className="mx-auto mt-6 flex max-w-6xl flex-wrap items-center justify-between gap-3 rounded-xl border p-4"
+          role={error ? "alert" : "status"}
+        >
+          <p className="text-sm">
+            {cargando ? "Cargando información actualizada de profesores..." : error}
+          </p>
+
+          {error && !cargando && (
+            <button
+              type="button"
+              onClick={() => void cargarProfesores()}
+              className="rounded-lg border px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
+            >
+              Reintentar
+            </button>
+          )}
+        </div>
+      )}
+
 
       {/* ======================================
 
@@ -929,7 +1032,7 @@ export default function Profesores() {
 
           titulo="La Reina"
 
-          profesores={profesoresLaReina}
+          profesores={profesoresLaReinaMostrados}
 
         />
 
@@ -955,7 +1058,7 @@ export default function Profesores() {
 
           titulo="Peñalolén"
 
-          profesores={profesoresPenalolen}
+          profesores={profesoresPenalolenMostrados}
 
         />
 

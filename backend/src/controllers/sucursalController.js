@@ -143,3 +143,33 @@ export const eliminarSucursal = async (
     });
   }
 };
+
+export const obtenerSucursalesPublicas = async (req, res) => {
+  try {
+    const sucursales = await Sucursal.findAll({
+      where: { estado: "Activa" },
+      attributes: [
+        "id",
+        "nombre",
+        "direccion",
+        "comuna",
+        "ciudad",
+        "horarioAtencion",
+        "telefono",
+      ],
+      order: [["nombre", "ASC"]],
+    });
+
+    res.json(sucursales);
+  } catch (error) {
+    console.error(
+      "Error al obtener sucursales publicas:",
+      error.message
+    );
+
+    res.status(500).json({
+      ok: false,
+      mensaje: "Error al obtener sucursales",
+    });
+  }
+};
