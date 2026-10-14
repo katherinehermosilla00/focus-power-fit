@@ -447,7 +447,7 @@ export default function ProfesoresPage() {
 
         <div>
 
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 sm:p-8">
+          <div className="rounded-2xl border border-white/10 bg-linear-to-br from-zinc-900 to-zinc-950 p-6 sm:p-8">
 
             <h2 className="text-2xl font-bold mb-2">
               {profesorEditandoId !== null
@@ -543,7 +543,7 @@ export default function ProfesoresPage() {
 
         <div className="lg:col-span-2">
 
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950">
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-linear-to-br from-zinc-900 to-zinc-950">
 
             <div className="p-6 border-b border-zinc-800">
 
@@ -828,7 +828,7 @@ export default function ProfesoresPage() {
 
       {/* ESTADO DE CONEXIÓN */}
 
-      <section className="mt-8 rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6">
+      <section className="mt-8 rounded-2xl border border-white/10 bg-linear-to-br from-zinc-900 to-zinc-950 p-6">
 
         <h2 className="text-xl text-red-500 font-bold mb-2">
           Base de datos

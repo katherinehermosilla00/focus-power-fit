@@ -157,7 +157,7 @@ export default function SucursalesPage() {
             {sucursales.map((sucursal, indice) => (
               <article
                 key={sucursal.id}
-                className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-6 transition duration-200 hover:-translate-y-1 hover:border-red-500/50 sm:p-8"
+                className="group relative overflow-hidden rounded-2xl border border-white/10 bg-linear-to-br from-zinc-900 via-zinc-950 to-black p-6 transition duration-200 hover:-translate-y-1 hover:border-red-500/50 sm:p-8"
               >
                 <div className="absolute -right-12 -top-12 h-44 w-44 rounded-full border border-red-500/10 transition group-hover:scale-110" />
                 <div className="relative">
@@ -195,7 +195,7 @@ export default function SucursalesPage() {
         ) : null}
 
         {!cargando && !error && (
-          <div className="mt-12 rounded-2xl border border-white/10 bg-gradient-to-r from-zinc-900 to-zinc-950 p-7 sm:flex sm:items-center sm:justify-between sm:p-9">
+          <div className="mt-12 rounded-2xl border border-white/10 bg-linear-to-r from-zinc-900 to-zinc-950 p-7 sm:flex sm:items-center sm:justify-between sm:p-9">
             <div>
               <p className="text-xl font-black">¿Listo para dar el primer paso?</p>
               <p className="mt-2 text-gray-400">Te esperamos para entrenar con propósito.</p>
