@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -5,7 +6,7 @@ import {
   useContext,
   useEffect,
   useState,
-  ReactNode,
+  type ReactNode,
 } from "react";
 
 type Rol = "admin" | "cliente" | "profesor";
@@ -37,7 +38,10 @@ type AuthContextType = {
   cargando: boolean;
   login: (email: string, password: string) => Promise<ResultadoLogin>;
   register: (datos: DatosRegistro) => Promise<ResultadoLogin>;
-  verifyRegistration: (email: string, codigo: string) => Promise<ResultadoLogin>;
+  verifyRegistration: (
+    email: string,
+    codigo: string
+  ) => Promise<ResultadoLogin>;
   logout: () => void;
 };
 
@@ -49,21 +53,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
+    let cancelado = false;
+
     try {
       const tokenGuardado = localStorage.getItem("focusPowerFitToken");
       const usuarioGuardado = localStorage.getItem("focusPowerFitUsuario");
 
-      if (tokenGuardado && usuarioGuardado) {
-        setToken(tokenGuardado);
-        setUsuario(JSON.parse(usuarioGuardado));
-      }
+      const usuarioRecuperado =
+        tokenGuardado && usuarioGuardado
+          ? (JSON.parse(usuarioGuardado) as Usuario)
+          : null;
+
+      queueMicrotask(() => {
+        if (cancelado) return;
+
+        if (tokenGuardado && usuarioRecuperado) {
+          setToken(tokenGuardado);
+          setUsuario(usuarioRecuperado);
+        }
+
+        setCargando(false);
+      });
     } catch (error) {
       console.error("Error al cargar la sesión:", error);
+
       localStorage.removeItem("focusPowerFitToken");
       localStorage.removeItem("focusPowerFitUsuario");
-    } finally {
-      setCargando(false);
+
+      queueMicrotask(() => {
+        if (!cancelado) {
+          setCargando(false);
+        }
+      });
     }
+
+    return () => {
+      cancelado = true;
+    };
   }, []);
 
   const login = async (
@@ -107,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { ok: true };
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
+
       return {
         ok: false,
         mensaje: "No se pudo conectar con el servidor. Intenta nuevamente.",
@@ -114,7 +141,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (datos: DatosRegistro): Promise<ResultadoLogin> => {
+  const register = async (
+    datos: DatosRegistro
+  ): Promise<ResultadoLogin> => {
     try {
       const respuesta = await fetch("http://localhost:3001/api/auth/register", {
         method: "POST",
@@ -139,6 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     } catch (error) {
       console.error("Error al iniciar registro:", error);
+
       return {
         ok: false,
         mensaje: "No se pudo conectar con el servidor. Intenta nuevamente.",
@@ -190,6 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { ok: true };
     } catch (error) {
       console.error("Error al verificar correo:", error);
+
       return {
         ok: false,
         mensaje: "No se pudo conectar con el servidor. Intenta nuevamente.",
