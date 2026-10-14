@@ -91,7 +91,7 @@ export default function TerminosPage() {
         </aside>
 
         <div className="mt-10 flex flex-wrap justify-start gap-3">
-          <Link href="/#planes" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-(--color-primary) px-7 py-3 text-sm font-extrabold text-white transition-all hover:-translate-y-0.5 hover:bg-(--color-primary-hover) focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
+          <Link href="/#planes" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-(--color-primary) px-7 py-3 text-sm font-extrabold text-white transition-all hover:-translate-y-0.5 hover:bg-(--color-primary-hover) focus-visible:outline-2 focus-visible:outline-offset-4">
             Ver planes de entrenamiento
           </Link>
           <Link href="/" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-(--color-border) px-7 py-3 text-sm font-extrabold transition-colors hover:border-(--color-primary)">

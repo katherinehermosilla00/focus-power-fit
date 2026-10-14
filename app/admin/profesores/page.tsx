@@ -659,7 +659,7 @@ export default function ProfesoresPage() {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-3">
-                          <h3 className="break-words text-lg font-bold">
+                          <h3 className="wrap-break-word text-lg font-bold">
                             {profesor.nombre}
                           </h3>
 
@@ -909,7 +909,7 @@ function Dato({
         {titulo}
       </p>
 
-      <p className="break-words text-sm font-semibold">
+      <p className="wrap-break-word text-sm font-semibold">
         {valor || "No informado"}
       </p>
     </div>
