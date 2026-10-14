@@ -16,13 +16,18 @@
   --bot-secondary-text: #b3b3b3;
 
   position: fixed;
-  bottom: 24px;
+
+  /* Separado de otros botones flotantes */
+  bottom: 100px;
   right: 24px;
+
   z-index: 9999;
 
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+
+  max-width: calc(100vw - 32px);
 }
 
 /* =========================================
@@ -37,6 +42,7 @@
   width: 60px;
   height: 60px;
 
+  padding: 0;
   border: none;
   border-radius: 50%;
 
@@ -77,9 +83,11 @@
   max-width: calc(100vw - 32px);
 
   height: 490px;
-  max-height: calc(100dvh - 110px);
 
-  margin-bottom: 12px;
+  /* Evita que la ventana salga de la pantalla */
+  max-height: calc(100dvh - 120px);
+
+  margin-bottom: 0;
 
   overflow: hidden;
 
@@ -114,6 +122,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+
   min-width: 0;
 }
 
@@ -165,6 +174,11 @@
   background-color: rgba(255, 255, 255, 0.15);
 }
 
+.closeButton:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
 /* =========================================
    ÁREA DE MENSAJES
    ========================================= */
@@ -204,7 +218,9 @@
   background-color: #777777;
 }
 
-/* BURBUJAS DE MENSAJES */
+/* =========================================
+   BURBUJAS DE MENSAJES
+   ========================================= */
 
 .botMessage,
 .userMessage {
@@ -294,6 +310,7 @@
   width: 43px;
   height: 43px;
 
+  padding: 0;
   border: none;
   border-radius: 10px;
 
@@ -317,22 +334,28 @@
   cursor: not-allowed;
 }
 
+.sendButton:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
 /* =========================================
    DISEÑO RESPONSIVE
    ========================================= */
 
 @media (max-width: 480px) {
   .container {
-    bottom: 16px;
+    bottom: 90px;
     right: 16px;
   }
 
   .chatWindow {
     width: calc(100vw - 32px);
-    height: min(490px, calc(100dvh - 100px));
-    max-height: calc(100dvh - 100px);
 
-    margin-bottom: 10px;
+    height: min(490px, calc(100dvh - 110px));
+    max-height: calc(100dvh - 110px);
+
+    margin-bottom: 0;
     border-radius: 16px;
   }
 
@@ -356,10 +379,17 @@
   }
 }
 
-/* PANTALLAS DE POCA ALTURA */
+/* =========================================
+   PANTALLAS DE POCA ALTURA
+   ========================================= */
 
 @media (max-height: 600px) {
+  .container {
+    bottom: 72px;
+  }
+
   .chatWindow {
-    height: calc(100dvh - 105px);
+    height: min(390px, calc(100dvh - 88px));
+    max-height: calc(100dvh - 88px);
   }
 }

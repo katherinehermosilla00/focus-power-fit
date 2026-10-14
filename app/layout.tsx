@@ -4,7 +4,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { AuthProvider } from "./auth/AuthContext";
-import FitBot from "./components/FitBot";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,12 +31,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <body>
-        <AuthProvider>
-          {children}
-
-          {/* CHATBOT FLOTANTE */}
-          <FitBot />
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

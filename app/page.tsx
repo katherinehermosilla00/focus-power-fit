@@ -1,12 +1,16 @@
 
 import Link from "next/link";
 import styles from "./page.module.css";
+import FitBot from "../app/components/FitBot";
+
 
 export default function Home() {
   return (
     <main className={styles.main}>
 
-      {/* BARRA DE NAVEGACIÓN */}
+      {/* =====================================
+          BARRA DE NAVEGACIÓN
+          ===================================== */}
       <nav className={styles.navbar}>
 
         {/* IDENTIDAD DEL GIMNASIO */}
@@ -23,7 +27,10 @@ export default function Home() {
         {/* MENÚ DE NAVEGACIÓN */}
         <ul className={styles.navLinks}>
           <li>
-            <Link href="/" className={styles.navLink}>
+            <Link
+              href="/"
+              className={styles.navLink}
+            >
               Inicio
             </Link>
           </li>
@@ -66,7 +73,9 @@ export default function Home() {
         </ul>
       </nav>
 
-      {/* CONTENIDO PRINCIPAL */}
+      {/* =====================================
+          CONTENIDO PRINCIPAL
+          ===================================== */}
       <section className={styles.hero}>
 
         {/* TÍTULO PRINCIPAL */}
@@ -81,7 +90,9 @@ export default function Home() {
           en nuestras sucursales de La Reina y Peñalolén.
         </p>
 
-        {/* TARJETAS INFORMATIVAS */}
+        {/* =====================================
+            TARJETAS INFORMATIVAS
+            ===================================== */}
         <div className={styles.cards}>
 
           {/* TARJETA: ENTRENAMIENTOS */}
@@ -134,7 +145,9 @@ export default function Home() {
 
         </div>
 
-        {/* BOTÓN DE ACCESO */}
+        {/* =====================================
+            BOTÓN DE ACCESO
+            ===================================== */}
         <div className={styles.ctaContainer}>
           <Link
             href="/registro"
@@ -146,13 +159,20 @@ export default function Home() {
 
       </section>
 
-      {/* PIE DE PÁGINA */}
+      {/* =====================================
+          PIE DE PÁGINA
+          ===================================== */}
       <footer className={styles.footer}>
         <p className={styles.footerText}>
           © {new Date().getFullYear()} Focus Power Fit.
           Todos los derechos reservados.
         </p>
       </footer>
+
+      {/* =====================================
+          FITBOT - SOLO PÁGINA PRINCIPAL
+          ===================================== */}
+      <FitBot />
 
     </main>
   );

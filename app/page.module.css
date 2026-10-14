@@ -66,7 +66,9 @@
   font-weight: 700;
 }
 
-/* MENÚ DE NAVEGACIÓN */
+/* =====================================
+   MENÚ DE NAVEGACIÓN
+   ===================================== */
 
 .navLinks {
   display: flex;
@@ -89,7 +91,9 @@
   color: var(--page-red);
 }
 
-/* BOTÓN INICIAR SESIÓN */
+/* =====================================
+   BOTÓN INICIAR SESIÓN
+   ===================================== */
 
 .loginButton {
   display: inline-block;
@@ -111,13 +115,40 @@
 }
 
 /* =====================================
-   CONTENIDO PRINCIPAL
+   CONTENIDO PRINCIPAL CON FOTOGRAFÍA
    ===================================== */
 
 .hero {
+  position: relative;
+  isolation: isolate;
+
+  min-height: 650px;
   padding: 4rem 2rem;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
   text-align: center;
+
+  background-color: #000000;
+
+  background-image:
+    linear-gradient(
+      rgba(0, 0, 0, 0.68),
+      rgba(0, 0, 0, 0.78)
+    ),
+    url("/focus-dashboard.png");
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
+
+/* =====================================
+   TÍTULO PRINCIPAL
+   ===================================== */
 
 .heroTitle {
   margin: 0 0 1rem;
@@ -126,14 +157,21 @@
   font-size: 3rem;
   font-weight: 700;
   line-height: 1.2;
+
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
 }
+
+/* DESCRIPCIÓN PRINCIPAL */
 
 .heroDescription {
   max-width: 672px;
   margin: 0 auto 2rem;
 
-  color: var(--page-text-secondary);
+  color: #e5e7eb;
+  font-size: 1rem;
   line-height: 1.7;
+
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
 }
 
 /* =====================================
@@ -145,6 +183,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.5rem;
 
+  width: 100%;
   max-width: 1152px;
   margin: 2.5rem auto 0;
 }
@@ -155,13 +194,19 @@
   border: 1px solid var(--page-red);
   border-radius: 0.75rem;
 
-  background-color: var(--page-card-background);
+  background-color: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(5px);
 
-  transition: transform 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .card:hover {
   transform: translateY(-4px);
+  border-color: #f87171;
+  background-color: rgba(15, 15, 15, 0.94);
 }
 
 .cardTitle {
@@ -176,7 +221,7 @@
 .cardDescription {
   margin: 0.75rem 0 0;
 
-  color: var(--page-text-secondary);
+  color: #e5e7eb;
   line-height: 1.6;
 }
 
@@ -240,7 +285,7 @@
 
 .footerText {
   margin: 0;
-  color: #6b7280;
+  color: #9ca3af;
   font-size: 0.875rem;
 }
 
@@ -249,6 +294,11 @@
    ===================================== */
 
 @media (max-width: 900px) {
+  .hero {
+    min-height: 600px;
+    padding: 3.5rem 1.5rem;
+  }
+
   .cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -270,18 +320,34 @@
   }
 
   .hero {
+    min-height: 650px;
     padding: 3rem 1.5rem;
+
+    background-position: center;
   }
 
   .heroTitle {
     font-size: 2.25rem;
   }
 
+  .heroDescription {
+    font-size: 0.95rem;
+  }
+
   .cards {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .card {
+    padding: 1.25rem;
   }
 
   .cardTitle {
     font-size: 1.35rem;
+  }
+
+  .ctaContainer {
+    margin-top: 2rem;
   }
 }

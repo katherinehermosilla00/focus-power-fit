@@ -1,20 +1,29 @@
+
 "use client";
+
+import "../admin.css";
+
 import {
   FormEvent,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from "react";
 import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../auth/AuthContext";
+
 type EstadoCliente = "Activo" | "Inactivo";
+
 type Sucursal = {
   id: number;
   nombre: string;
   comuna: string | null;
   estado: "Activa" | "Inactiva";
 };
+
 type Cliente = {
   id: number;
   sucursalId: number | null;
@@ -37,163 +46,132 @@ type Cliente = {
   estado: EstadoCliente;
   sucursal?: Sucursal | null;
 };
-const API_CLIENTES =
-  "http://localhost:3001/api/clientes";
-const API_SUCURSALES =
-  "http://localhost:3001/api/sucursales";
-// Cliente HTTP autenticado para todas las operaciones del módulo.
-// El token se obtiene en cada solicitud para utilizar la sesión vigente.
+
+const API_CLIENTES = "http://localhost:3001/api/clientes";
+const API_SUCURSALES = "http://localhost:3001/api/sucursales";
+const POR_PAGINA = 20;
+
 const api = axios.create();
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("focusPowerFitToken");
+
   if (!token) {
-    return Promise.reject(new Error("Sesión no disponible. Inicia sesión nuevamente."));
+    return Promise.reject(
+      new Error("Sesión no disponible. Inicia sesión nuevamente.")
+    );
   }
+
   config.headers.set("Authorization", `Bearer ${token}`);
   return config;
 });
+
 export default function ClientesPage() {
   const router = useRouter();
-  const {
-    usuario,
-    cargando,
-  } = useAuth();
-  /*
-   * DATOS PRINCIPALES
-   */
-  const [clientes, setClientes] =
-    useState<Cliente[]>([]);
-  const [sucursales, setSucursales] =
-    useState<Sucursal[]>([]);
-  /*
-   * FORMULARIO
-   */
-  const [nombre, setNombre] =
-    useState("");
-  const [rut, setRut] =
-    useState("");
-  const [email, setEmail] =
-    useState("");
-  const [telefono, setTelefono] =
-    useState("");
-  const [plan, setPlan] =
-    useState("");
-  const [sucursalId, setSucursalId] =
-    useState("");
-  /*
-   * BUSCADOR Y FILTROS
-   */
-  const [busqueda, setBusqueda] =
-    useState("");
-  const [sucursalFiltro, setSucursalFiltro] =
-    useState("todas");
-  /*
-   * EDICIÓN Y DETALLE
-   */
-  const [
-    clienteEditandoId,
-    setClienteEditandoId,
-  ] =
-    useState<number | null>(null);
-  const [
-    clienteDetalle,
-    setClienteDetalle,
-  ] =
-    useState<Cliente | null>(null);
-  const [
-    cargandoClientes,
-    setCargandoClientes,
-  ] =
-    useState(true);
-  /*
-   * PROTECCIÓN DE RUTA
-   */
+  const { usuario, cargando } = useAuth();
+
+  const formularioRef = useRef<HTMLDivElement>(null);
+
+  // DATOS
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
+  const [cargandoClientes, setCargandoClientes] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+
+  // FORMULARIO
+  const [nombre, setNombre] = useState("");
+  const [rut, setRut] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [plan, setPlan] = useState("");
+  const [sucursalId, setSucursalId] = useState("");
+
+  // FILTROS Y PAGINACIÓN
+  const [busqueda, setBusqueda] = useState(() => {
+    if (typeof window === "undefined") return "";
+
+    return (
+      new URLSearchParams(window.location.search).get("buscar") ?? ""
+    );
+  });
+
+  const [sucursalFiltro, setSucursalFiltro] = useState("todas");
+  const [pagina, setPagina] = useState(1);
+
+  // EDICIÓN Y DETALLE
+  const [clienteEditandoId, setClienteEditandoId] = useState<
+    number | null
+  >(null);
+
+  const [clienteDetalle, setClienteDetalle] = useState<
+    Cliente | null
+  >(null);
+
+  // PROTECCIÓN DE RUTA
   useEffect(() => {
-    if (cargando) {
-      return;
-    }
+    if (cargando) return;
+
     if (!usuario) {
       router.replace("/login");
-      return;
-    }
-    if (usuario.rol !== "admin") {
+    } else if (usuario.rol !== "admin") {
       router.replace("/mi-cuenta");
     }
-  }, [
-    usuario,
-    cargando,
-    router,
-  ]);
-  /*
-   * CARGAR DATOS
-   */
+  }, [cargando, usuario, router]);
+
+  // CARGAR CLIENTES Y SUCURSALES
   useEffect(() => {
-    if (
-      cargando ||
-      !usuario ||
-      usuario.rol !== "admin"
-    ) {
-      return;
-    }
+    if (cargando || !usuario || usuario.rol !== "admin") return;
+
+    let activo = true;
+
     const cargarDatos = async () => {
       try {
         setCargandoClientes(true);
-        const [
-          respuestaClientes,
-          respuestaSucursales,
-        ] = await Promise.all([
-          api.get<Cliente[]>(
-            API_CLIENTES
-          ),
-          api.get<Sucursal[]>(
-            API_SUCURSALES
-          ),
-        ]);
-        setClientes(
-          respuestaClientes.data
-        );
-        setSucursales(
-          respuestaSucursales.data
-        );
+
+        const [respuestaClientes, respuestaSucursales] =
+          await Promise.all([
+            api.get<Cliente[]>(API_CLIENTES),
+            api.get<Sucursal[]>(API_SUCURSALES),
+          ]);
+
+        if (activo) {
+          setClientes(respuestaClientes.data);
+          setSucursales(respuestaSucursales.data);
+        }
       } catch (error) {
-        console.error(
-          "Error al cargar datos:",
-          error
-        );
-        alert(
-          "No se pudieron cargar los clientes o las sucursales."
-        );
+        console.error("Error al cargar datos:", error);
+
+        if (activo) {
+          alert(
+            "No se pudieron cargar los clientes o las sucursales."
+          );
+        }
       } finally {
-        setCargandoClientes(false);
+        if (activo) {
+          setCargandoClientes(false);
+        }
       }
     };
-    cargarDatos();
-  }, [
-    cargando,
-    usuario,
-  ]);
-  /*
-   * RECARGAR CLIENTES
-   */
+
+    void cargarDatos();
+
+    return () => {
+      activo = false;
+    };
+  }, [cargando, usuario]);
+
+  // ACTUALIZAR LISTADO
   const cargarClientes = async () => {
     try {
-      const respuesta =
-        await api.get<Cliente[]>(
-          API_CLIENTES
-        );
-      setClientes(
-        respuesta.data
-      );
+      const respuesta = await api.get<Cliente[]>(API_CLIENTES);
+      setClientes(respuesta.data);
     } catch (error) {
-      console.error(
-        "Error al cargar clientes:",
-        error
-      );
+      console.error("Error al cargar clientes:", error);
+      alert("No se pudo actualizar el listado de clientes.");
     }
   };
-  /*
-   * LIMPIAR FORMULARIO
-   */
+
+  // LIMPIAR FORMULARIO
   const limpiarFormulario = () => {
     setNombre("");
     setRut("");
@@ -203,827 +181,727 @@ export default function ClientesPage() {
     setSucursalId("");
     setClienteEditandoId(null);
   };
-  /*
-   * REGISTRAR / EDITAR
-   */
+
+  // REGISTRAR O EDITAR CLIENTE
   const guardarCliente = async (
     e: FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
+
     if (!nombre.trim()) {
-      alert(
-        "Debes ingresar el nombre del cliente."
-      );
+      alert("Debes ingresar el nombre del cliente.");
       return;
     }
+
     if (!sucursalId) {
-      alert(
-        "Debes seleccionar una sucursal."
-      );
+      alert("Debes seleccionar una sucursal.");
       return;
     }
-    /*
-     * Ya no validamos RUT/email como únicos
-     * globalmente porque existen clientes que
-     * aparecen en más de una sucursal.
-     */
+
     const datosCliente = {
       nombre: nombre.trim(),
-      /*
-       * El modelo nuevo también utiliza
-       * nombres. Por ahora usamos el nombre
-       * completo para mantener compatibilidad.
-       */
       nombres: nombre.trim(),
-      rut:
-        rut.trim() || null,
-      email:
-        email.trim() || null,
-      telefono:
-        telefono.trim() || null,
-      plan:
-        plan || null,
-      sucursalId:
-        Number(sucursalId),
+      rut: rut.trim() || null,
+      email: email.trim() || null,
+      telefono: telefono.trim() || null,
+      plan: plan || null,
+      sucursalId: Number(sucursalId),
     };
+
     try {
-      /*
-       * EDITAR
-       */
-      if (
-        clienteEditandoId !== null
-      ) {
+      setGuardando(true);
+
+      if (clienteEditandoId !== null) {
         await api.put(
           `${API_CLIENTES}/${clienteEditandoId}`,
           datosCliente
         );
-        alert(
-          "Cliente actualizado correctamente."
-        );
-        limpiarFormulario();
-        await cargarClientes();
-        return;
+
+        alert("Cliente actualizado correctamente.");
+      } else {
+        await api.post(API_CLIENTES, datosCliente);
+
+        alert("Cliente registrado correctamente.");
       }
-      /*
-       * CREAR
-       */
-      await api.post(
-        API_CLIENTES,
-        datosCliente
-      );
-      alert(
-        "Cliente registrado correctamente."
-      );
+
       limpiarFormulario();
       await cargarClientes();
     } catch (error) {
-      console.error(
-        "Error al guardar cliente:",
-        error
-      );
-      alert(
-        "Ocurrió un error al guardar el cliente."
-      );
+      console.error("Error al guardar cliente:", error);
+      alert("Ocurrió un error al guardar el cliente.");
+    } finally {
+      setGuardando(false);
     }
   };
-  /*
-   * EDITAR CLIENTE
-   */
-  const editarCliente = (
-    cliente: Cliente
-  ) => {
-    setNombre(
-      cliente.nombre ?? ""
-    );
-    setRut(
-      cliente.rut ?? ""
-    );
-    setEmail(
-      cliente.email ?? ""
-    );
-    setTelefono(
-      cliente.telefono ?? ""
-    );
-    setPlan(
-      cliente.plan ?? ""
-    );
+
+  // EDITAR CLIENTE
+  const editarCliente = (cliente: Cliente) => {
+    setNombre(cliente.nombre ?? "");
+    setRut(cliente.rut ?? "");
+    setEmail(cliente.email ?? "");
+    setTelefono(cliente.telefono ?? "");
+    setPlan(cliente.plan ?? "");
+
     setSucursalId(
-      cliente.sucursalId
-        ? String(
-            cliente.sucursalId
-          )
+      cliente.sucursalId !== null
+        ? String(cliente.sucursalId)
         : ""
     );
-    setClienteEditandoId(
-      cliente.id
-    );
-    window.scrollTo({
-      top: 0,
+
+    setClienteEditandoId(cliente.id);
+
+    formularioRef.current?.scrollIntoView({
       behavior: "smooth",
+      block: "start",
     });
   };
-  const cancelarEdicion = () => {
-    limpiarFormulario();
-  };
-  /*
-   * ACTIVAR / DESACTIVAR
-   */
-  const cambiarEstado = async (
-    cliente: Cliente
-  ) => {
-    const nuevoEstado:
-      EstadoCliente =
-        cliente.estado === "Activo"
-          ? "Inactivo"
-          : "Activo";
+
+  // ACTIVAR O DESACTIVAR
+  const cambiarEstado = async (cliente: Cliente) => {
+    const nuevoEstado: EstadoCliente =
+      cliente.estado === "Activo" ? "Inactivo" : "Activo";
+
     try {
-      await api.put(
-        `${API_CLIENTES}/${cliente.id}`,
-        {
-          estado: nuevoEstado,
-        }
-      );
+      await api.put(`${API_CLIENTES}/${cliente.id}`, {
+        estado: nuevoEstado,
+      });
+
       await cargarClientes();
     } catch (error) {
-      console.error(
-        "Error al cambiar estado:",
-        error
-      );
-      alert(
-        "No se pudo cambiar el estado del cliente."
-      );
+      console.error("Error al cambiar estado:", error);
+      alert("No se pudo cambiar el estado del cliente.");
     }
   };
-  /*
-   * ELIMINAR
-   */
-  const eliminarCliente = async (
-    id: number
-  ) => {
-    const confirmar =
-      window.confirm(
-        "¿Seguro que deseas eliminar este cliente?"
-      );
-    if (!confirmar) {
-      return;
-    }
+
+  // ELIMINAR CLIENTE
+  const eliminarCliente = async (id: number) => {
+    const confirmado = window.confirm(
+      "¿Seguro que deseas eliminar este cliente?"
+    );
+
+    if (!confirmado) return;
+
     try {
-      await api.delete(
-        `${API_CLIENTES}/${id}`
-      );
-      if (
-        clienteEditandoId === id
-      ) {
+      await api.delete(`${API_CLIENTES}/${id}`);
+
+      if (clienteEditandoId === id) {
         limpiarFormulario();
       }
-      if (
-        clienteDetalle?.id === id
-      ) {
+
+      if (clienteDetalle?.id === id) {
         setClienteDetalle(null);
       }
+
       await cargarClientes();
-      alert(
-        "Cliente eliminado correctamente."
-      );
+
+      alert("Cliente eliminado correctamente.");
     } catch (error) {
-      console.error(
-        "Error al eliminar cliente:",
-        error
-      );
-      alert(
-        "No se pudo eliminar el cliente."
-      );
+      console.error("Error al eliminar cliente:", error);
+      alert("No se pudo eliminar el cliente.");
     }
   };
-  /*
-   * BUSCADOR + FILTRO SUCURSAL
-   */
-  const clientesFiltrados =
-    clientes.filter(
-      (cliente) => {
-        const texto =
-          busqueda
-            .trim()
-            .toLowerCase();
-        const coincideSucursal =
-          sucursalFiltro ===
-            "todas" ||
-          cliente.sucursalId ===
-            Number(
-              sucursalFiltro
-            );
-        const coincideBusqueda =
-          !texto ||
-          (cliente.nombre ?? "")
-            .toLowerCase()
-            .includes(texto) ||
-          (cliente.rut ?? "")
-            .toLowerCase()
-            .includes(texto) ||
-          (cliente.email ?? "")
-            .toLowerCase()
-            .includes(texto) ||
-          (cliente.telefono ?? "")
-            .toLowerCase()
-            .includes(texto) ||
-          (cliente.plan ?? "")
-            .toLowerCase()
-            .includes(texto) ||
-          (cliente.numeroCliente ?? "")
-            .toLowerCase()
-            .includes(texto) ||
-          (cliente.sucursal?.nombre ?? "")
-            .toLowerCase()
-            .includes(texto);
-        return (
-          coincideSucursal &&
-          coincideBusqueda
+
+  // FILTRAR CLIENTES
+  const clientesFiltrados = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase();
+
+    return clientes.filter((cliente) => {
+      const coincideSucursal =
+        sucursalFiltro === "todas" ||
+        cliente.sucursalId === Number(sucursalFiltro);
+
+      const coincideBusqueda =
+        !texto ||
+        [
+          cliente.nombre,
+          cliente.rut,
+          cliente.email,
+          cliente.telefono,
+          cliente.plan,
+          cliente.numeroCliente,
+          cliente.sucursal?.nombre,
+        ].some((valor) =>
+          (valor ?? "").toLowerCase().includes(texto)
         );
-      }
-    );
-  /*
-   * CONTADORES
-   */
-  const totalPenalolen =
-    clientes.filter(
-      (cliente) =>
-        cliente.sucursalId === 1
-    ).length;
-  const totalLaReina =
-    clientes.filter(
-      (cliente) =>
-        cliente.sucursalId === 2
-    ).length;
-  /*
-   * CARGANDO
-   */
-  if (cargando) {
+
+      return coincideSucursal && coincideBusqueda;
+    });
+  }, [clientes, busqueda, sucursalFiltro]);
+
+  // PAGINACIÓN
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(clientesFiltrados.length / POR_PAGINA)
+  );
+
+  const paginaActual = Math.min(pagina, totalPaginas);
+
+  const clientesPagina = clientesFiltrados.slice(
+    (paginaActual - 1) * POR_PAGINA,
+    paginaActual * POR_PAGINA
+  );
+
+  // CONTADORES REALES
+  const totalPenalolen = clientes.filter(
+    (cliente) => cliente.sucursalId === 1
+  ).length;
+
+  const totalLaReina = clientes.filter(
+    (cliente) => cliente.sucursalId === 2
+  ).length;
+
+  // CONTROL DE ACCESO
+  if (cargando || !usuario || usuario.rol !== "admin") {
     return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p>
-          Cargando...
-        </p>
+      <main className="cargando">
+        {cargando ? "Cargando..." : "Verificando acceso..."}
       </main>
     );
   }
-  /*
-   * SIN PERMISOS
-   */
-  if (
-    !usuario ||
-    usuario.rol !== "admin"
-  ) {
-    return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p>
-          Verificando acceso...
-        </p>
-      </main>
-    );
-  }
+
   return (
-    <main className="min-h-screen bg-black text-white p-6 md:p-10">
-      {/* HEADER */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+    <main className="admin-clientes">
+      {/* ENCABEZADO */}
+      <header className="clientes-encabezado">
         <div>
-          <p className="text-gray-400">
-            Panel administrativo
+          <p className="clientes-etiqueta">
+            PANEL ADMINISTRATIVO / CLIENTES
           </p>
-          <h1 className="text-4xl font-black mt-1">
-            Gestión de{" "}
-            <span className="text-red-600">
-              Clientes
-            </span>
+
+          <h1>
+            Gestión de <span>Clientes</span>
           </h1>
-          <p className="text-gray-400 mt-2">
-            Registra, consulta y administra los clientes de Focus Power Fit.
+
+          <p className="clientes-subtitulo">
+            Registra, consulta y administra los clientes de
+            Focus Power Fit.
           </p>
         </div>
-        <Link
-          href="/admin"
-          className="bg-zinc-900 border border-zinc-700 hover:border-red-600 px-5 py-3 rounded-xl font-bold transition"
-        >
-          Volver al panel
+
+        <Link href="/admin" className="clientes-volver">
+          ← Volver al panel
         </Link>
       </header>
-      {/* RESUMEN SUCURSALES */}
-      <section className="grid sm:grid-cols-3 gap-4 mb-8">
+
+      {/* TARJETAS DE RESUMEN */}
+      <section
+        className="clientes-resumen"
+        aria-label="Resumen de clientes"
+      >
         <Resumen
-          titulo="Total clientes"
+          titulo="Total de clientes"
           valor={clientes.length}
+          detalle="En todas las sucursales"
         />
+
         <Resumen
           titulo="Peñalolén"
           valor={totalPenalolen}
+          detalle="Clientes de la sucursal"
         />
+
         <Resumen
           titulo="La Reina"
           valor={totalLaReina}
+          detalle="Clientes de la sucursal"
         />
       </section>
-      {/* FORMULARIO + LISTADO */}
-      <section className="grid lg:grid-cols-3 gap-8">
+
+      {/* FORMULARIO Y DIRECTORIO */}
+      <section className="clientes-distribucion">
         {/* FORMULARIO */}
-        <div>
-          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
-            <h2 className="text-2xl font-bold mb-2">
+        <div
+          className="clientes-formulario-panel"
+          ref={formularioRef}
+        >
+          <div className="clientes-panel-titulo">
+            <p className="clientes-etiqueta">FORMULARIO</p>
+
+            <h2>
               {clienteEditandoId !== null
                 ? "Editar cliente"
                 : "Registrar cliente"}
             </h2>
-            {clienteEditandoId !== null ? (
-              <p className="text-yellow-500 text-sm mb-6">
-                Estás modificando un cliente existente.
-              </p>
-            ) : (
-              <p className="text-gray-400 text-sm mb-6">
-                Ingresa los datos principales del cliente.
-              </p>
-            )}
-            <form
-              onSubmit={guardarCliente}
-              className="space-y-5"
-            >
-              <Campo
-                label="Nombre completo"
-                value={nombre}
-                onChange={setNombre}
-                placeholder="Ej: Juan Pérez"
-              />
-              <Campo
-                label="RUT"
-                value={rut}
-                onChange={setRut}
-                placeholder="Ej: 12.345.678-9"
-                required={false}
-              />
-              <Campo
-                label="Correo electrónico"
-                value={email}
-                onChange={setEmail}
-                type="email"
-                placeholder="correo@ejemplo.cl"
-                required={false}
-              />
-              <Campo
-                label="Teléfono"
-                value={telefono}
-                onChange={setTelefono}
-                placeholder="+56 9 1234 5678"
-                required={false}
-              />
-              {/* SUCURSAL */}
-              <div>
-                <label className="block mb-2 font-semibold">
-                  Sucursal
-                </label>
-                <select
-                  value={sucursalId}
-                  onChange={(e) =>
-                    setSucursalId(
-                      e.target.value
-                    )
-                  }
-                  required
-                  className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
-                >
-                  <option value="">
-                    Seleccionar sucursal
+
+            <p>
+              {clienteEditandoId !== null
+                ? "Estás modificando un cliente existente."
+                : "Ingresa los datos principales del cliente."}
+            </p>
+          </div>
+
+          <form
+            onSubmit={guardarCliente}
+            className="clientes-formulario"
+          >
+            <Campo
+              label="Nombre completo"
+              value={nombre}
+              onChange={setNombre}
+              placeholder="Ej: Juan Pérez"
+            />
+
+            <Campo
+              label="RUT"
+              value={rut}
+              onChange={setRut}
+              placeholder="Ej: 12.345.678-9"
+              required={false}
+            />
+
+            <Campo
+              label="Correo electrónico"
+              value={email}
+              onChange={setEmail}
+              type="email"
+              placeholder="correo@ejemplo.cl"
+              required={false}
+            />
+
+            <Campo
+              label="Teléfono"
+              value={telefono}
+              onChange={setTelefono}
+              placeholder="+56 9 1234 5678"
+              required={false}
+            />
+
+            <div className="clientes-campo">
+              <label htmlFor="cliente-sucursal">
+                Sucursal <span>*</span>
+              </label>
+
+              <select
+                id="cliente-sucursal"
+                value={sucursalId}
+                onChange={(e) =>
+                  setSucursalId(e.target.value)
+                }
+                required
+              >
+                <option value="">
+                  Seleccionar sucursal
+                </option>
+
+                {sucursales.map((sucursal) => (
+                  <option
+                    key={sucursal.id}
+                    value={sucursal.id}
+                  >
+                    {sucursal.nombre}
                   </option>
-                  {sucursales.map(
-                    (sucursal) => (
-                      <option
-                        key={sucursal.id}
-                        value={sucursal.id}
-                      >
-                        {sucursal.nombre}
-                      </option>
-                    )
-                  )}
-                </select>
-              </div>
-              {/* PLAN */}
-              <div>
-                <label className="block mb-2 font-semibold">
-                  Plan
-                </label>
-                <select
-                  value={plan}
-                  onChange={(e) =>
-                    setPlan(
-                      e.target.value
-                    )
-                  }
-                  className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
-                >
-                  <option value="">
-                    Sin plan asignado
-                  </option>
-                  <option value="Personal Training">
-                    Personal Training
-                  </option>
-                  <option value="Plan Mensual">
-                    Plan Mensual
-                  </option>
-                  <option value="Plan Trimestral">
-                    Plan Trimestral
-                  </option>
-                  <option value="Plan Semestral">
-                    Plan Semestral
-                  </option>
-                </select>
-              </div>
+                ))}
+              </select>
+            </div>
+
+            <div className="clientes-campo">
+              <label htmlFor="cliente-plan">Plan</label>
+
+              <select
+                id="cliente-plan"
+                value={plan}
+                onChange={(e) => setPlan(e.target.value)}
+              >
+                <option value="">Sin plan asignado</option>
+                <option value="Personal Training">
+                  Personal Training
+                </option>
+                <option value="Plan Mensual">
+                  Plan Mensual
+                </option>
+                <option value="Plan Trimestral">
+                  Plan Trimestral
+                </option>
+                <option value="Plan Semestral">
+                  Plan Semestral
+                </option>
+              </select>
+            </div>
+
+            <div className="clientes-formulario-acciones">
               <button
                 type="submit"
-                className="w-full bg-red-600 hover:bg-red-700 transition py-3 rounded-xl font-bold"
+                className="clientes-boton-primario"
+                disabled={guardando}
+              >
+                {guardando
+                  ? "Guardando..."
+                  : clienteEditandoId !== null
+                    ? "Guardar cambios"
+                    : "Registrar cliente"}
+              </button>
+
+              <button
+                type="button"
+                className="clientes-boton-secundario"
+                onClick={limpiarFormulario}
+                disabled={guardando}
               >
                 {clienteEditandoId !== null
-                  ? "Guardar cambios"
-                  : "Registrar cliente"}
+                  ? "Cancelar edición"
+                  : "Limpiar formulario"}
               </button>
-              {clienteEditandoId !== null ? (
-                <button
-                  type="button"
-                  onClick={
-                    cancelarEdicion
-                  }
-                  className="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 py-3 rounded-xl"
-                >
-                  Cancelar edición
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={
-                    limpiarFormulario
-                  }
-                  className="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 py-3 rounded-xl"
-                >
-                  Limpiar formulario
-                </button>
-              )}
-            </form>
-          </div>
-        </div>
-        {/* LISTADO */}
-        <div className="lg:col-span-2">
-          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden">
-            <div className="p-6 border-b border-zinc-800">
-              <div className="flex flex-col gap-4">
-                <div>
-                  <h2 className="text-2xl font-bold">
-                    Clientes registrados
-                  </h2>
-                  <p className="text-gray-400 mt-1">
-                    Mostrando:{" "}
-                    {clientesFiltrados.length}
-                    {" "}de{" "}
-                    {clientes.length}
-                  </p>
-                </div>
-                <div className="grid md:grid-cols-2 gap-3">
-                  {/* FILTRO SUCURSAL */}
-                  <select
-                    value={
-                      sucursalFiltro
-                    }
-                    onChange={(e) =>
-                      setSucursalFiltro(
-                        e.target.value
-                      )
-                    }
-                    className="bg-black border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-red-600"
-                  >
-                    <option value="todas">
-                      Todas las sucursales
-                    </option>
-                    {sucursales.map(
-                      (sucursal) => (
-                        <option
-                          key={
-                            sucursal.id
-                          }
-                          value={
-                            String(
-                              sucursal.id
-                            )
-                          }
-                        >
-                          {sucursal.nombre}
-                        </option>
-                      )
-                    )}
-                  </select>
-                  {/* BUSCADOR */}
-                  <input
-                    type="text"
-                    value={busqueda}
-                    onChange={(e) =>
-                      setBusqueda(
-                        e.target.value
-                      )
-                    }
-                    placeholder="Buscar cliente..."
-                    className="bg-black border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-red-600"
-                  />
-                </div>
-              </div>
             </div>
-            {cargandoClientes ? (
-              <div className="p-10 text-center text-gray-400">
-                Cargando clientes...
-              </div>
-            ) : clientesFiltrados.length === 0 ? (
-              <div className="p-10 text-center text-gray-400">
-                No se encontraron clientes.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-zinc-900">
+          </form>
+        </div>
+
+        {/* DIRECTORIO */}
+        <div className="clientes-listado-panel">
+          <div className="clientes-listado-cabecera">
+            <div>
+              <p className="clientes-etiqueta">DIRECTORIO</p>
+
+              <h2>Clientes registrados</h2>
+
+              <p>
+                Mostrando {clientesFiltrados.length} de{" "}
+                {clientes.length} clientes
+              </p>
+            </div>
+
+            <div className="clientes-filtros">
+              <select
+                aria-label="Filtrar por sucursal"
+                value={sucursalFiltro}
+                onChange={(e) => {
+                  setSucursalFiltro(e.target.value);
+                  setPagina(1);
+                }}
+              >
+                <option value="todas">
+                  Todas las sucursales
+                </option>
+
+                {sucursales.map((sucursal) => (
+                  <option
+                    key={sucursal.id}
+                    value={String(sucursal.id)}
+                  >
+                    {sucursal.nombre}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="search"
+                aria-label="Buscar cliente"
+                value={busqueda}
+                onChange={(e) => {
+                  setBusqueda(e.target.value);
+                  setPagina(1);
+                }}
+                placeholder="Buscar nombre, RUT, correo..."
+              />
+            </div>
+          </div>
+
+          {cargandoClientes ? (
+            <div className="clientes-vacio">
+              Cargando clientes...
+            </div>
+          ) : clientesFiltrados.length === 0 ? (
+            <div className="clientes-vacio">
+              No se encontraron clientes con estos filtros.
+            </div>
+          ) : (
+            <>
+              <div className="clientes-tabla-scroll">
+                <table className="clientes-tabla">
+                  <thead>
                     <tr>
-                      <th className="p-4">
-                        Nombre
-                      </th>
-                      <th className="p-4">
-                        RUT
-                      </th>
-                      <th className="p-4">
-                        Sucursal
-                      </th>
-                      <th className="p-4">
-                        Plan
-                      </th>
-                      <th className="p-4">
-                        Estado
-                      </th>
-                      <th className="p-4">
-                        Acciones
-                      </th>
+                      <th>Cliente</th>
+                      <th>RUT</th>
+                      <th>Sucursal</th>
+                      <th>Plan</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
                     </tr>
                   </thead>
+
                   <tbody>
-                    {clientesFiltrados.map(
-                      (cliente) => (
-                        <tr
-                          key={cliente.id}
-                          className="border-t border-zinc-800 hover:bg-zinc-900/50"
-                        >
-                          <td className="p-4">
-                            <p className="font-semibold">
-                              {cliente.nombre}
-                            </p>
-                            <p className="text-gray-500 text-sm">
-                              {cliente.email ||
-                                "Sin correo"}
-                            </p>
-                          </td>
-                          <td className="p-4 text-gray-300">
-                            {cliente.rut ||
-                              "Sin RUT"}
-                          </td>
-                          <td className="p-4">
-                            <span className="text-red-400 font-semibold">
-                              {cliente
-                                .sucursal
-                                ?.nombre ||
-                                "Sin sucursal"}
-                            </span>
-                          </td>
-                          <td className="p-4 text-gray-300">
-                            {cliente.plan ||
-                              "Sin plan"}
-                          </td>
-                          <td className="p-4">
-                            <span
-                              className={
-                                cliente.estado ===
-                                "Activo"
-                                  ? "text-green-500 font-bold"
-                                  : "text-gray-500 font-bold"
+                    {clientesPagina.map((cliente) => (
+                      <tr key={cliente.id}>
+                        <td>
+                          <div className="clientes-nombre">
+                            {cliente.nombre}
+                          </div>
+
+                          <div className="clientes-email">
+                            {cliente.email || "Sin correo"}
+                          </div>
+                        </td>
+
+                        <td className="clientes-dato">
+                          {cliente.rut || "Sin RUT"}
+                        </td>
+
+                        <td>
+                          <span className="clientes-sucursal">
+                            {cliente.sucursal?.nombre ||
+                              sucursales.find(
+                                (s) =>
+                                  s.id === cliente.sucursalId
+                              )?.nombre ||
+                              "Sin sucursal"}
+                          </span>
+                        </td>
+
+                        <td className="clientes-dato">
+                          {cliente.plan || "Sin plan"}
+                        </td>
+
+                        <td>
+                          <span
+                            className={`clientes-estado ${
+                              cliente.estado === "Activo"
+                                ? "clientes-estado-activo"
+                                : "clientes-estado-inactivo"
+                            }`}
+                          >
+                            {cliente.estado}
+                          </span>
+                        </td>
+
+                        <td>
+                          <div className="clientes-acciones">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setClienteDetalle(cliente)
+                              }
+                              title="Ver detalles"
+                            >
+                              Ver
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                editarCliente(cliente)
+                              }
+                              title="Editar cliente"
+                            >
+                              Editar
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void cambiarEstado(cliente)
+                              }
+                              title={
+                                cliente.estado === "Activo"
+                                  ? "Desactivar cliente"
+                                  : "Activar cliente"
                               }
                             >
-                              {cliente.estado}
-                            </span>
-                          </td>
-                          <td className="p-4">
-                            <div className="flex flex-wrap gap-2">
-                              <button
-                                onClick={() =>
-                                  setClienteDetalle(
-                                    cliente
-                                  )
-                                }
-                                className="border border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-lg transition"
-                              >
-                                Ver
-                              </button>
-                              <button
-                                onClick={() =>
-                                  editarCliente(
-                                    cliente
-                                  )
-                                }
-                                className="border border-yellow-600 text-yellow-400 hover:bg-yellow-600 hover:text-black px-3 py-2 rounded-lg transition"
-                              >
-                                Editar
-                              </button>
-                              <button
-                                onClick={() =>
-                                  cambiarEstado(
-                                    cliente
-                                  )
-                                }
-                                className="border border-red-600 text-red-500 hover:bg-red-600 hover:text-white px-3 py-2 rounded-lg transition"
-                              >
-                                {cliente.estado ===
-                                "Activo"
-                                  ? "Desactivar"
-                                  : "Activar"}
-                              </button>
-                              <button
-                                onClick={() =>
-                                  eliminarCliente(
-                                    cliente.id
-                                  )
-                                }
-                                className="border border-zinc-600 text-gray-300 hover:bg-zinc-800 px-3 py-2 rounded-lg transition"
-                              >
-                                Eliminar
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    )}
+                              {cliente.estado === "Activo"
+                                ? "Desactivar"
+                                : "Activar"}
+                            </button>
+
+                            <button
+                              type="button"
+                              className="clientes-accion-eliminar"
+                              onClick={() =>
+                                void eliminarCliente(cliente.id)
+                              }
+                              title="Eliminar cliente"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
-            )}
-          </div>
+
+              {/* PAGINACIÓN */}
+              <div className="clientes-paginacion">
+                <span>
+                  Página {paginaActual} de {totalPaginas} ·{" "}
+                  {clientesFiltrados.length} resultados
+                </span>
+
+                <div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPagina((p) => Math.max(1, p - 1))
+                    }
+                    disabled={paginaActual <= 1}
+                  >
+                    ← Anterior
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPagina((p) =>
+                        Math.min(totalPaginas, p + 1)
+                      )
+                    }
+                    disabled={paginaActual >= totalPaginas}
+                  >
+                    Siguiente →
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </section>
-      {/* DETALLE CLIENTE */}
+
+      {/* MODAL DE DETALLE */}
       {clienteDetalle && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-zinc-950 border border-red-600 rounded-2xl max-w-2xl w-full p-7 my-8">
-            <div className="flex items-start justify-between gap-4 mb-6">
+        <div
+          className="clientes-modal-overlay"
+          role="presentation"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setClienteDetalle(null);
+            }
+          }}
+        >
+          <section
+            className="clientes-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="clientes-modal-titulo"
+          >
+            <header className="clientes-modal-cabecera">
               <div>
-                <p className="text-gray-400">
-                  Información del cliente
+                <p className="clientes-etiqueta">
+                  INFORMACIÓN DEL CLIENTE
                 </p>
-                <h2 className="text-3xl font-black">
+
+                <h2 id="clientes-modal-titulo">
                   {clienteDetalle.nombre}
                 </h2>
               </div>
+
               <button
-                onClick={() =>
-                  setClienteDetalle(null)
-                }
-                className="text-gray-400 hover:text-white text-2xl"
+                type="button"
+                className="clientes-modal-cerrar"
+                onClick={() => setClienteDetalle(null)}
+                aria-label="Cerrar detalles"
               >
                 ✕
               </button>
-            </div>
-            <div className="grid md:grid-cols-2 gap-4">
+            </header>
+
+            <div className="clientes-detalles">
               <Detalle
                 titulo="N° cliente"
-                valor={
-                  clienteDetalle.numeroCliente
-                }
+                valor={clienteDetalle.numeroCliente}
               />
+
               <Detalle
                 titulo="Sucursal"
                 valor={
-                  clienteDetalle
-                    .sucursal
-                    ?.nombre
+                  clienteDetalle.sucursal?.nombre ||
+                  sucursales.find(
+                    (s) =>
+                      s.id === clienteDetalle.sucursalId
+                  )?.nombre
                 }
               />
+
               <Detalle
                 titulo="RUT"
-                valor={
-                  clienteDetalle.rut
-                }
+                valor={clienteDetalle.rut}
               />
+
               <Detalle
                 titulo="Correo electrónico"
-                valor={
-                  clienteDetalle.email
-                }
+                valor={clienteDetalle.email}
               />
+
               <Detalle
                 titulo="Teléfono"
-                valor={
-                  clienteDetalle.telefono
-                }
+                valor={clienteDetalle.telefono}
               />
+
               <Detalle
                 titulo="Teléfono secundario"
-                valor={
-                  clienteDetalle
-                    .telefonoSecundario
-                }
+                valor={clienteDetalle.telefonoSecundario}
               />
+
               <Detalle
                 titulo="Dirección"
-                valor={
-                  clienteDetalle.direccion
-                }
+                valor={clienteDetalle.direccion}
               />
+
               <Detalle
                 titulo="Comuna"
-                valor={
-                  clienteDetalle.comuna
-                }
+                valor={clienteDetalle.comuna}
               />
+
               <Detalle
                 titulo="Ciudad"
-                valor={
-                  clienteDetalle.ciudad
-                }
+                valor={clienteDetalle.ciudad}
               />
+
               <Detalle
                 titulo="Edad"
                 valor={
-                  clienteDetalle.edad !==
-                  null
-                    ? String(
-                        clienteDetalle.edad
-                      )
+                  clienteDetalle.edad !== null
+                    ? String(clienteDetalle.edad)
                     : null
                 }
               />
+
               <Detalle
                 titulo="Género"
-                valor={
-                  clienteDetalle.genero
-                }
+                valor={clienteDetalle.genero}
               />
+
               <Detalle
                 titulo="Fecha nacimiento"
-                valor={
-                  clienteDetalle
-                    .fechaNacimiento
-                }
+                valor={clienteDetalle.fechaNacimiento}
               />
+
               <Detalle
                 titulo="Plan"
-                valor={
-                  clienteDetalle.plan
-                }
+                valor={clienteDetalle.plan}
               />
+
               <Detalle
                 titulo="Estado"
-                valor={
-                  clienteDetalle.estado
-                }
+                valor={clienteDetalle.estado}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3 mt-7">
+
+            <div className="clientes-modal-acciones">
               <button
+                type="button"
+                className="clientes-boton-primario"
                 onClick={() => {
-                  editarCliente(
-                    clienteDetalle
-                  );
-                  setClienteDetalle(
-                    null
-                  );
+                  editarCliente(clienteDetalle);
+                  setClienteDetalle(null);
                 }}
-                className="bg-red-600 hover:bg-red-700 py-3 rounded-xl font-bold"
               >
                 Editar cliente
               </button>
+
               <button
-                onClick={() =>
-                  setClienteDetalle(null)
-                }
-                className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 py-3 rounded-xl"
+                type="button"
+                className="clientes-boton-secundario"
+                onClick={() => setClienteDetalle(null)}
               >
                 Cerrar
               </button>
             </div>
-          </div>
+          </section>
         </div>
       )}
-      {/* BASE DE DATOS */}
-      <section className="mt-8 bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
-        <h2 className="text-xl text-red-500 font-bold mb-2">
-          Base de datos
-        </h2>
-        <p className="text-gray-400">
-          Los clientes de Peñalolén y La Reina
-          se almacenan en MySQL y están
-          relacionados con su sucursal
-          correspondiente.
-        </p>
-      </section>
     </main>
   );
 }
-/*
- * CAMPO
- */
+
+// CAMPO DE FORMULARIO
 function Campo({
   label,
   value,
@@ -1034,75 +912,67 @@ function Campo({
 }: {
   label: string;
   value: string;
-  onChange: (
-    value: string
-  ) => void;
+  onChange: (value: string) => void;
   type?: string;
   placeholder?: string;
   required?: boolean;
 }) {
+  const id = `cliente-${label
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "-")}`;
+
   return (
-    <div>
-      <label className="block mb-2 font-semibold">
+    <div className="clientes-campo">
+      <label htmlFor={id}>
         {label}
+        {required && <span> *</span>}
       </label>
+
       <input
+        id={id}
         type={type}
         value={value}
-        onChange={(e) =>
-          onChange(
-            e.target.value
-          )
-        }
+        onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
       />
     </div>
   );
 }
-/*
- * DETALLE
- */
+
+// DETALLE DEL CLIENTE
 function Detalle({
   titulo,
   valor,
 }: {
   titulo: string;
-  valor:
-    | string
-    | null
-    | undefined;
+  valor: string | null | undefined;
 }) {
   return (
-    <div className="bg-black border border-zinc-800 rounded-xl p-4">
-      <p className="text-gray-500 text-sm mb-1">
-        {titulo}
-      </p>
-      <p className="font-semibold">
-        {valor || "No informado"}
-      </p>
+    <div className="clientes-detalle">
+      <span>{titulo}</span>
+      <strong>{valor || "No informado"}</strong>
     </div>
   );
 }
-/*
- * TARJETA RESUMEN
- */
+
+// TARJETA DE RESUMEN
 function Resumen({
   titulo,
   valor,
+  detalle,
 }: {
   titulo: string;
   valor: number;
+  detalle: string;
 }) {
   return (
-    <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5">
-      <p className="text-gray-400">
-        {titulo}
-      </p>
-      <p className="text-3xl font-black text-red-500 mt-1">
-        {valor}
-      </p>
-    </div>
+    <article className="clientes-tarjeta">
+      <p>{titulo}</p>
+
+      <strong>{valor.toLocaleString("es-CL")}</strong>
+
+      <small>{detalle}</small>
+    </article>
   );
 }
