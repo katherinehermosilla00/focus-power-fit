@@ -22,3 +22,23 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+
+  --color-primary: #b91c1c;
+  --color-primary-hover: #991b1b;
+
+  --color-surface: #171717;
+  --color-surface-secondary: #262626;
+
+  --color-border: #404040;
+  --color-text-secondary: #b3b3b3;
+
+  /* Tarjetas interactivas */
+  --color-card-selected: #310b0e;
+  --color-card-selected-secondary: #4b1117;
+  --color-card-selected-text: #fca5a5;
+  
+
+}
