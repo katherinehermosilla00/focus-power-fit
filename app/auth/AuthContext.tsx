@@ -33,24 +33,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    try {
-      const tokenGuardado = localStorage.getItem("focusPowerFitToken");
-      const usuarioGuardado = localStorage.getItem("focusPowerFitUsuario");
+    let cancelado = false;
 
-      if (tokenGuardado && usuarioGuardado) {
-        setToken(tokenGuardado);
-        setUsuario(JSON.parse(usuarioGuardado));
+    queueMicrotask(() => {
+      if (cancelado) return;
+
+      try {
+        const tokenGuardado = localStorage.getItem("focusPowerFitToken");
+        const usuarioGuardado = localStorage.getItem("focusPowerFitUsuario");
+
+        if (tokenGuardado && usuarioGuardado) {
+          const usuarioParseado: Usuario = JSON.parse(usuarioGuardado);
+
+          setToken(tokenGuardado);
+          setUsuario(usuarioParseado);
+        } else {
+          localStorage.removeItem("focusPowerFitToken");
+          localStorage.removeItem("focusPowerFitUsuario");
+        }
+      } catch (error) {
+        console.error("Error al cargar la sesión:", error);
+        localStorage.removeItem("focusPowerFitToken");
+        localStorage.removeItem("focusPowerFitUsuario");
+      } finally {
+        setCargando(false);
       }
-    } catch (error) {
-      console.error("Error al cargar la sesión:", error);
-      localStorage.removeItem("focusPowerFitToken");
-      localStorage.removeItem("focusPowerFitUsuario");
-    } finally {
-      setCargando(false);
-    }
+    });
+
+    return () => {
+      cancelado = true;
+    };
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<boolean> => {
     try {
       const respuesta = await fetch("http://localhost:3001/api/auth/login", {
         method: "POST",
