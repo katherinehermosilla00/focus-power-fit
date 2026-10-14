@@ -1,11 +1,7 @@
+
 "use client";
 
-import {
-  FormEvent,
-  useEffect,
-  useState,
-} from "react";
-
+import { FormEvent, useEffect, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -32,170 +28,139 @@ type Profesor = {
   sucursal?: Sucursal | null;
 };
 
-const API_PROFESORES =
-  "http://localhost:3001/api/profesores";
+const API_PROFESORES = "http://localhost:3001/api/profesores";
+const API_SUCURSALES = "http://localhost:3001/api/sucursales";
 
-const API_SUCURSALES =
-  "http://localhost:3001/api/sucursales";
+const colores = {
+  fondo: "var(--background)",
+  principal: "var(--color-primary)",
+  principalHover: "var(--color-primary-hover)",
+  superficie: "var(--color-surface)",
+  superficie2: "var(--color-surface-secondary)",
+  borde: "var(--color-border)",
+  secundario: "var(--color-text-secondary)",
+};
+
+const campoClase =
+  "w-full rounded-xl border bg-black px-4 py-3 text-sm text-white outline-none transition-colors focus:border-[var(--color-primary)]";
+
+function iniciales(nombre: string) {
+  return nombre
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((parte) => parte.charAt(0).toUpperCase())
+    .join("");
+}
+
+function AvatarProfesor({
+  nombre,
+  grande = false,
+}: {
+  nombre: string;
+  grande?: boolean;
+}) {
+  return (
+    <div
+      className={`flex shrink-0 items-center justify-center rounded-full border font-bold text-white ${
+        grande ? "h-20 w-20 text-2xl" : "h-12 w-12 text-sm"
+      }`}
+      style={{
+        backgroundColor: colores.superficie2,
+        borderColor: colores.borde,
+      }}
+      aria-label={`Avatar de ${nombre}`}
+    >
+      {iniciales(nombre)}
+    </div>
+  );
+}
 
 export default function ProfesoresPage() {
   const router = useRouter();
+  const { usuario, cargando } = useAuth();
 
-  const {
-    usuario,
-    cargando,
-  } = useAuth();
+  const [profesores, setProfesores] = useState<Profesor[]>([]);
+  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
 
-  const [profesores, setProfesores] =
-    useState<Profesor[]>([]);
+  const [nombre, setNombre] = useState("");
+  const [rut, setRut] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [especialidad, setEspecialidad] = useState("");
+  const [sucursalId, setSucursalId] = useState("");
 
-  const [sucursales, setSucursales] =
-    useState<Sucursal[]>([]);
+  const [busqueda, setBusqueda] = useState("");
+  const [sucursalFiltro, setSucursalFiltro] = useState("todas");
+  const [estadoFiltro, setEstadoFiltro] = useState("todos");
 
-  const [nombre, setNombre] =
-    useState("");
-
-  const [rut, setRut] =
-    useState("");
-
-  const [email, setEmail] =
-    useState("");
-
-  const [telefono, setTelefono] =
-    useState("");
-
-  const [especialidad, setEspecialidad] =
-    useState("");
-
-  const [sucursalId, setSucursalId] =
-    useState("");
-
-  const [busqueda, setBusqueda] =
-    useState("");
-
-  const [sucursalFiltro, setSucursalFiltro] =
-    useState("todas");
-
-  const [
-    profesorEditandoId,
-    setProfesorEditandoId,
-  ] =
+  const [profesorEditandoId, setProfesorEditandoId] =
     useState<number | null>(null);
 
-  const [
-    profesorDetalle,
-    setProfesorDetalle,
-  ] =
+  const [profesorDetalle, setProfesorDetalle] =
     useState<Profesor | null>(null);
 
-  const [
-    cargandoProfesores,
-    setCargandoProfesores,
-  ] =
-    useState(true);
+  const [cargandoProfesores, setCargandoProfesores] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+  const [errorCarga, setErrorCarga] = useState("");
 
-  /*
-   * PROTECCIÓN DE RUTA
-   */
+  // PROTECCIÓN DE RUTA
   useEffect(() => {
-    if (cargando) {
-      return;
-    }
+    if (cargando) return;
 
     if (!usuario) {
       router.replace("/login");
-      return;
-    }
-
-    if (usuario.rol !== "admin") {
+    } else if (usuario.rol !== "admin") {
       router.replace("/mi-cuenta");
     }
-  }, [
-    usuario,
-    cargando,
-    router,
-  ]);
+  }, [usuario, cargando, router]);
 
-  /*
-   * CARGAR PROFESORES + SUCURSALES
-   */
+  // CARGAR DATOS
   useEffect(() => {
-    if (
-      cargando ||
-      !usuario ||
-      usuario.rol !== "admin"
-    ) {
-      return;
-    }
+    if (cargando || !usuario || usuario.rol !== "admin") return;
+
+    let activo = true;
 
     const cargarDatos = async () => {
       try {
         setCargandoProfesores(true);
+        setErrorCarga("");
 
-        const [
-          respuestaProfesores,
-          respuestaSucursales,
-        ] = await Promise.all([
-          axios.get<Profesor[]>(
-            API_PROFESORES
-          ),
+        const [respuestaProfesores, respuestaSucursales] =
+          await Promise.all([
+            axios.get<Profesor[]>(API_PROFESORES),
+            axios.get<Sucursal[]>(API_SUCURSALES),
+          ]);
 
-          axios.get<Sucursal[]>(
-            API_SUCURSALES
-          ),
-        ]);
+        if (!activo) return;
 
-        setProfesores(
-          respuestaProfesores.data
-        );
-
-        setSucursales(
-          respuestaSucursales.data
-        );
+        setProfesores(respuestaProfesores.data);
+        setSucursales(respuestaSucursales.data);
       } catch (error) {
-        console.error(
-          "Error al cargar datos:",
-          error
-        );
+        console.error("Error al cargar datos:", error);
 
-        alert(
-          "No se pudieron cargar los profesores o las sucursales."
-        );
+        if (activo) {
+          setErrorCarga(
+            "No se pudieron cargar los profesores o las sucursales."
+          );
+        }
       } finally {
-        setCargandoProfesores(false);
+        if (activo) setCargandoProfesores(false);
       }
     };
 
     cargarDatos();
-  }, [
-    cargando,
-    usuario,
-  ]);
 
-  /*
-   * RECARGAR PROFESORES
-   */
+    return () => {
+      activo = false;
+    };
+  }, [usuario, cargando]);
+
   const cargarProfesores = async () => {
-    try {
-      const respuesta =
-        await axios.get<Profesor[]>(
-          API_PROFESORES
-        );
-
-      setProfesores(
-        respuesta.data
-      );
-    } catch (error) {
-      console.error(
-        "Error al cargar profesores:",
-        error
-      );
-    }
+    const respuesta = await axios.get<Profesor[]>(API_PROFESORES);
+    setProfesores(respuesta.data);
   };
 
-  /*
-   * LIMPIAR FORMULARIO
-   */
   const limpiarFormulario = () => {
     setNombre("");
     setRut("");
@@ -203,462 +168,293 @@ export default function ProfesoresPage() {
     setTelefono("");
     setEspecialidad("");
     setSucursalId("");
-
     setProfesorEditandoId(null);
   };
 
-  /*
-   * REGISTRAR / EDITAR
-   */
-  const guardarProfesor = async (
-    e: FormEvent<HTMLFormElement>
-  ) => {
+  // REGISTRAR Y EDITAR
+  const guardarProfesor = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const correoExiste = profesores.some(
       (profesor) =>
-        profesor.email
-          .toLowerCase() ===
-          email.toLowerCase() &&
+        profesor.email.toLowerCase() === email.trim().toLowerCase() &&
         profesor.id !== profesorEditandoId
     );
 
     if (correoExiste) {
-      alert(
-        "Ya existe un profesor con ese correo."
-      );
+      alert("Ya existe un profesor con ese correo.");
       return;
     }
 
     const rutExiste = profesores.some(
       (profesor) =>
-        profesor.rut
-          .toLowerCase() ===
-          rut.toLowerCase() &&
+        profesor.rut.toLowerCase() === rut.trim().toLowerCase() &&
         profesor.id !== profesorEditandoId
     );
 
     if (rutExiste) {
-      alert(
-        "Ya existe un profesor con ese RUT."
-      );
+      alert("Ya existe un profesor con ese RUT.");
       return;
     }
 
     if (!sucursalId) {
-      alert(
-        "Debes seleccionar una sucursal."
-      );
+      alert("Debes seleccionar una sucursal.");
       return;
     }
 
     const datosProfesor = {
-      nombre:
-        nombre.trim(),
-
-      rut:
-        rut.trim(),
-
-      email:
-        email.trim(),
-
-      telefono:
-        telefono.trim() || null,
-
-      especialidad:
-        especialidad.trim() || null,
-
-      sucursalId:
-        Number(sucursalId),
+      nombre: nombre.trim(),
+      rut: rut.trim(),
+      email: email.trim(),
+      telefono: telefono.trim() || null,
+      especialidad: especialidad.trim() || null,
+      sucursalId: Number(sucursalId),
     };
 
     try {
-      /*
-       * EDITAR
-       */
-      if (
-        profesorEditandoId !== null
-      ) {
+      setGuardando(true);
+
+      if (profesorEditandoId !== null) {
         await axios.put(
           `${API_PROFESORES}/${profesorEditandoId}`,
           datosProfesor
         );
-
-        alert(
-          "Profesor actualizado correctamente."
-        );
-
-        limpiarFormulario();
-
-        await cargarProfesores();
-
-        return;
+        alert("Profesor actualizado correctamente.");
+      } else {
+        await axios.post(API_PROFESORES, datosProfesor);
+        alert("Profesor registrado correctamente.");
       }
 
-      /*
-       * CREAR
-       */
-      await axios.post(
-        API_PROFESORES,
-        datosProfesor
-      );
-
-      alert(
-        "Profesor registrado correctamente."
-      );
-
-      limpiarFormulario();
-
       await cargarProfesores();
-
+      limpiarFormulario();
     } catch (error) {
-      console.error(
-        "Error al guardar profesor:",
-        error
-      );
-
-      alert(
-        "Ocurrió un error al guardar el profesor."
-      );
+      console.error("Error al guardar profesor:", error);
+      alert("Ocurrió un error al guardar el profesor.");
+    } finally {
+      setGuardando(false);
     }
   };
 
-  /*
-   * EDITAR PROFESOR
-   */
-  const editarProfesor = (
-    profesor: Profesor
-  ) => {
-    setNombre(
-      profesor.nombre
-    );
-
-    setRut(
-      profesor.rut
-    );
-
-    setEmail(
-      profesor.email
-    );
-
-    setTelefono(
-      profesor.telefono ?? ""
-    );
-
-    setEspecialidad(
-      profesor.especialidad ?? ""
-    );
-
+  const editarProfesor = (profesor: Profesor) => {
+    setNombre(profesor.nombre);
+    setRut(profesor.rut);
+    setEmail(profesor.email);
+    setTelefono(profesor.telefono ?? "");
+    setEspecialidad(profesor.especialidad ?? "");
     setSucursalId(
-      profesor.sucursalId
-        ? String(
-            profesor.sucursalId
-          )
+      profesor.sucursalId !== null
+        ? String(profesor.sucursalId)
         : ""
     );
+    setProfesorEditandoId(profesor.id);
+    setProfesorDetalle(null);
 
-    setProfesorEditandoId(
-      profesor.id
-    );
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const cancelarEdicion = () => {
-    limpiarFormulario();
-  };
-
-  /*
-   * ACTIVAR / DESACTIVAR
-   */
-  const cambiarEstado = async (
-    profesor: Profesor
-  ) => {
-    const nuevoEstado:
-      EstadoProfesor =
-        profesor.estado === "Activo"
-          ? "Inactivo"
-          : "Activo";
+  // ACTIVAR / DESACTIVAR
+  const cambiarEstado = async (profesor: Profesor) => {
+    const nuevoEstado: EstadoProfesor =
+      profesor.estado === "Activo" ? "Inactivo" : "Activo";
 
     try {
-      await axios.put(
-        `${API_PROFESORES}/${profesor.id}`,
-        {
-          estado: nuevoEstado,
-        }
-      );
+      await axios.put(`${API_PROFESORES}/${profesor.id}`, {
+        estado: nuevoEstado,
+      });
 
       await cargarProfesores();
-
+      setProfesorDetalle(null);
     } catch (error) {
-      console.error(
-        "Error al cambiar estado:",
-        error
-      );
-
-      alert(
-        "No se pudo cambiar el estado del profesor."
-      );
+      console.error("Error al cambiar estado:", error);
+      alert("No se pudo cambiar el estado del profesor.");
     }
   };
 
-  /*
-   * ELIMINAR
-   */
-  const eliminarProfesor = async (
-    id: number
-  ) => {
-    const confirmar =
-      window.confirm(
-        "¿Seguro que deseas eliminar este profesor?"
-      );
-
-    if (!confirmar) {
+  // ELIMINAR
+  const eliminarProfesor = async (id: number) => {
+    if (!window.confirm("¿Seguro que deseas eliminar este profesor?")) {
       return;
     }
 
     try {
-      await axios.delete(
-        `${API_PROFESORES}/${id}`
-      );
+      await axios.delete(`${API_PROFESORES}/${id}`);
 
-      if (
-        profesorEditandoId === id
-      ) {
-        limpiarFormulario();
-      }
-
-      if (
-        profesorDetalle?.id === id
-      ) {
-        setProfesorDetalle(null);
-      }
+      if (profesorEditandoId === id) limpiarFormulario();
+      if (profesorDetalle?.id === id) setProfesorDetalle(null);
 
       await cargarProfesores();
-
-      alert(
-        "Profesor eliminado correctamente."
-      );
-
+      alert("Profesor eliminado correctamente.");
     } catch (error) {
-      console.error(
-        "Error al eliminar profesor:",
-        error
-      );
-
-      alert(
-        "No se pudo eliminar el profesor."
-      );
+      console.error("Error al eliminar profesor:", error);
+      alert("No se pudo eliminar el profesor.");
     }
   };
 
-  /*
-   * FILTRO + BUSCADOR
-   */
-  const profesoresFiltrados =
-    profesores.filter(
-      (profesor) => {
-        const texto =
-          busqueda
-            .trim()
-            .toLowerCase();
+  // FILTROS
+  const profesoresFiltrados = profesores.filter((profesor) => {
+    const texto = busqueda.trim().toLowerCase();
 
-        const coincideSucursal =
-          sucursalFiltro ===
-            "todas" ||
-          profesor.sucursalId ===
-            Number(
-              sucursalFiltro
-            );
+    const coincideSucursal =
+      sucursalFiltro === "todas" ||
+      profesor.sucursalId === Number(sucursalFiltro);
 
-        const coincideBusqueda =
-          !texto ||
+    const coincideEstado =
+      estadoFiltro === "todos" ||
+      profesor.estado === estadoFiltro;
 
-          profesor.nombre
-            .toLowerCase()
-            .includes(texto) ||
+    const contenido = [
+      profesor.nombre,
+      profesor.rut,
+      profesor.email,
+      profesor.telefono ?? "",
+      profesor.especialidad ?? "",
+      profesor.sucursal?.nombre ?? "",
+    ]
+      .join(" ")
+      .toLowerCase();
 
-          profesor.rut
-            .toLowerCase()
-            .includes(texto) ||
-
-          profesor.email
-            .toLowerCase()
-            .includes(texto) ||
-
-          (profesor.telefono ?? "")
-            .toLowerCase()
-            .includes(texto) ||
-
-          (profesor.especialidad ?? "")
-            .toLowerCase()
-            .includes(texto) ||
-
-          (profesor.sucursal?.nombre ?? "")
-            .toLowerCase()
-            .includes(texto);
-
-        return (
-          coincideSucursal &&
-          coincideBusqueda
-        );
-      }
+    return (
+      coincideSucursal &&
+      coincideEstado &&
+      contenido.includes(texto)
     );
+  });
 
-  /*
-   * CONTADORES
-   */
-  const totalPenalolen =
-    profesores.filter(
-      (profesor) =>
-        profesor.sucursalId === 1
-    ).length;
+  const activos = profesores.filter(
+    (profesor) => profesor.estado === "Activo"
+  ).length;
 
-  const totalLaReina =
-    profesores.filter(
-      (profesor) =>
-        profesor.sucursalId === 2
-    ).length;
+  const inactivos = profesores.filter(
+    (profesor) => profesor.estado === "Inactivo"
+  ).length;
 
-  const totalSinSucursal =
-    profesores.filter(
-      (profesor) =>
-        profesor.sucursalId === null
-    ).length;
+  const totalSinSucursal = profesores.filter(
+    (profesor) => profesor.sucursalId === null
+  ).length;
 
-  /*
-   * CARGANDO
-   */
+  const nombreSucursal = (profesor: Profesor) =>
+    profesor.sucursal?.nombre ||
+    sucursales.find((s) => s.id === profesor.sucursalId)?.nombre ||
+    "Sin sucursal";
+
   if (cargando) {
     return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p>
-          Cargando...
-        </p>
+      <main className="flex min-h-screen items-center justify-center bg-black text-white">
+        Cargando...
       </main>
     );
   }
 
-  /*
-   * SIN PERMISOS
-   */
-  if (
-    !usuario ||
-    usuario.rol !== "admin"
-  ) {
+  if (!usuario || usuario.rol !== "admin") {
     return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p>
-          Verificando acceso...
-        </p>
+      <main className="flex min-h-screen items-center justify-center bg-black text-white">
+        Verificando acceso...
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-black text-white p-6 md:p-10">
-
-      {/* HEADER */}
-
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-
-        <div>
-
-          <p className="text-gray-400">
-            Panel administrativo
-          </p>
-
-          <h1 className="text-4xl font-black mt-1">
-
-            Gestión de{" "}
-
-            <span className="text-red-600">
-              Profesores
-            </span>
-
-          </h1>
-
-          <p className="text-gray-400 mt-2">
-            Registra, consulta y administra los profesores de Focus Power Fit.
-          </p>
-
-        </div>
-
-        <Link
-          href="/admin"
-          className="bg-zinc-900 border border-zinc-700 hover:border-red-600 px-5 py-3 rounded-xl font-bold transition"
-        >
-          Volver al panel
-        </Link>
-
-      </header>
-
-      {/* RESUMEN */}
-
-      <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-
-        <Resumen
-          titulo="Total profesores"
-          valor={profesores.length}
-        />
-
-        <Resumen
-          titulo="Peñalolén"
-          valor={totalPenalolen}
-        />
-
-        <Resumen
-          titulo="La Reina"
-          valor={totalLaReina}
-        />
-
-        <Resumen
-          titulo="Sin sucursal"
-          valor={totalSinSucursal}
-        />
-
-      </section>
-
-      {/* FORMULARIO + LISTADO */}
-
-      <section className="grid lg:grid-cols-3 gap-8">
-
-        {/* FORMULARIO */}
-
-        <div>
-
-          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
-
-            <h2 className="text-2xl font-bold mb-2">
-
-              {profesorEditandoId !== null
-                ? "Editar profesor"
-                : "Registrar profesor"}
-
-            </h2>
-
-            {profesorEditandoId !== null ? (
-
-              <p className="text-yellow-500 text-sm mb-6">
-                Estás modificando un profesor existente.
-              </p>
-
-            ) : (
-
-              <p className="text-gray-400 text-sm mb-6">
-                Ingresa los datos del profesor.
-              </p>
-
-            )}
-
-            <form
-              onSubmit={guardarProfesor}
-              className="space-y-5"
+    <main
+      className="min-h-screen px-4 py-8 text-white sm:px-6 lg:px-10"
+      style={{ backgroundColor: colores.fondo }}
+    >
+      <div className="mx-auto max-w-7xl">
+        {/* ENCABEZADO */}
+        <header className="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-center">
+          <div>
+            <p
+              className="mb-2 text-xs font-bold uppercase tracking-[0.25em]"
+              style={{ color: colores.principal }}
             >
+              Panel administrativo
+            </p>
 
+            <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
+              Gestión de{" "}
+              <span style={{ color: colores.principal }}>
+                Profesores
+              </span>
+            </h1>
+
+            <p
+              className="mt-3 max-w-xl text-sm leading-relaxed"
+              style={{ color: colores.secundario }}
+            >
+              Administra el equipo de profesionales, sus
+              especialidades y sucursales.
+            </p>
+          </div>
+
+          <Link
+            href="/admin"
+            className="inline-flex items-center justify-center rounded-xl border px-5 py-3 text-sm font-semibold transition-opacity hover:opacity-80"
+            style={{
+              backgroundColor: colores.superficie,
+              borderColor: colores.borde,
+            }}
+          >
+            ← Volver al panel
+          </Link>
+        </header>
+
+        {/* RESUMEN */}
+        <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <Resumen titulo="Total profesores" valor={profesores.length} />
+          <Resumen titulo="Activos" valor={activos} />
+          <Resumen titulo="Inactivos" valor={inactivos} />
+          <Resumen titulo="Sin sucursal" valor={totalSinSucursal} />
+        </section>
+
+        {errorCarga && (
+          <div
+            role="alert"
+            className="mb-6 rounded-xl border p-4 text-sm"
+            style={{
+              borderColor: colores.principal,
+              backgroundColor: colores.superficie,
+            }}
+          >
+            {errorCarga}
+          </div>
+        )}
+
+        {/* FORMULARIO + LISTADO */}
+        <section className="grid items-start gap-7 xl:grid-cols-[340px_minmax(0,1fr)]">
+          {/* FORMULARIO */}
+          <div
+            className="rounded-2xl border p-6"
+            style={{
+              backgroundColor: colores.superficie,
+              borderColor: colores.borde,
+            }}
+          >
+            <div className="mb-6">
+              <p
+                className="mb-2 text-xs font-bold uppercase tracking-wider"
+                style={{ color: colores.principal }}
+              >
+                {profesorEditandoId !== null
+                  ? "Edición de registro"
+                  : "Nuevo registro"}
+              </p>
+
+              <h2 className="text-xl font-bold">
+                {profesorEditandoId !== null
+                  ? "Editar profesor"
+                  : "Registrar profesor"}
+              </h2>
+
+              <p
+                className="mt-2 text-sm"
+                style={{ color: colores.secundario }}
+              >
+                {profesorEditandoId !== null
+                  ? "Actualiza los datos del profesional."
+                  : "Completa la información del profesional."}
+              </p>
+            </div>
+
+            <form onSubmit={guardarProfesor} className="space-y-4">
               <Campo
                 label="Nombre completo"
                 value={nombre}
@@ -693,488 +489,340 @@ export default function ProfesoresPage() {
                 label="Especialidad"
                 value={especialidad}
                 onChange={setEspecialidad}
-                placeholder="Ej: Personal Training"
+                placeholder="Ej: Entrenamiento funcional"
                 required={false}
               />
 
-              {/* SUCURSAL */}
-
               <div>
-
-                <label className="block mb-2 font-semibold">
+                <label className="mb-2 block text-sm font-semibold">
                   Sucursal
                 </label>
 
                 <select
                   value={sucursalId}
-                  onChange={(e) =>
-                    setSucursalId(
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => setSucursalId(e.target.value)}
                   required
-                  className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
+                  className={campoClase}
+                  style={{ borderColor: colores.borde }}
                 >
-
-                  <option value="">
-                    Seleccionar sucursal
-                  </option>
-
-                  {sucursales.map(
-                    (sucursal) => (
-
-                      <option
-                        key={sucursal.id}
-                        value={sucursal.id}
-                      >
-                        {sucursal.nombre}
-                      </option>
-
-                    )
-                  )}
-
+                  <option value="">Seleccionar sucursal</option>
+                  {sucursales.map((sucursal) => (
+                    <option key={sucursal.id} value={sucursal.id}>
+                      {sucursal.nombre}
+                    </option>
+                  ))}
                 </select>
+              </div>
 
+              {/* FOTOGRAFÍA FUTURA */}
+              <div
+                className="rounded-xl border border-dashed p-4"
+                style={{
+                  borderColor: colores.borde,
+                  backgroundColor: colores.superficie2,
+                }}
+              >
+                <p className="text-sm font-semibold">
+                  Fotografía del profesor
+                </p>
+                <p
+                  className="mt-1 text-xs leading-relaxed"
+                  style={{ color: colores.secundario }}
+                >
+                  Próximamente podrás agregar una fotografía.
+                  Por ahora se mostrará un avatar con iniciales.
+                </p>
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-red-600 hover:bg-red-700 transition py-3 rounded-xl font-bold"
+                disabled={guardando}
+                className="w-full rounded-xl px-5 py-3.5 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: colores.principal }}
               >
-
-                {profesorEditandoId !== null
-                  ? "Guardar cambios"
-                  : "Registrar profesor"}
-
+                {guardando
+                  ? "Guardando..."
+                  : profesorEditandoId !== null
+                    ? "Guardar cambios"
+                    : "Registrar profesor"}
               </button>
 
-              {profesorEditandoId !== null ? (
-
-                <button
-                  type="button"
-                  onClick={
-                    cancelarEdicion
-                  }
-                  className="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 py-3 rounded-xl"
-                >
-                  Cancelar edición
-                </button>
-
-              ) : (
-
-                <button
-                  type="button"
-                  onClick={
-                    limpiarFormulario
-                  }
-                  className="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 py-3 rounded-xl"
-                >
-                  Limpiar formulario
-                </button>
-
-              )}
-
+              <button
+                type="button"
+                onClick={limpiarFormulario}
+                className="w-full rounded-xl border px-5 py-3 text-sm font-semibold transition-opacity hover:opacity-80"
+                style={{
+                  backgroundColor: colores.superficie2,
+                  borderColor: colores.borde,
+                }}
+              >
+                {profesorEditandoId !== null
+                  ? "Cancelar edición"
+                  : "Limpiar formulario"}
+              </button>
             </form>
-
           </div>
 
-        </div>
+          {/* LISTADO */}
+          <div
+            className="min-w-0 overflow-hidden rounded-2xl border"
+            style={{
+              backgroundColor: colores.superficie,
+              borderColor: colores.borde,
+            }}
+          >
+            <div
+              className="border-b p-5 md:p-6"
+              style={{ borderColor: colores.borde }}
+            >
+              <h2 className="text-xl font-bold">
+                Profesores registrados
+              </h2>
 
-        {/* LISTADO */}
+              <p
+                className="mt-1 text-sm"
+                style={{ color: colores.secundario }}
+              >
+                Mostrando {profesoresFiltrados.length} de{" "}
+                {profesores.length} profesores
+              </p>
 
-        <div className="lg:col-span-2">
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <input
+                  type="search"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  placeholder="Buscar profesor..."
+                  aria-label="Buscar profesor"
+                  className={campoClase}
+                  style={{ borderColor: colores.borde }}
+                />
 
-          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden">
-
-            <div className="p-6 border-b border-zinc-800">
-
-              <div className="flex flex-col gap-4">
-
-                <div>
-
-                  <h2 className="text-2xl font-bold">
-                    Profesores registrados
-                  </h2>
-
-                  <p className="text-gray-400 mt-1">
-                    Mostrando:{" "}
-                    {profesoresFiltrados.length}
-                    {" "}de{" "}
-                    {profesores.length}
-                  </p>
-
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-3">
-
-                  <select
-                    value={
-                      sucursalFiltro
-                    }
-                    onChange={(e) =>
-                      setSucursalFiltro(
-                        e.target.value
-                      )
-                    }
-                    className="bg-black border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-red-600"
-                  >
-
-                    <option value="todas">
-                      Todas las sucursales
+                <select
+                  value={sucursalFiltro}
+                  onChange={(e) => setSucursalFiltro(e.target.value)}
+                  aria-label="Filtrar por sucursal"
+                  className={campoClase}
+                  style={{ borderColor: colores.borde }}
+                >
+                  <option value="todas">Todas las sucursales</option>
+                  {sucursales.map((sucursal) => (
+                    <option key={sucursal.id} value={sucursal.id}>
+                      {sucursal.nombre}
                     </option>
+                  ))}
+                </select>
 
-                    {sucursales.map(
-                      (sucursal) => (
-
-                        <option
-                          key={
-                            sucursal.id
-                          }
-                          value={
-                            String(
-                              sucursal.id
-                            )
-                          }
-                        >
-                          {sucursal.nombre}
-                        </option>
-
-                      )
-                    )}
-
-                  </select>
-
-                  <input
-                    type="text"
-                    value={busqueda}
-                    onChange={(e) =>
-                      setBusqueda(
-                        e.target.value
-                      )
-                    }
-                    placeholder="Buscar profesor..."
-                    className="bg-black border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-red-600"
-                  />
-
-                </div>
-
+                <select
+                  value={estadoFiltro}
+                  onChange={(e) => setEstadoFiltro(e.target.value)}
+                  aria-label="Filtrar por estado"
+                  className={campoClase}
+                  style={{ borderColor: colores.borde }}
+                >
+                  <option value="todos">Todos los estados</option>
+                  <option value="Activo">Activos</option>
+                  <option value="Inactivo">Inactivos</option>
+                </select>
               </div>
-
             </div>
 
             {cargandoProfesores ? (
-
-              <div className="p-10 text-center text-gray-400">
+              <p className="p-10 text-center text-sm text-gray-400">
                 Cargando profesores...
-              </div>
-
+              </p>
             ) : profesoresFiltrados.length === 0 ? (
-
-              <div className="p-10 text-center text-gray-400">
-                No se encontraron profesores.
-              </div>
-
-            ) : (
-
-              <div className="overflow-x-auto">
-
-                <table className="w-full text-left">
-
-                  <thead className="bg-zinc-900">
-
-                    <tr>
-
-                      <th className="p-4">
-                        Nombre
-                      </th>
-
-                      <th className="p-4">
-                        RUT
-                      </th>
-
-                      <th className="p-4">
-                        Sucursal
-                      </th>
-
-                      <th className="p-4">
-                        Especialidad
-                      </th>
-
-                      <th className="p-4">
-                        Estado
-                      </th>
-
-                      <th className="p-4">
-                        Acciones
-                      </th>
-
-                    </tr>
-
-                  </thead>
-
-                  <tbody>
-
-                    {profesoresFiltrados.map(
-                      (profesor) => (
-
-                        <tr
-                          key={profesor.id}
-                          className="border-t border-zinc-800 hover:bg-zinc-900/50"
-                        >
-
-                          <td className="p-4">
-
-                            <p className="font-semibold">
-                              {profesor.nombre}
-                            </p>
-
-                            <p className="text-gray-500 text-sm">
-                              {profesor.email}
-                            </p>
-
-                          </td>
-
-                          <td className="p-4 text-gray-300">
-                            {profesor.rut}
-                          </td>
-
-                          <td className="p-4">
-
-                            <span className="text-red-400 font-semibold">
-                              {profesor
-                                .sucursal
-                                ?.nombre ||
-                                "Sin sucursal"}
-                            </span>
-
-                          </td>
-
-                          <td className="p-4 text-gray-300">
-                            {profesor.especialidad ||
-                              "No informada"}
-                          </td>
-
-                          <td className="p-4">
-
-                            <span
-                              className={
-                                profesor.estado ===
-                                "Activo"
-                                  ? "text-green-500 font-bold"
-                                  : "text-gray-500 font-bold"
-                              }
-                            >
-                              {profesor.estado}
-                            </span>
-
-                          </td>
-
-                          <td className="p-4">
-
-                            <div className="flex flex-wrap gap-2">
-
-                              <button
-                                onClick={() =>
-                                  setProfesorDetalle(
-                                    profesor
-                                  )
-                                }
-                                className="border border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-lg transition"
-                              >
-                                Ver
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  editarProfesor(
-                                    profesor
-                                  )
-                                }
-                                className="border border-yellow-600 text-yellow-400 hover:bg-yellow-600 hover:text-black px-3 py-2 rounded-lg transition"
-                              >
-                                Editar
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  cambiarEstado(
-                                    profesor
-                                  )
-                                }
-                                className="border border-red-600 text-red-500 hover:bg-red-600 hover:text-white px-3 py-2 rounded-lg transition"
-                              >
-
-                                {profesor.estado ===
-                                "Activo"
-                                  ? "Desactivar"
-                                  : "Activar"}
-
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  eliminarProfesor(
-                                    profesor.id
-                                  )
-                                }
-                                className="border border-zinc-600 text-gray-300 hover:bg-zinc-800 px-3 py-2 rounded-lg transition"
-                              >
-                                Eliminar
-                              </button>
-
-                            </div>
-
-                          </td>
-
-                        </tr>
-
-                      )
-                    )}
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-            )}
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* DETALLE PROFESOR */}
-
-      {profesorDetalle && (
-
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-
-          <div className="bg-zinc-950 border border-red-600 rounded-2xl max-w-lg w-full p-7">
-
-            <div className="flex items-start justify-between gap-4 mb-6">
-
-              <div>
-
-                <p className="text-gray-400">
-                  Información del profesor
+              <div className="p-10 text-center">
+                <p className="text-lg font-semibold">
+                  No se encontraron profesores
                 </p>
+                <p
+                  className="mt-2 text-sm"
+                  style={{ color: colores.secundario }}
+                >
+                  Prueba con otra búsqueda o revisa los filtros.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 p-4 md:p-6">
+                {profesoresFiltrados.map((profesor) => (
+                  <article
+                    key={profesor.id}
+                    className="rounded-xl border p-4 transition-colors md:p-5"
+                    style={{
+                      backgroundColor: colores.superficie2,
+                      borderColor: colores.borde,
+                    }}
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                      <AvatarProfesor nombre={profesor.nombre} />
 
-                <h2 className="text-3xl font-black">
-                  {profesorDetalle.nombre}
-                </h2>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <h3 className="break-words text-lg font-bold">
+                            {profesor.nombre}
+                          </h3>
 
+                          <span
+                            className="rounded-full border px-3 py-1 text-xs font-semibold"
+                            style={{
+                              borderColor: colores.borde,
+                              backgroundColor:
+                                profesor.estado === "Activo"
+                                  ? colores.principal
+                                  : colores.superficie,
+                              color: "#ffffff",
+                            }}
+                          >
+                            {profesor.estado}
+                          </span>
+                        </div>
+
+                        <p
+                          className="mt-1 break-all text-sm"
+                          style={{ color: colores.secundario }}
+                        >
+                          {profesor.email}
+                        </p>
+
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                          <Dato
+                            titulo="Especialidad"
+                            valor={profesor.especialidad || "No informada"}
+                          />
+                          <Dato
+                            titulo="Sucursal"
+                            valor={nombreSucursal(profesor)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      className="mt-5 flex flex-wrap gap-2 border-t pt-4"
+                      style={{ borderColor: colores.borde }}
+                    >
+                      <Accion
+                        texto="Ver detalles"
+                        onClick={() => setProfesorDetalle(profesor)}
+                      />
+                      <Accion
+                        texto="Editar"
+                        onClick={() => editarProfesor(profesor)}
+                      />
+                      <Accion
+                        texto={
+                          profesor.estado === "Activo"
+                            ? "Desactivar"
+                            : "Activar"
+                        }
+                        onClick={() => cambiarEstado(profesor)}
+                      />
+                      <Accion
+                        texto="Eliminar"
+                        onClick={() => eliminarProfesor(profesor.id)}
+                        peligro
+                      />
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      {/* MODAL DE DETALLES */}
+      {profesorDetalle && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setProfesorDetalle(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-profesor"
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border p-6 md:p-8"
+            style={{
+              backgroundColor: colores.superficie,
+              borderColor: colores.borde,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <AvatarProfesor
+                  nombre={profesorDetalle.nombre}
+                  grande
+                />
+
+                <div>
+                  <p
+                    className="text-xs font-semibold uppercase tracking-wider"
+                    style={{ color: colores.principal }}
+                  >
+                    Perfil del profesor
+                  </p>
+
+                  <h2
+                    id="titulo-profesor"
+                    className="mt-1 text-xl font-bold"
+                  >
+                    {profesorDetalle.nombre}
+                  </h2>
+                </div>
               </div>
 
               <button
-                onClick={() =>
-                  setProfesorDetalle(null)
-                }
-                className="text-gray-400 hover:text-white text-2xl"
+                type="button"
+                onClick={() => setProfesorDetalle(null)}
+                aria-label="Cerrar detalles"
+                className="text-xl text-gray-400 hover:text-white"
               >
                 ✕
               </button>
-
             </div>
 
-            <div className="space-y-4">
-
-              <Detalle
-                titulo="RUT"
-                valor={
-                  profesorDetalle.rut
-                }
-              />
-
-              <Detalle
-                titulo="Correo electrónico"
-                valor={
-                  profesorDetalle.email
-                }
-              />
-
-              <Detalle
-                titulo="Teléfono"
-                valor={
-                  profesorDetalle.telefono
-                }
-              />
-
-              <Detalle
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Dato titulo="RUT" valor={profesorDetalle.rut} />
+              <Dato titulo="Correo" valor={profesorDetalle.email} />
+              <Dato titulo="Teléfono" valor={profesorDetalle.telefono} />
+              <Dato
                 titulo="Especialidad"
-                valor={
-                  profesorDetalle.especialidad
-                }
+                valor={profesorDetalle.especialidad}
               />
-
-              <Detalle
+              <Dato
                 titulo="Sucursal"
-                valor={
-                  profesorDetalle
-                    .sucursal
-                    ?.nombre
-                }
+                valor={nombreSucursal(profesorDetalle)}
               />
-
-              <Detalle
-                titulo="Estado"
-                valor={
-                  profesorDetalle.estado
-                }
-              />
-
+              <Dato titulo="Estado" valor={profesorDetalle.estado} />
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-7">
-
+            <div className="mt-7 grid grid-cols-2 gap-3">
               <button
-                onClick={() => {
-                  editarProfesor(
-                    profesorDetalle
-                  );
-
-                  setProfesorDetalle(
-                    null
-                  );
-                }}
-                className="bg-red-600 hover:bg-red-700 py-3 rounded-xl font-bold"
+                type="button"
+                onClick={() => editarProfesor(profesorDetalle)}
+                className="rounded-xl px-4 py-3 text-sm font-bold text-white"
+                style={{ backgroundColor: colores.principal }}
               >
                 Editar profesor
               </button>
 
               <button
-                onClick={() =>
-                  setProfesorDetalle(null)
-                }
-                className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 py-3 rounded-xl"
+                type="button"
+                onClick={() => setProfesorDetalle(null)}
+                className="rounded-xl border px-4 py-3 text-sm font-semibold"
+                style={{
+                  borderColor: colores.borde,
+                  backgroundColor: colores.superficie2,
+                }}
               >
                 Cerrar
               </button>
-
             </div>
-
           </div>
-
         </div>
-
       )}
-
-      {/* BASE DE DATOS */}
-
-      <section className="mt-8 bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
-
-        <h2 className="text-xl text-red-500 font-bold mb-2">
-          Base de datos
-        </h2>
-
-        <p className="text-gray-400">
-          Los profesores se almacenan en MySQL y
-          pueden asociarse a su sucursal correspondiente.
-        </p>
-
-      </section>
-
     </main>
   );
 }
@@ -1189,58 +837,26 @@ function Campo({
 }: {
   label: string;
   value: string;
-  onChange: (
-    value: string
-  ) => void;
+  onChange: (value: string) => void;
   type?: string;
   placeholder?: string;
   required?: boolean;
 }) {
   return (
     <div>
-
-      <label className="block mb-2 font-semibold">
+      <label className="mb-2 block text-sm font-semibold">
         {label}
       </label>
 
       <input
         type={type}
         value={value}
-        onChange={(e) =>
-          onChange(
-            e.target.value
-          )
-        }
+        onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
+        className={campoClase}
+        style={{ borderColor: colores.borde }}
       />
-
-    </div>
-  );
-}
-
-function Detalle({
-  titulo,
-  valor,
-}: {
-  titulo: string;
-  valor:
-    | string
-    | null
-    | undefined;
-}) {
-  return (
-    <div className="bg-black border border-zinc-800 rounded-xl p-4">
-
-      <p className="text-gray-500 text-sm mb-1">
-        {titulo}
-      </p>
-
-      <p className="font-semibold">
-        {valor || "No informado"}
-      </p>
-
     </div>
   );
 }
@@ -1253,16 +869,76 @@ function Resumen({
   valor: number;
 }) {
   return (
-    <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5">
-
-      <p className="text-gray-400">
+    <div
+      className="rounded-2xl border p-5"
+      style={{
+        backgroundColor: colores.superficie,
+        borderColor: colores.borde,
+      }}
+    >
+      <p
+        className="text-sm"
+        style={{ color: colores.secundario }}
+      >
         {titulo}
       </p>
 
-      <p className="text-3xl font-black text-red-500 mt-1">
+      <p
+        className="mt-2 text-3xl font-black"
+        style={{ color: colores.principal }}
+      >
         {valor}
       </p>
-
     </div>
+  );
+}
+
+function Dato({
+  titulo,
+  valor,
+}: {
+  titulo: string;
+  valor: string | null | undefined;
+}) {
+  return (
+    <div>
+      <p
+        className="mb-1 text-xs uppercase tracking-wider"
+        style={{ color: colores.secundario }}
+      >
+        {titulo}
+      </p>
+
+      <p className="break-words text-sm font-semibold">
+        {valor || "No informado"}
+      </p>
+    </div>
+  );
+}
+
+function Accion({
+  texto,
+  onClick,
+  peligro = false,
+}: {
+  texto: string;
+  onClick: () => void;
+  peligro?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-lg border px-3 py-2 text-xs font-semibold transition-opacity hover:opacity-75"
+      style={{
+        borderColor: peligro ? colores.principal : colores.borde,
+        color: peligro ? "#ffffff" : colores.secundario,
+        backgroundColor: peligro
+          ? colores.principal
+          : colores.superficie,
+      }}
+    >
+      {texto}
+    </button>
   );
 }
