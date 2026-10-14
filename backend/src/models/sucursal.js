@@ -11,27 +11,18 @@ const Sucursal = sequelize.define(
     },
 
     nombre: {
-      type: DataTypes.STRING(120),
+      type: DataTypes.STRING(100),
       allowNull: false,
+      unique: true,
     },
 
     direccion: {
-      type: DataTypes.STRING(200),
-      allowNull: false,
+      type: DataTypes.STRING(255),
+      allowNull: true,
     },
 
     comuna: {
       type: DataTypes.STRING(100),
-      allowNull: false,
-    },
-
-    ciudad: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-    },
-
-    horarioAtencion: {
-      type: DataTypes.STRING(200),
       allowNull: false,
     },
 
@@ -41,9 +32,12 @@ const Sucursal = sequelize.define(
     },
 
     estado: {
-      type: DataTypes.ENUM("Activo", "Inactivo"),
+      type: DataTypes.ENUM(
+        "Activa",
+        "Inactiva"
+      ),
       allowNull: false,
-      defaultValue: "Activo",
+      defaultValue: "Activa",
     },
   },
   {

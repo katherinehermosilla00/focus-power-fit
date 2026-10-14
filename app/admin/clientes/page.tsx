@@ -1,1007 +1,978 @@
+
 "use client";
+
+import "../admin.css";
 
 import {
   FormEvent,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from "react";
-
 import axios from "axios";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../auth/AuthContext";
-import AdminSectionHeader from "../components/AdminSectionHeader";
 
 type EstadoCliente = "Activo" | "Inactivo";
 
-type Cliente = {
+type Sucursal = {
   id: number;
   nombre: string;
-  rut: string;
-  email: string;
-  telefono: string;
-  plan: string;
-  estado: EstadoCliente;
+  comuna: string | null;
+  estado: "Activa" | "Inactiva";
 };
 
-const API_URL =
-  "http://localhost:3001/api/clientes";
+type Cliente = {
+  id: number;
+  sucursalId: number | null;
+  numeroCliente: string | null;
+  nombres: string | null;
+  apellidos: string | null;
+  nombre: string;
+  rut: string | null;
+  email: string | null;
+  telefono: string | null;
+  telefonoSecundario: string | null;
+  direccion: string | null;
+  comuna: string | null;
+  ciudad: string | null;
+  edad: number | null;
+  genero: string | null;
+  fechaNacimiento: string | null;
+  fechaCreacionOrigen: string | null;
+  plan: string | null;
+  estado: EstadoCliente;
+  sucursal?: Sucursal | null;
+};
+
+const API_CLIENTES = "http://localhost:3001/api/clientes";
+const API_SUCURSALES = "http://localhost:3001/api/sucursales";
+const POR_PAGINA = 20;
+
+const api = axios.create();
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("focusPowerFitToken");
+
+  if (!token) {
+    return Promise.reject(
+      new Error("Sesión no disponible. Inicia sesión nuevamente.")
+    );
+  }
+
+  config.headers.set("Authorization", `Bearer ${token}`);
+  return config;
+});
 
 export default function ClientesPage() {
   const router = useRouter();
+  const { usuario, cargando } = useAuth();
 
-  const {
-    usuario,
-    cargando,
-    token,
-  } = useAuth();
+  const formularioRef = useRef<HTMLDivElement>(null);
 
-  const [clientes, setClientes] =
-    useState<Cliente[]>([]);
+  // DATOS
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
+  const [cargandoClientes, setCargandoClientes] = useState(true);
+  const [guardando, setGuardando] = useState(false);
 
-  const [nombre, setNombre] =
-    useState("");
+  // FORMULARIO
+  const [nombre, setNombre] = useState("");
+  const [rut, setRut] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [plan, setPlan] = useState("");
+  const [sucursalId, setSucursalId] = useState("");
 
-  const [rut, setRut] =
-    useState("");
+  // FILTROS Y PAGINACIÓN
+  const [busqueda, setBusqueda] = useState(() => {
+    if (typeof window === "undefined") return "";
 
-  const [email, setEmail] =
-    useState("");
+    return (
+      new URLSearchParams(window.location.search).get("buscar") ?? ""
+    );
+  });
 
-  const [telefono, setTelefono] =
-    useState("");
+  const [sucursalFiltro, setSucursalFiltro] = useState("todas");
+  const [pagina, setPagina] = useState(1);
 
-  const [plan, setPlan] =
-    useState("");
+  // EDICIÓN Y DETALLE
+  const [clienteEditandoId, setClienteEditandoId] = useState<
+    number | null
+  >(null);
 
-  const [busqueda, setBusqueda] =
-    useState("");
+  const [clienteDetalle, setClienteDetalle] = useState<
+    Cliente | null
+  >(null);
 
-  const [clienteEditandoId, setClienteEditandoId] =
-    useState<number | null>(null);
-
-  const [clienteDetalle, setClienteDetalle] =
-    useState<Cliente | null>(null);
-
-  const [cargandoClientes, setCargandoClientes] =
-    useState(true);
-
-  const configAutenticacion = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  /*
-   * PROTECCIÓN DE RUTA
-   */
+  // PROTECCIÓN DE RUTA
   useEffect(() => {
-    if (cargando) {
-      return;
-    }
+    if (cargando) return;
 
     if (!usuario) {
       router.replace("/login");
-      return;
-    }
-
-    if (usuario.rol !== "admin") {
+    } else if (usuario.rol !== "admin") {
       router.replace("/mi-cuenta");
     }
-  }, [
-    usuario,
-    cargando,
-    router,
-  ]);
+  }, [cargando, usuario, router]);
 
-  /*
-   * CARGAR CLIENTES DESDE MYSQL
-   */
+  // CARGAR CLIENTES Y SUCURSALES
   useEffect(() => {
-    if (
-      cargando ||
-      !usuario ||
-      usuario.rol !== "admin"
-    ) {
-      return;
-    }
+    if (cargando || !usuario || usuario.rol !== "admin") return;
 
-    const cargarClientes = async () => {
+    let activo = true;
+
+    const cargarDatos = async () => {
       try {
         setCargandoClientes(true);
 
-        const respuesta =
-          await axios.get<Cliente[]>(
-            API_URL,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+        const [respuestaClientes, respuestaSucursales] =
+          await Promise.all([
+            api.get<Cliente[]>(API_CLIENTES),
+            api.get<Sucursal[]>(API_SUCURSALES),
+          ]);
 
-        setClientes(
-          respuesta.data
-        );
+        if (activo) {
+          setClientes(respuestaClientes.data);
+          setSucursales(respuestaSucursales.data);
+        }
       } catch (error) {
-        console.error(
-          "Error al cargar clientes:",
-          error
-        );
+        console.error("Error al cargar datos:", error);
 
-        alert(
-          "No se pudieron cargar los clientes."
-        );
+        if (activo) {
+          alert(
+            "No se pudieron cargar los clientes o las sucursales."
+          );
+        }
       } finally {
-        setCargandoClientes(false);
+        if (activo) {
+          setCargandoClientes(false);
+        }
       }
     };
 
-    cargarClientes();
-  }, [
-    cargando,
-    usuario,
-    token,
-  ]);
+    void cargarDatos();
 
-  /*
-   * RECARGAR CLIENTES
-   */
+    return () => {
+      activo = false;
+    };
+  }, [cargando, usuario]);
+
+  // ACTUALIZAR LISTADO
   const cargarClientes = async () => {
     try {
-      const respuesta =
-        await axios.get<Cliente[]>(
-          API_URL,
-          configAutenticacion
-        );
-
-      setClientes(
-        respuesta.data
-      );
+      const respuesta = await api.get<Cliente[]>(API_CLIENTES);
+      setClientes(respuesta.data);
     } catch (error) {
-      console.error(
-        "Error al cargar clientes:",
-        error
-      );
+      console.error("Error al cargar clientes:", error);
+      alert("No se pudo actualizar el listado de clientes.");
     }
   };
 
-  /*
-   * LIMPIAR FORMULARIO
-   */
+  // LIMPIAR FORMULARIO
   const limpiarFormulario = () => {
     setNombre("");
     setRut("");
     setEmail("");
     setTelefono("");
     setPlan("");
+    setSucursalId("");
     setClienteEditandoId(null);
   };
 
-  /*
-   * REGISTRAR O EDITAR CLIENTE
-   */
+  // REGISTRAR O EDITAR CLIENTE
   const guardarCliente = async (
     e: FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
 
-    /*
-     * Validar correo duplicado
-     */
-    const correoExiste = clientes.some(
-      (cliente) =>
-        cliente.email.toLowerCase() ===
-          email.toLowerCase() &&
-        cliente.id !== clienteEditandoId
-    );
-
-    if (correoExiste) {
-      alert(
-        "Ya existe un cliente con ese correo."
-      );
+    if (!nombre.trim()) {
+      alert("Debes ingresar el nombre del cliente.");
       return;
     }
 
-    /*
-     * Validar RUT duplicado
-     */
-    const rutExiste = clientes.some(
-      (cliente) =>
-        cliente.rut.toLowerCase() ===
-          rut.toLowerCase() &&
-        cliente.id !== clienteEditandoId
-    );
-
-    if (rutExiste) {
-      alert(
-        "Ya existe un cliente con ese RUT."
-      );
+    if (!sucursalId) {
+      alert("Debes seleccionar una sucursal.");
       return;
     }
+
+    const datosCliente = {
+      nombre: nombre.trim(),
+      nombres: nombre.trim(),
+      rut: rut.trim() || null,
+      email: email.trim() || null,
+      telefono: telefono.trim() || null,
+      plan: plan || null,
+      sucursalId: Number(sucursalId),
+    };
 
     try {
-      /*
-       * EDITAR CLIENTE
-       */
-      if (
-        clienteEditandoId !== null
-      ) {
-        await axios.put(
-          `${API_URL}/${clienteEditandoId}`,
-          {
-            nombre,
-            rut,
-            email,
-            telefono,
-            plan,
-          },
-          configAutenticacion
+      setGuardando(true);
+
+      if (clienteEditandoId !== null) {
+        await api.put(
+          `${API_CLIENTES}/${clienteEditandoId}`,
+          datosCliente
         );
 
-        alert(
-          "Cliente actualizado correctamente."
-        );
+        alert("Cliente actualizado correctamente.");
+      } else {
+        await api.post(API_CLIENTES, datosCliente);
 
-        limpiarFormulario();
-
-        await cargarClientes();
-
-        return;
+        alert("Cliente registrado correctamente.");
       }
 
-      /*
-       * CREAR CLIENTE
-       */
-      await axios.post(
-        API_URL,
-        {
-          nombre,
-          rut,
-          email,
-          telefono,
-          plan,
-        },
-        configAutenticacion
-      );
-
-      alert(
-        "Cliente registrado correctamente."
-      );
-
       limpiarFormulario();
-
       await cargarClientes();
-
     } catch (error) {
-      console.error(
-        "Error al guardar cliente:",
-        error
-      );
-
-      alert(
-        "Ocurrió un error al guardar el cliente."
-      );
+      console.error("Error al guardar cliente:", error);
+      alert("Ocurrió un error al guardar el cliente.");
+    } finally {
+      setGuardando(false);
     }
   };
 
-  /*
-   * CARGAR CLIENTE EN FORMULARIO
-   */
-  const editarCliente = (
-    cliente: Cliente
-  ) => {
-    setNombre(cliente.nombre);
-    setRut(cliente.rut);
-    setEmail(cliente.email);
-    setTelefono(cliente.telefono);
-    setPlan(cliente.plan);
+  // EDITAR CLIENTE
+  const editarCliente = (cliente: Cliente) => {
+    setNombre(cliente.nombre ?? "");
+    setRut(cliente.rut ?? "");
+    setEmail(cliente.email ?? "");
+    setTelefono(cliente.telefono ?? "");
+    setPlan(cliente.plan ?? "");
 
-    setClienteEditandoId(
-      cliente.id
+    setSucursalId(
+      cliente.sucursalId !== null
+        ? String(cliente.sucursalId)
+        : ""
     );
 
-    window.scrollTo({
-      top: 0,
+    setClienteEditandoId(cliente.id);
+
+    formularioRef.current?.scrollIntoView({
       behavior: "smooth",
+      block: "start",
     });
   };
 
-  const cancelarEdicion = () => {
-    limpiarFormulario();
-  };
-
-  /*
-   * ACTIVAR / DESACTIVAR
-   */
-  const cambiarEstado = async (
-    cliente: Cliente
-  ) => {
-    const nuevoEstado:
-      EstadoCliente =
-        cliente.estado === "Activo"
-          ? "Inactivo"
-          : "Activo";
+  // ACTIVAR O DESACTIVAR
+  const cambiarEstado = async (cliente: Cliente) => {
+    const nuevoEstado: EstadoCliente =
+      cliente.estado === "Activo" ? "Inactivo" : "Activo";
 
     try {
-      await axios.put(
-        `${API_URL}/${cliente.id}`,
-        {
-          estado: nuevoEstado,
-        },
-        configAutenticacion
-      );
+      await api.put(`${API_CLIENTES}/${cliente.id}`, {
+        estado: nuevoEstado,
+      });
 
       await cargarClientes();
-
     } catch (error) {
-      console.error(
-        "Error al cambiar estado:",
-        error
-      );
-
-      alert(
-        "No se pudo cambiar el estado del cliente."
-      );
+      console.error("Error al cambiar estado:", error);
+      alert("No se pudo cambiar el estado del cliente.");
     }
   };
 
-  /*
-   * ELIMINAR CLIENTE
-   */
-  const eliminarCliente = async (
-    id: number
-  ) => {
-    const confirmar =
-      window.confirm(
-        "¿Seguro que deseas eliminar este cliente?"
-      );
+  // ELIMINAR CLIENTE
+  const eliminarCliente = async (id: number) => {
+    const confirmado = window.confirm(
+      "¿Seguro que deseas eliminar este cliente?"
+    );
 
-    if (!confirmar) {
-      return;
-    }
+    if (!confirmado) return;
 
     try {
-      await axios.delete(
-        `${API_URL}/${id}`,
-        configAutenticacion
-      );
+      await api.delete(`${API_CLIENTES}/${id}`);
 
-      if (
-        clienteEditandoId === id
-      ) {
+      if (clienteEditandoId === id) {
         limpiarFormulario();
       }
 
-      if (
-        clienteDetalle?.id === id
-      ) {
+      if (clienteDetalle?.id === id) {
         setClienteDetalle(null);
       }
 
       await cargarClientes();
 
-      alert(
-        "Cliente eliminado correctamente."
-      );
-
+      alert("Cliente eliminado correctamente.");
     } catch (error) {
-      console.error(
-        "Error al eliminar cliente:",
-        error
-      );
-
-      alert(
-        "No se pudo eliminar el cliente."
-      );
+      console.error("Error al eliminar cliente:", error);
+      alert("No se pudo eliminar el cliente.");
     }
   };
 
-  /*
-   * BUSCADOR
-   */
-  const clientesFiltrados =
-    clientes.filter(
-      (cliente) => {
-        const texto =
-          busqueda
-            .trim()
-            .toLowerCase();
+  // FILTRAR CLIENTES
+  const clientesFiltrados = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase();
 
-        return (
-          cliente.nombre
-            .toLowerCase()
-            .includes(texto) ||
+    return clientes.filter((cliente) => {
+      const coincideSucursal =
+        sucursalFiltro === "todas" ||
+        cliente.sucursalId === Number(sucursalFiltro);
 
-          cliente.rut
-            .toLowerCase()
-            .includes(texto) ||
-
-          cliente.email
-            .toLowerCase()
-            .includes(texto) ||
-
-          cliente.telefono
-            .toLowerCase()
-            .includes(texto) ||
-
-          cliente.plan
-            .toLowerCase()
-            .includes(texto)
+      const coincideBusqueda =
+        !texto ||
+        [
+          cliente.nombre,
+          cliente.rut,
+          cliente.email,
+          cliente.telefono,
+          cliente.plan,
+          cliente.numeroCliente,
+          cliente.sucursal?.nombre,
+        ].some((valor) =>
+          (valor ?? "").toLowerCase().includes(texto)
         );
-      }
-    );
 
-  /*
-   * CARGANDO AUTENTICACIÓN
-   */
-  if (cargando) {
-    return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p>
-          Cargando...
-        </p>
-      </main>
-    );
-  }
+      return coincideSucursal && coincideBusqueda;
+    });
+  }, [clientes, busqueda, sucursalFiltro]);
 
-  /*
-   * SIN PERMISOS
-   */
-  if (
-    !usuario ||
-    usuario.rol !== "admin"
-  ) {
+  // PAGINACIÓN
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(clientesFiltrados.length / POR_PAGINA)
+  );
+
+  const paginaActual = Math.min(pagina, totalPaginas);
+
+  const clientesPagina = clientesFiltrados.slice(
+    (paginaActual - 1) * POR_PAGINA,
+    paginaActual * POR_PAGINA
+  );
+
+  // CONTADORES REALES
+  const totalPenalolen = clientes.filter(
+    (cliente) => cliente.sucursalId === 1
+  ).length;
+
+  const totalLaReina = clientes.filter(
+    (cliente) => cliente.sucursalId === 2
+  ).length;
+
+  // CONTROL DE ACCESO
+  if (cargando || !usuario || usuario.rol !== "admin") {
     return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p>
-          Verificando acceso...
-        </p>
+      <main className="cargando">
+        {cargando ? "Cargando..." : "Verificando acceso..."}
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#080808] text-white p-6 md:p-10">
-      <AdminSectionHeader
-        titulo="Gestión de"
-        destacado="Clientes"
-        descripcion="Registra, consulta y administra los clientes de Focus Power Fit."
-      />
-
-      {/* FORMULARIO + LISTADO */}
-
-      <section className="grid lg:grid-cols-3 gap-8">
-
-        {/* FORMULARIO */}
-
+    <main className="admin-clientes">
+      {/* ENCABEZADO */}
+      <header className="clientes-encabezado">
         <div>
+          <p className="clientes-etiqueta">
+            PANEL ADMINISTRATIVO / CLIENTES
+          </p>
 
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6 sm:p-8">
+          <h1>
+            Gestión de <span>Clientes</span>
+          </h1>
 
-            <h2 className="text-2xl font-bold mb-2">
+          <p className="clientes-subtitulo">
+            Registra, consulta y administra los clientes de
+            Focus Power Fit.
+          </p>
+        </div>
 
+        <Link href="/admin" className="clientes-volver">
+          ← Volver al panel
+        </Link>
+      </header>
+
+      {/* TARJETAS DE RESUMEN */}
+      <section
+        className="clientes-resumen"
+        aria-label="Resumen de clientes"
+      >
+        <Resumen
+          titulo="Total de clientes"
+          valor={clientes.length}
+          detalle="En todas las sucursales"
+        />
+
+        <Resumen
+          titulo="Peñalolén"
+          valor={totalPenalolen}
+          detalle="Clientes de la sucursal"
+        />
+
+        <Resumen
+          titulo="La Reina"
+          valor={totalLaReina}
+          detalle="Clientes de la sucursal"
+        />
+      </section>
+
+      {/* FORMULARIO Y DIRECTORIO */}
+      <section className="clientes-distribucion">
+        {/* FORMULARIO */}
+        <div
+          className="clientes-formulario-panel"
+          ref={formularioRef}
+        >
+          <div className="clientes-panel-titulo">
+            <p className="clientes-etiqueta">FORMULARIO</p>
+
+            <h2>
               {clienteEditandoId !== null
                 ? "Editar cliente"
                 : "Registrar cliente"}
-
             </h2>
 
-            {clienteEditandoId !== null && (
-              <p className="text-yellow-500 text-sm mb-6">
-                Estás modificando un cliente existente.
-              </p>
-            )}
-
-            {clienteEditandoId === null && (
-              <p className="text-gray-400 text-sm mb-6">
-                Ingresa los datos del cliente.
-              </p>
-            )}
-
-            <form
-              onSubmit={guardarCliente}
-              className="space-y-5"
-            >
-
-              <Campo
-                label="Nombre completo"
-                value={nombre}
-                onChange={setNombre}
-                placeholder="Ej: Juan Pérez"
-              />
-
-              <Campo
-                label="RUT"
-                value={rut}
-                onChange={setRut}
-                placeholder="Ej: 12.345.678-9"
-              />
-
-              <Campo
-                label="Correo electrónico"
-                value={email}
-                onChange={setEmail}
-                type="email"
-                placeholder="correo@ejemplo.cl"
-              />
-
-              <Campo
-                label="Teléfono"
-                value={telefono}
-                onChange={setTelefono}
-                placeholder="+56 9 1234 5678"
-              />
-
-              <div>
-
-                <label className="block mb-2 font-semibold">
-                  Plan
-                </label>
-
-                <select
-                  value={plan}
-                  onChange={(e) =>
-                    setPlan(
-                      e.target.value
-                    )
-                  }
-                  required
-                  className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
-                >
-
-                  <option value="">
-                    Seleccionar plan
-                  </option>
-
-                  <option value="Personal Training">
-                    Personal Training
-                  </option>
-
-                  <option value="Plan Mensual">
-                    Plan Mensual
-                  </option>
-
-                  <option value="Plan Trimestral">
-                    Plan Trimestral
-                  </option>
-
-                  <option value="Plan Semestral">
-                    Plan Semestral
-                  </option>
-
-                </select>
-
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-red-600 hover:bg-red-700 transition py-3 rounded-xl font-bold"
-              >
-
-                {clienteEditandoId !== null
-                  ? "Guardar cambios"
-                  : "Registrar cliente"}
-
-              </button>
-
-              {clienteEditandoId !== null ? (
-
-                <button
-                  type="button"
-                  onClick={
-                    cancelarEdicion
-                  }
-                  className="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 py-3 rounded-xl"
-                >
-                  Cancelar edición
-                </button>
-
-              ) : (
-
-                <button
-                  type="button"
-                  onClick={
-                    limpiarFormulario
-                  }
-                  className="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 py-3 rounded-xl"
-                >
-                  Limpiar formulario
-                </button>
-
-              )}
-
-            </form>
-
+            <p>
+              {clienteEditandoId !== null
+                ? "Estás modificando un cliente existente."
+                : "Ingresa los datos principales del cliente."}
+            </p>
           </div>
 
-        </div>
+          <form
+            onSubmit={guardarCliente}
+            className="clientes-formulario"
+          >
+            <Campo
+              label="Nombre completo"
+              value={nombre}
+              onChange={setNombre}
+              placeholder="Ej: Juan Pérez"
+            />
 
-        {/* LISTADO */}
+            <Campo
+              label="RUT"
+              value={rut}
+              onChange={setRut}
+              placeholder="Ej: 12.345.678-9"
+              required={false}
+            />
 
-        <div className="lg:col-span-2">
+            <Campo
+              label="Correo electrónico"
+              value={email}
+              onChange={setEmail}
+              type="email"
+              placeholder="correo@ejemplo.cl"
+              required={false}
+            />
 
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950">
+            <Campo
+              label="Teléfono"
+              value={telefono}
+              onChange={setTelefono}
+              placeholder="+56 9 1234 5678"
+              required={false}
+            />
 
-            <div className="p-6 border-b border-zinc-800">
+            <div className="clientes-campo">
+              <label htmlFor="cliente-sucursal">
+                Sucursal <span>*</span>
+              </label>
 
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <select
+                id="cliente-sucursal"
+                value={sucursalId}
+                onChange={(e) =>
+                  setSucursalId(e.target.value)
+                }
+                required
+              >
+                <option value="">
+                  Seleccionar sucursal
+                </option>
 
-                <div>
-
-                  <h2 className="text-2xl font-bold">
-                    Clientes registrados
-                  </h2>
-
-                  <p className="text-gray-400 mt-1">
-                    Total: {clientes.length}
-                  </p>
-
-                </div>
-
-                <input
-                  type="text"
-                  value={busqueda}
-                  onChange={(e) =>
-                    setBusqueda(
-                      e.target.value
-                    )
-                  }
-                  placeholder="Buscar cliente..."
-                  className="bg-black border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-red-600"
-                />
-
-              </div>
-
+                {sucursales.map((sucursal) => (
+                  <option
+                    key={sucursal.id}
+                    value={sucursal.id}
+                  >
+                    {sucursal.nombre}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {cargandoClientes ? (
+            <div className="clientes-campo">
+              <label htmlFor="cliente-plan">Plan</label>
 
-              <div className="p-10 text-center text-gray-400">
-                Cargando clientes...
-              </div>
+              <select
+                id="cliente-plan"
+                value={plan}
+                onChange={(e) => setPlan(e.target.value)}
+              >
+                <option value="">Sin plan asignado</option>
+                <option value="Personal Training">
+                  Personal Training
+                </option>
+                <option value="Plan Mensual">
+                  Plan Mensual
+                </option>
+                <option value="Plan Trimestral">
+                  Plan Trimestral
+                </option>
+                <option value="Plan Semestral">
+                  Plan Semestral
+                </option>
+              </select>
+            </div>
 
-            ) : clientesFiltrados.length === 0 ? (
+            <div className="clientes-formulario-acciones">
+              <button
+                type="submit"
+                className="clientes-boton-primario"
+                disabled={guardando}
+              >
+                {guardando
+                  ? "Guardando..."
+                  : clienteEditandoId !== null
+                    ? "Guardar cambios"
+                    : "Registrar cliente"}
+              </button>
 
-              <div className="p-10 text-center text-gray-400">
-                No se encontraron clientes.
-              </div>
+              <button
+                type="button"
+                className="clientes-boton-secundario"
+                onClick={limpiarFormulario}
+                disabled={guardando}
+              >
+                {clienteEditandoId !== null
+                  ? "Cancelar edición"
+                  : "Limpiar formulario"}
+              </button>
+            </div>
+          </form>
+        </div>
 
-            ) : (
+        {/* DIRECTORIO */}
+        <div className="clientes-listado-panel">
+          <div className="clientes-listado-cabecera">
+            <div>
+              <p className="clientes-etiqueta">DIRECTORIO</p>
 
-              <div className="overflow-x-auto">
+              <h2>Clientes registrados</h2>
 
-                <table className="w-full text-left">
+              <p>
+                Mostrando {clientesFiltrados.length} de{" "}
+                {clientes.length} clientes
+              </p>
+            </div>
 
-                  <thead className="bg-zinc-900">
+            <div className="clientes-filtros">
+              <select
+                aria-label="Filtrar por sucursal"
+                value={sucursalFiltro}
+                onChange={(e) => {
+                  setSucursalFiltro(e.target.value);
+                  setPagina(1);
+                }}
+              >
+                <option value="todas">
+                  Todas las sucursales
+                </option>
 
+                {sucursales.map((sucursal) => (
+                  <option
+                    key={sucursal.id}
+                    value={String(sucursal.id)}
+                  >
+                    {sucursal.nombre}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="search"
+                aria-label="Buscar cliente"
+                value={busqueda}
+                onChange={(e) => {
+                  setBusqueda(e.target.value);
+                  setPagina(1);
+                }}
+                placeholder="Buscar nombre, RUT, correo..."
+              />
+            </div>
+          </div>
+
+          {cargandoClientes ? (
+            <div className="clientes-vacio">
+              Cargando clientes...
+            </div>
+          ) : clientesFiltrados.length === 0 ? (
+            <div className="clientes-vacio">
+              No se encontraron clientes con estos filtros.
+            </div>
+          ) : (
+            <>
+              <div className="clientes-tabla-scroll">
+                <table className="clientes-tabla">
+                  <thead>
                     <tr>
-
-                      <th className="p-4">
-                        Nombre
-                      </th>
-
-                      <th className="p-4">
-                        RUT
-                      </th>
-
-                      <th className="p-4">
-                        Plan
-                      </th>
-
-                      <th className="p-4">
-                        Estado
-                      </th>
-
-                      <th className="p-4">
-                        Acciones
-                      </th>
-
+                      <th>Cliente</th>
+                      <th>RUT</th>
+                      <th>Sucursal</th>
+                      <th>Plan</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
                     </tr>
-
                   </thead>
 
                   <tbody>
+                    {clientesPagina.map((cliente) => (
+                      <tr key={cliente.id}>
+                        <td>
+                          <div className="clientes-nombre">
+                            {cliente.nombre}
+                          </div>
 
-                    {clientesFiltrados.map(
-                      (cliente) => (
+                          <div className="clientes-email">
+                            {cliente.email || "Sin correo"}
+                          </div>
+                        </td>
 
-                        <tr
-                          key={cliente.id}
-                          className="border-t border-zinc-800 hover:bg-zinc-900/50"
-                        >
+                        <td className="clientes-dato">
+                          {cliente.rut || "Sin RUT"}
+                        </td>
 
-                          <td className="p-4">
+                        <td>
+                          <span className="clientes-sucursal">
+                            {cliente.sucursal?.nombre ||
+                              sucursales.find(
+                                (s) =>
+                                  s.id === cliente.sucursalId
+                              )?.nombre ||
+                              "Sin sucursal"}
+                          </span>
+                        </td>
 
-                            <p className="font-semibold">
-                              {cliente.nombre}
-                            </p>
+                        <td className="clientes-dato">
+                          {cliente.plan || "Sin plan"}
+                        </td>
 
-                            <p className="text-gray-500 text-sm">
-                              {cliente.email}
-                            </p>
+                        <td>
+                          <span
+                            className={`clientes-estado ${
+                              cliente.estado === "Activo"
+                                ? "clientes-estado-activo"
+                                : "clientes-estado-inactivo"
+                            }`}
+                          >
+                            {cliente.estado}
+                          </span>
+                        </td>
 
-                          </td>
+                        <td>
+                          <div className="clientes-acciones">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setClienteDetalle(cliente)
+                              }
+                              title="Ver detalles"
+                            >
+                              Ver
+                            </button>
 
-                          <td className="p-4 text-gray-300">
-                            {cliente.rut}
-                          </td>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                editarCliente(cliente)
+                              }
+                              title="Editar cliente"
+                            >
+                              Editar
+                            </button>
 
-                          <td className="p-4 text-gray-300">
-                            {cliente.plan}
-                          </td>
-
-                          <td className="p-4">
-
-                            <span
-                              className={
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void cambiarEstado(cliente)
+                              }
+                              title={
                                 cliente.estado === "Activo"
-                                  ? "text-green-500 font-bold"
-                                  : "text-gray-500 font-bold"
+                                  ? "Desactivar cliente"
+                                  : "Activar cliente"
                               }
                             >
-                              {cliente.estado}
-                            </span>
+                              {cliente.estado === "Activo"
+                                ? "Desactivar"
+                                : "Activar"}
+                            </button>
 
-                          </td>
-
-                          <td className="p-4">
-
-                            <div className="flex flex-wrap gap-2">
-
-                              <button
-                                onClick={() =>
-                                  setClienteDetalle(
-                                    cliente
-                                  )
-                                }
-                                className="border border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-lg transition"
-                              >
-                                Ver
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  editarCliente(
-                                    cliente
-                                  )
-                                }
-                                className="border border-yellow-600 text-yellow-400 hover:bg-yellow-600 hover:text-black px-3 py-2 rounded-lg transition"
-                              >
-                                Editar
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  cambiarEstado(
-                                    cliente
-                                  )
-                                }
-                                className="border border-red-600 text-red-500 hover:bg-red-600 hover:text-white px-3 py-2 rounded-lg transition"
-                              >
-
-                                {cliente.estado === "Activo"
-                                  ? "Desactivar"
-                                  : "Activar"}
-
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  eliminarCliente(
-                                    cliente.id
-                                  )
-                                }
-                                className="border border-zinc-600 text-gray-300 hover:bg-zinc-800 px-3 py-2 rounded-lg transition"
-                              >
-                                Eliminar
-                              </button>
-
-                            </div>
-
-                          </td>
-
-                        </tr>
-
-                      )
-                    )}
-
+                            <button
+                              type="button"
+                              className="clientes-accion-eliminar"
+                              onClick={() =>
+                                void eliminarCliente(cliente.id)
+                              }
+                              title="Eliminar cliente"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
-
                 </table>
-
               </div>
 
-            )}
+              {/* PAGINACIÓN */}
+              <div className="clientes-paginacion">
+                <span>
+                  Página {paginaActual} de {totalPaginas} ·{" "}
+                  {clientesFiltrados.length} resultados
+                </span>
 
-          </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPagina((p) => Math.max(1, p - 1))
+                    }
+                    disabled={paginaActual <= 1}
+                  >
+                    ← Anterior
+                  </button>
 
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPagina((p) =>
+                        Math.min(totalPaginas, p + 1)
+                      )
+                    }
+                    disabled={paginaActual >= totalPaginas}
+                  >
+                    Siguiente →
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
-
       </section>
 
-      {/* DETALLE CLIENTE */}
-
+      {/* MODAL DE DETALLE */}
       {clienteDetalle && (
-
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-
-          <div className="bg-zinc-950 border border-red-600 rounded-2xl max-w-lg w-full p-7">
-
-            <div className="flex items-start justify-between gap-4 mb-6">
-
+        <div
+          className="clientes-modal-overlay"
+          role="presentation"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setClienteDetalle(null);
+            }
+          }}
+        >
+          <section
+            className="clientes-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="clientes-modal-titulo"
+          >
+            <header className="clientes-modal-cabecera">
               <div>
-
-                <p className="text-gray-400">
-                  Información del cliente
+                <p className="clientes-etiqueta">
+                  INFORMACIÓN DEL CLIENTE
                 </p>
 
-                <h2 className="text-3xl font-black">
+                <h2 id="clientes-modal-titulo">
                   {clienteDetalle.nombre}
                 </h2>
-
               </div>
 
               <button
-                onClick={() =>
-                  setClienteDetalle(null)
-                }
-                className="text-gray-400 hover:text-white text-2xl"
+                type="button"
+                className="clientes-modal-cerrar"
+                onClick={() => setClienteDetalle(null)}
+                aria-label="Cerrar detalles"
               >
                 ✕
               </button>
+            </header>
 
-            </div>
+            <div className="clientes-detalles">
+              <Detalle
+                titulo="N° cliente"
+                valor={clienteDetalle.numeroCliente}
+              />
 
-            <div className="space-y-4">
+              <Detalle
+                titulo="Sucursal"
+                valor={
+                  clienteDetalle.sucursal?.nombre ||
+                  sucursales.find(
+                    (s) =>
+                      s.id === clienteDetalle.sucursalId
+                  )?.nombre
+                }
+              />
 
               <Detalle
                 titulo="RUT"
-                valor={
-                  clienteDetalle.rut
-                }
+                valor={clienteDetalle.rut}
               />
 
               <Detalle
                 titulo="Correo electrónico"
-                valor={
-                  clienteDetalle.email
-                }
+                valor={clienteDetalle.email}
               />
 
               <Detalle
                 titulo="Teléfono"
+                valor={clienteDetalle.telefono}
+              />
+
+              <Detalle
+                titulo="Teléfono secundario"
+                valor={clienteDetalle.telefonoSecundario}
+              />
+
+              <Detalle
+                titulo="Dirección"
+                valor={clienteDetalle.direccion}
+              />
+
+              <Detalle
+                titulo="Comuna"
+                valor={clienteDetalle.comuna}
+              />
+
+              <Detalle
+                titulo="Ciudad"
+                valor={clienteDetalle.ciudad}
+              />
+
+              <Detalle
+                titulo="Edad"
                 valor={
-                  clienteDetalle.telefono
+                  clienteDetalle.edad !== null
+                    ? String(clienteDetalle.edad)
+                    : null
                 }
+              />
+
+              <Detalle
+                titulo="Género"
+                valor={clienteDetalle.genero}
+              />
+
+              <Detalle
+                titulo="Fecha nacimiento"
+                valor={clienteDetalle.fechaNacimiento}
               />
 
               <Detalle
                 titulo="Plan"
-                valor={
-                  clienteDetalle.plan
-                }
+                valor={clienteDetalle.plan}
               />
 
               <Detalle
                 titulo="Estado"
-                valor={
-                  clienteDetalle.estado
-                }
+                valor={clienteDetalle.estado}
               />
-
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-7">
-
+            <div className="clientes-modal-acciones">
               <button
+                type="button"
+                className="clientes-boton-primario"
                 onClick={() => {
-                  editarCliente(
-                    clienteDetalle
-                  );
-
-                  setClienteDetalle(
-                    null
-                  );
+                  editarCliente(clienteDetalle);
+                  setClienteDetalle(null);
                 }}
-                className="bg-red-600 hover:bg-red-700 py-3 rounded-xl font-bold"
               >
                 Editar cliente
               </button>
 
               <button
-                onClick={() =>
-                  setClienteDetalle(null)
-                }
-                className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 py-3 rounded-xl"
+                type="button"
+                className="clientes-boton-secundario"
+                onClick={() => setClienteDetalle(null)}
               >
                 Cerrar
               </button>
-
             </div>
-
-          </div>
-
+          </section>
         </div>
-
       )}
-
-      {/* ESTADO DE CONEXIÓN */}
-
-      <section className="mt-8 rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6">
-
-        <h2 className="text-xl text-red-500 font-bold mb-2">
-          Base de datos
-        </h2>
-
-        <p className="text-gray-400">
-          Los clientes registrados en este módulo
-          se almacenan en MySQL mediante la API
-          del backend de Focus Power Fit.
-        </p>
-
-      </section>
-
     </main>
   );
 }
 
+// CAMPO DE FORMULARIO
 function Campo({
   label,
   value,
   onChange,
   type = "text",
   placeholder = "",
+  required = true,
 }: {
   label: string;
   value: string;
-  onChange: (
-    value: string
-  ) => void;
+  onChange: (value: string) => void;
   type?: string;
   placeholder?: string;
+  required?: boolean;
 }) {
-  return (
-    <div>
+  const id = `cliente-${label
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "-")}`;
 
-      <label className="block mb-2 font-semibold">
+  return (
+    <div className="clientes-campo">
+      <label htmlFor={id}>
         {label}
+        {required && <span> *</span>}
       </label>
 
       <input
+        id={id}
         type={type}
         value={value}
-        onChange={(e) =>
-          onChange(
-            e.target.value
-          )
-        }
+        onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        required
-        className="w-full bg-black border border-zinc-700 rounded-lg p-3 outline-none focus:border-red-600"
+        required={required}
       />
-
     </div>
   );
 }
 
+// DETALLE DEL CLIENTE
 function Detalle({
   titulo,
   valor,
 }: {
   titulo: string;
-  valor: string;
+  valor: string | null | undefined;
 }) {
   return (
-    <div className="bg-black border border-zinc-800 rounded-xl p-4">
-
-      <p className="text-gray-500 text-sm mb-1">
-        {titulo}
-      </p>
-
-      <p className="font-semibold">
-        {valor}
-      </p>
-
+    <div className="clientes-detalle">
+      <span>{titulo}</span>
+      <strong>{valor || "No informado"}</strong>
     </div>
+  );
+}
+
+// TARJETA DE RESUMEN
+function Resumen({
+  titulo,
+  valor,
+  detalle,
+}: {
+  titulo: string;
+  valor: number;
+  detalle: string;
+}) {
+  return (
+    <article className="clientes-tarjeta">
+      <p>{titulo}</p>
+
+      <strong>{valor.toLocaleString("es-CL")}</strong>
+
+      <small>{detalle}</small>
+    </article>
   );
 }

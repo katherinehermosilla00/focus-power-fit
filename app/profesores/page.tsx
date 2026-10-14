@@ -1,218 +1,1074 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import axios from "axios";
+import { useState } from "react";
+
 import Link from "next/link";
 
 type Profesor = {
-  id: number;
+
   nombre: string;
-  especialidad: string | null;
+
+  rol: string;
+
+  instagram?: string;
+
 };
 
-const PROFESORES_DEMO: Profesor[] = [
-  { id: -1, nombre: "Camila Torres", especialidad: "Entrenamiento funcional" },
-  { id: -2, nombre: "Diego Fuentes", especialidad: "Preparación física" },
-  { id: -3, nombre: "Valentina Rojas", especialidad: "Fuerza y acondicionamiento" },
-  { id: -4, nombre: "Matías Herrera", especialidad: "Musculación" },
-  { id: -5, nombre: "Antonia Silva", especialidad: "Movilidad y flexibilidad" },
-  { id: -6, nombre: "Joaquín Morales", especialidad: "Entrenamiento funcional" },
-  { id: -7, nombre: "Fernanda Castro", especialidad: "Acondicionamiento físico" },
-  { id: -8, nombre: "Benjamín Soto", especialidad: "Fuerza y potencia" },
-  { id: -9, nombre: "Isidora Vega", especialidad: "Entrenamiento personalizado" },
-  { id: -10, nombre: "Tomás Contreras", especialidad: "Musculación" },
-  { id: -11, nombre: "Josefina Reyes", especialidad: "Preparación física" },
-  { id: -12, nombre: "Vicente Navarro", especialidad: "Entrenamiento funcional" },
-  { id: -13, nombre: "Emilia González", especialidad: "Movilidad y flexibilidad" },
-  { id: -14, nombre: "Agustín Paredes", especialidad: "Fuerza y acondicionamiento" },
-  { id: -15, nombre: "Catalina Muñoz", especialidad: "Acondicionamiento físico" },
-  { id: -16, nombre: "Lucas Araya", especialidad: "Entrenamiento personalizado" },
-  { id: -17, nombre: "Florencia Vidal", especialidad: "Musculación" },
-  { id: -18, nombre: "Gabriel Campos", especialidad: "Fuerza y potencia" },
-  { id: -19, nombre: "Trinidad Espinoza", especialidad: "Entrenamiento funcional" },
-  { id: -20, nombre: "Maximiliano León", especialidad: "Preparación física" },
+const profesoresLaReina: Profesor[] = [
+
+  {
+
+    nombre: "Bastián Bustos",
+
+    rol: "Profesor de Educación Física / Personal Trainer",
+
+  },
+
+  {
+
+    nombre: "Juan Carlos Ignamarca",
+
+    rol: "Personal Trainer",
+
+  },
+
+  {
+
+    nombre: "Fabián Rodriguez",
+
+    rol: "Personal Trainer",
+
+    instagram: "@jesuss__fabian",
+
+  },
+
+  {
+
+    nombre: "Carlos Cabrera",
+
+    rol: "Personal Trainer",
+
+    instagram: "@carlosalbertocabreramardones",
+
+  },
+
+  {
+
+    nombre: "Fernando San Juan",
+
+    rol: "Preparador Físico / Personal Trainer",
+
+  },
+
 ];
 
-const INICIALES_COLORES = [
-  "from-red-600 to-rose-900",
-  "from-orange-600 to-red-900",
-  "from-rose-600 to-purple-900",
-  "from-zinc-500 to-zinc-800",
+const profesoresPenalolen: Profesor[] = [
+
+  {
+
+    nombre: "César Salas",
+
+    rol: "Personal Trainer",
+
+  },
+
+  {
+
+    nombre: "Simón Guzmán",
+
+    rol: "Profesor de Educación Física / Entrenador Personal",
+
+  },
+
+  {
+
+    nombre: "Nicolás Pérez",
+
+    rol: "Profesor de Educación Física / Jefe de Turno P.M.",
+
+  },
+
+  {
+
+    nombre: "Francisco Andrade",
+
+    rol: "Profesor de Educación Física / Encargado Administrativo",
+
+  },
+
+  {
+
+    nombre: "Cristian Hormazabal",
+
+    rol: "Preparador Físico",
+
+  },
+
+  {
+
+    nombre: "Didier Valdebenito",
+
+    rol: "Preparador Físico",
+
+  },
+
+  {
+
+    nombre: "Fernando Carvallo",
+
+    rol: "Preparador Físico / Encargado Turno A.M.",
+
+  },
+
 ];
 
-export default function ProfesoresPage() {
-  const [profesores, setProfesores] = useState<Profesor[]>([]);
-  const [usandoEjemplos, setUsandoEjemplos] = useState(false);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
+function obtenerIniciales(nombre: string) {
 
-  const cargarProfesores = useCallback(async () => {
-    setCargando(true);
-    setError("");
-    setUsandoEjemplos(false);
+  return nombre
 
-    try {
-      const respuesta = await axios.get<Profesor[]>(
-        "http://localhost:3001/api/profesores/publicos"
-      );
+    .trim()
 
-      if (respuesta.data.length === 0) {
-        setProfesores(PROFESORES_DEMO);
-        setUsandoEjemplos(true);
-      } else {
-        setProfesores(respuesta.data);
-      }
-    } catch (errorCarga) {
-      console.error("Error al cargar profesores:", errorCarga);
-      setError("No pudimos cargar la información del equipo. Intenta nuevamente.");
-    } finally {
-      setCargando(false);
-    }
-  }, []);
+    .split(/\s+/)
 
-  useEffect(() => {
-    void Promise.resolve().then(cargarProfesores);
-  }, [cargarProfesores]);
+    .slice(0, 2)
+
+    .map((parte) => parte.charAt(0).toUpperCase())
+
+    .join("");
+
+}
+
+function IconoInstagram() {
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#080808] text-white">
-      <nav className="border-b border-white/10 bg-black/80">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
-          <Link href="/" className="flex items-center gap-3 font-black tracking-wide">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-600 text-sm">
-              FP
-            </span>
-            <span>FOCUS <span className="text-red-500">POWER FIT</span></span>
-          </Link>
-          <Link
-            href="/"
-            className="rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-gray-300 transition hover:border-red-500/60 hover:text-white"
+
+    <svg
+
+      width="18"
+
+      height="18"
+
+      viewBox="0 0 24 24"
+
+      fill="none"
+
+      stroke="currentColor"
+
+      strokeWidth="1.8"
+
+      strokeLinecap="round"
+
+      strokeLinejoin="round"
+
+      aria-hidden="true"
+
+    >
+
+      <rect x="2" y="2" width="20" height="20" rx="5" />
+
+      <circle cx="12" cy="12" r="4" />
+
+      <circle
+
+        cx="17.5"
+
+        cy="6.5"
+
+        r="1"
+
+        fill="currentColor"
+
+        stroke="none"
+
+      />
+
+    </svg>
+
+  );
+
+}
+
+function IconoUbicacion() {
+
+  return (
+
+    <svg
+
+      width="20"
+
+      height="20"
+
+      viewBox="0 0 24 24"
+
+      fill="none"
+
+      stroke="currentColor"
+
+      strokeWidth="1.8"
+
+      strokeLinecap="round"
+
+      strokeLinejoin="round"
+
+      aria-hidden="true"
+
+    >
+
+      <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+
+      <circle cx="12" cy="10" r="2.5" />
+
+    </svg>
+
+  );
+
+}
+
+function TarjetaProfesor({
+
+  nombre,
+
+  rol,
+
+  instagram,
+
+}: Profesor) {
+
+  const [seleccionado, setSeleccionado] = useState(false);
+
+  return (
+
+    <article
+
+      className="group relative flex h-full flex-col overflow-hidden rounded-2xl border p-6 transition-all duration-300 hover:-translate-y-1 sm:p-7"
+
+      style={{
+
+        backgroundColor: seleccionado
+
+          ? "var(--color-card-selected)"
+
+          : "var(--color-surface)",
+
+        borderColor: seleccionado
+
+          ? "var(--color-primary)"
+
+          : "var(--color-border)",
+
+        boxShadow: seleccionado
+
+          ? "var(--shadow-card-selected)"
+
+          : "var(--shadow-card-default)",
+
+      }}
+
+    >
+
+      {/* BOTÓN INTERACTIVO SOBRE LA TARJETA */}
+
+      <button
+
+        type="button"
+
+        onClick={() => setSeleccionado((actual) => !actual)}
+
+        aria-pressed={seleccionado}
+
+        aria-label={
+
+          seleccionado
+
+            ? `Restaurar color de la tarjeta de ${nombre}`
+
+            : `Cambiar color de la tarjeta de ${nombre}`
+
+        }
+
+        className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[var(--color-primary)]"
+
+      />
+
+      {/* LÍNEA SUPERIOR */}
+
+      <div
+
+        className="pointer-events-none absolute inset-x-0 top-0 h-1"
+
+        style={{
+
+          background: seleccionado
+
+            ? "var(--color-primary)"
+
+            : "var(--gradient-card-accent)",
+
+        }}
+
+      />
+
+      {/* AVATAR */}
+
+      <div
+
+        className="pointer-events-none relative z-1 mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border text-2xl font-black tracking-wide transition-all duration-300 group-hover:scale-105"
+
+        style={{
+
+          backgroundColor: seleccionado
+
+            ? "var(--color-primary)"
+
+            : "var(--color-surface-secondary)",
+
+          borderColor: "var(--color-primary)",
+
+          color: "var(--foreground)",
+
+          boxShadow: seleccionado
+
+            ? "var(--shadow-avatar-selected)"
+
+            : "var(--shadow-avatar-default)",
+
+        }}
+
+        aria-hidden="true"
+
+      >
+
+        {obtenerIniciales(nombre)}
+
+      </div>
+
+      {/* NOMBRE */}
+
+      <h3
+
+        className="pointer-events-none relative z-1 text-xl font-black leading-tight tracking-tight"
+
+        style={{
+
+          color: "var(--foreground)",
+
+        }}
+
+      >
+
+        {nombre}
+
+      </h3>
+
+      {/* CARGO */}
+
+      <p
+
+        className="pointer-events-none relative z-1 mt-3 text-sm leading-6"
+
+        style={{
+
+          color: seleccionado
+
+            ? "var(--color-card-selected-text)"
+
+            : "var(--color-text-secondary)",
+
+        }}
+
+      >
+
+        {rol}
+
+      </p>
+
+      {/* INSTAGRAM */}
+
+      {instagram && (
+
+        <div className="relative z-2 mt-auto pt-6">
+
+          <a
+
+            href={`https://www.instagram.com/${instagram.replace(
+
+              "@",
+
+              ""
+
+            )}/`}
+
+            target="_blank"
+
+            rel="noopener noreferrer"
+
+            aria-label={`Instagram de ${nombre}`}
+
+            className="inline-flex max-w-full items-center gap-2 break-all rounded-lg border px-3 py-2 text-xs font-semibold transition-all hover:brightness-125"
+
+            style={{
+
+              backgroundColor: seleccionado
+
+                ? "var(--color-card-selected-secondary)"
+
+                : "var(--color-surface-secondary)",
+
+              borderColor: seleccionado
+
+                ? "var(--color-primary)"
+
+                : "var(--color-border)",
+
+              color: "var(--foreground)",
+
+            }}
+
           >
-            ← Volver al inicio
-          </Link>
+
+            <span
+
+              className="shrink-0"
+
+              style={{
+
+                color: seleccionado
+
+                  ? "var(--foreground)"
+
+                  : "var(--color-primary)",
+
+              }}
+
+            >
+
+              <IconoInstagram />
+
+            </span>
+
+            {instagram}
+
+          </a>
+
         </div>
+
+      )}
+
+
+    </article>
+
+  );
+
+}
+
+function SeccionProfesores({
+
+  id,
+
+  titulo,
+
+  profesores,
+
+}: {
+
+  id: string;
+
+  titulo: string;
+
+  profesores: Profesor[];
+
+}) {
+
+  return (
+
+    <section id={id} className="scroll-mt-28">
+
+      {/* TÍTULO DE SUCURSAL */}
+
+      <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
+
+        <div className="flex items-center gap-3">
+
+          <span
+
+            className="flex h-11 w-11 items-center justify-center rounded-xl"
+
+            style={{
+
+              backgroundColor:
+
+                "var(--color-surface-secondary)",
+
+              color: "var(--color-primary)",
+
+            }}
+
+          >
+
+            <IconoUbicacion />
+
+          </span>
+
+          <div>
+
+            <p
+
+              className="text-xs font-bold uppercase tracking-[0.2em]"
+
+              style={{
+
+                color: "var(--color-text-secondary)",
+
+              }}
+
+            >
+
+              Equipo de profesionales
+
+            </p>
+
+            <h2
+
+              className="text-2xl font-black uppercase tracking-tight sm:text-3xl"
+
+              style={{
+
+                color: "var(--foreground)",
+
+              }}
+
+            >
+
+              {titulo}
+
+            </h2>
+
+          </div>
+
+        </div>
+
+        <span
+
+          className="rounded-full border px-4 py-2 text-xs font-bold"
+
+          style={{
+
+            backgroundColor: "var(--color-surface)",
+
+            borderColor: "var(--color-border)",
+
+            color: "var(--color-text-secondary)",
+
+          }}
+
+        >
+
+          {profesores.length} profesionales
+
+        </span>
+
+      </div>
+
+      {/* GRID DE TARJETAS */}
+
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+
+        {profesores.map((profesor) => (
+
+          <TarjetaProfesor
+
+            key={profesor.nombre}
+
+            {...profesor}
+
+          />
+
+        ))}
+
+      </div>
+
+    </section>
+
+  );
+
+}
+
+export default function Profesores() {
+
+  return (
+
+    <main
+
+      className="min-h-screen"
+
+      style={{
+
+        backgroundColor: "var(--background)",
+
+        color: "var(--foreground)",
+
+      }}
+
+    >
+
+      {/* ======================================
+
+          NAVBAR
+
+          ====================================== */}
+
+      <nav
+
+        aria-label="Navegación principal"
+
+        className="relative z-10 flex flex-wrap items-center justify-between gap-6 border-b px-5 py-4 md:px-10 lg:px-12"
+
+        style={{
+
+          backgroundColor: "var(--background)",
+
+          borderColor: "var(--color-border)",
+
+        }}
+
+      >
+
+        <Link
+
+          href="/"
+
+          className="flex items-center gap-3 no-underline"
+
+        >
+
+          <span
+
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl font-black"
+
+            style={{
+
+              backgroundColor: "var(--color-primary)",
+
+              color: "var(--foreground)",
+
+              boxShadow: "var(--shadow-logo)",
+
+            }}
+
+          >
+
+            F
+
+          </span>
+
+          <span
+
+            className="text-xl font-extrabold tracking-tight"
+
+            style={{
+
+              color: "var(--foreground)",
+
+            }}
+
+          >
+
+            Focus Power Fit
+
+          </span>
+
+        </Link>
+
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+
+          <Link
+
+            href="/"
+
+            className="py-2 text-sm font-semibold transition-opacity hover:opacity-75"
+
+            style={{
+
+              color: "var(--color-text-secondary)",
+
+            }}
+
+          >
+
+            Inicio
+
+          </Link>
+
+          <Link
+
+            href="/#planes"
+
+            className="py-2 text-sm font-semibold transition-opacity hover:opacity-75"
+
+            style={{
+
+              color: "var(--color-text-secondary)",
+
+            }}
+
+          >
+
+            Planes
+
+          </Link>
+
+          <Link
+
+            href="/sucursales"
+
+            className="py-2 text-sm font-semibold transition-opacity hover:opacity-75"
+
+            style={{
+
+              color: "var(--color-text-secondary)",
+
+            }}
+
+          >
+
+            Sucursales
+
+          </Link>
+
+          <Link
+
+            href="/profesores"
+
+            aria-current="page"
+
+            className="border-b-2 py-2 text-sm font-bold"
+
+            style={{
+
+              color: "var(--color-primary)",
+
+              borderColor: "var(--color-primary)",
+
+            }}
+
+          >
+
+            Profesores
+
+          </Link>
+
+          <Link
+
+            href="/registro"
+
+            className="py-2 text-sm font-semibold transition-opacity hover:opacity-75"
+
+            style={{
+
+              color: "var(--color-text-secondary)",
+
+            }}
+
+          >
+
+            Registro
+
+          </Link>
+
+          <Link
+
+            href="/login"
+
+            className="inline-flex min-h-11 items-center justify-center rounded-xl px-5 py-3 text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 hover:brightness-110"
+
+            style={{
+
+              backgroundColor: "var(--color-primary)",
+
+              color: "var(--foreground)",
+
+            }}
+
+          >
+
+            Iniciar sesión
+
+          </Link>
+
+        </div>
+
       </nav>
 
-      <section className="relative isolate border-b border-white/5">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_75%_35%,rgba(153,27,27,0.24),transparent_48%),linear-gradient(115deg,#080808_35%,#160909_100%)]" />
-        <div className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
-          <p className="text-sm font-bold uppercase tracking-[0.25em] text-red-400">
-            El equipo que te impulsa
+      {/* ======================================
+
+          CONTENIDO PRINCIPAL
+
+          ====================================== */}
+
+      <div className="w-full px-5 pb-20 pt-10 md:px-10 lg:px-14 xl:px-16">
+
+        {/* ENCABEZADO */}
+
+        <header className="mb-10 text-center">
+
+          <p
+
+            className="mb-3 text-xs font-bold uppercase tracking-[0.3em]"
+
+            style={{
+
+              color: "var(--color-primary)",
+
+            }}
+
+          >
+
+            FOCUS POWER FIT · EQUIPO PROFESIONAL
+
           </p>
-          <h1 className="mt-4 max-w-3xl text-4xl font-black leading-tight sm:text-5xl md:text-6xl">
-            Nuestros <span className="text-red-500">profesores</span>
-          </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-300">
-            Detrás de cada avance hay un equipo preparado para acompañarte.
-            Conoce a nuestros profesores, sus especialidades y encuentra la
-            motivación para llevar tu entrenamiento al siguiente nivel.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-gray-400">
-            <span className="rounded-full border border-red-500/30 bg-red-950/30 px-4 py-2 text-red-200">
-              {profesores.length} {profesores.length === 1 ? "profesor" : "profesores"}
+
+          <h1 className="text-4xl font-black uppercase tracking-tight sm:text-5xl md:text-6xl">
+
+            NUESTROS{" "}
+
+            <span style={{ color: "var(--color-primary)" }}>
+
+              PROFESORES
+
             </span>
-            <span>Experiencia, energía y orientación en cada entrenamiento.</span>
-          </div>
-        </div>
-      </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-14 md:px-8 md:py-20">
-        <div className="mb-9">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-red-500">
-            Conoce a nuestros especialistas
+          </h1>
+
+          <div
+
+            className="mx-auto mt-4 h-1 w-20 rounded-full"
+
+            style={{
+
+              backgroundColor: "var(--color-primary)",
+
+            }}
+
+          />
+
+          <p
+
+            className="mx-auto mt-5 max-w-2xl text-sm leading-7 md:text-base"
+
+            style={{
+
+              color: "var(--color-text-secondary)",
+
+            }}
+
+          >
+
+            Conoce a los profesionales que forman parte de
+
+            Focus Power Fit. Nuestro equipo te acompaña
+
+            en cada etapa de tu entrenamiento.
+
           </p>
-          <h2 className="mt-2 text-2xl font-black sm:text-3xl">
-            Personas reales. Apoyo en cada meta.
+
+          {/* BOTONES DE SUCURSALES */}
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+
+            <a
+
+              href="#la-reina"
+
+              className="inline-flex min-h-11 items-center justify-center rounded-xl px-5 py-3 text-sm font-bold transition-all hover:-translate-y-0.5 hover:brightness-110"
+
+              style={{
+
+                backgroundColor: "var(--color-primary)",
+
+                color: "var(--foreground)",
+
+              }}
+
+            >
+
+              Equipo La Reina
+
+            </a>
+
+            <a
+
+              href="#penalolen"
+
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border px-5 py-3 text-sm font-bold transition-all hover:-translate-y-0.5 hover:brightness-125"
+
+              style={{
+
+                backgroundColor: "var(--color-surface)",
+
+                borderColor: "var(--color-border)",
+
+                color: "var(--foreground)",
+
+              }}
+
+            >
+
+              Equipo Peñalolén
+
+            </a>
+
+          </div>
+
+        </header>
+
+        {/* LA REINA */}
+
+        <SeccionProfesores
+
+          id="la-reina"
+
+          titulo="La Reina"
+
+          profesores={profesoresLaReina}
+
+        />
+
+        {/* SEPARADOR */}
+
+        <div
+
+          className="my-14 h-px w-full"
+
+          style={{
+
+            backgroundColor: "var(--color-border)",
+
+          }}
+
+        />
+
+        {/* PEÑALOLÉN */}
+
+        <SeccionProfesores
+
+          id="penalolen"
+
+          titulo="Peñalolén"
+
+          profesores={profesoresPenalolen}
+
+        />
+
+        {/* LLAMADO A LA ACCIÓN */}
+
+        <div
+
+          className="mt-16 rounded-2xl border px-6 py-10 text-center md:px-10"
+
+          style={{
+
+            backgroundColor: "var(--color-surface)",
+
+            borderColor: "var(--color-border)",
+
+          }}
+
+        >
+
+          <p
+
+            className="mb-3 text-xs font-bold uppercase tracking-[0.25em]"
+
+            style={{
+
+              color: "var(--color-primary)",
+
+            }}
+
+          >
+
+            COMIENZA TU ENTRENAMIENTO
+
+          </p>
+
+          <h2 className="text-2xl font-black uppercase sm:text-3xl">
+
+            TU PRÓXIMO OBJETIVO COMIENZA AQUÍ
+
           </h2>
-        </div>
 
-        {usandoEjemplos && (
-          <div className="mb-6 rounded-xl border border-amber-700/40 bg-amber-950/25 px-4 py-3 text-sm text-amber-200">
-            La base de datos aún no tiene profesores activos. Estos 20 perfiles
-            ficticios son solo una vista previa del diseño.
-          </div>
-        )}
+          <p
 
-        {error && (
-          <div role="alert" className="rounded-2xl border border-red-900 bg-red-950/30 p-6 text-red-200">
-            <p>{error}</p>
-            <button
-              type="button"
-              onClick={() => void cargarProfesores()}
-              className="mt-3 font-bold underline underline-offset-4"
-            >
-              Reintentar
-            </button>
-          </div>
-        )}
+            className="mx-auto mt-3 max-w-xl text-sm leading-7"
 
-        {cargando ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {Array.from({ length: 8 }, (_, indice) => (
-              <div key={indice} className="h-64 animate-pulse rounded-2xl border border-white/10 bg-zinc-900/70" />
-            ))}
-          </div>
-        ) : !error ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {profesores.map((profesor, indice) => {
-              const iniciales = profesor.nombre
-                .trim()
-                .split(/\s+/)
-                .slice(0, 2)
-                .map((parte) => parte.charAt(0).toLocaleUpperCase("es-CL"))
-                .join("");
+            style={{
 
-              return (
-                <article
-                  key={profesor.id}
-                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-6 transition duration-200 hover:-translate-y-1 hover:border-red-500/50"
-                >
-                  <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full border border-white/5 transition group-hover:scale-110" />
-                  <div className="relative">
-                    <div className={`flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br ${INICIALES_COLORES[indice % INICIALES_COLORES.length]} text-2xl font-black shadow-lg`}>
-                      {iniciales}
-                    </div>
-                    <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-red-400">
-                      Profesor {String(indice + 1).padStart(2, "0")}
-                    </p>
-                    <h3 className="mt-2 text-xl font-black">{profesor.nombre}</h3>
-                    <div className="mt-4 border-t border-white/10 pt-4">
-                      <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                        Especialidad
-                      </p>
-                      <p className="mt-2 min-h-12 leading-6 text-gray-300">
-                        {profesor.especialidad || "Entrenamiento personalizado"}
-                      </p>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        ) : null}
+              color: "var(--color-text-secondary)",
 
-        {!cargando && !error && (
-          <div className="mt-12 rounded-2xl border border-white/10 bg-gradient-to-r from-zinc-900 to-zinc-950 p-7 sm:flex sm:items-center sm:justify-between sm:p-9">
-            <div>
-              <p className="text-xl font-black">¿Listo para comenzar?</p>
-              <p className="mt-2 text-gray-400">Nuestro equipo está preparado para acompañarte.</p>
-            </div>
+            }}
+
+          >
+
+            Conoce nuestros planes de entrenamiento
+
+            y encuentra la sucursal que más te acomode.
+
+          </p>
+
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+
             <Link
-              href="/registro"
-              className="mt-5 inline-flex rounded-xl bg-red-600 px-6 py-3 font-bold transition hover:bg-red-500 sm:mt-0"
-            >
-              Entrena con nosotros
-            </Link>
-          </div>
-        )}
-      </section>
 
-      <footer className="border-t border-white/10 bg-black/60">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-7 text-sm text-gray-500 sm:flex-row sm:items-center sm:justify-between md:px-8">
-          <p>© {new Date().getFullYear()} Focus Power Fit</p>
-          <Link href="/" className="transition hover:text-white">Volver al inicio</Link>
+              href="/#planes"
+
+              className="inline-flex min-h-12 items-center justify-center rounded-xl px-6 py-3 text-sm font-bold transition-all hover:-translate-y-0.5 hover:brightness-110"
+
+              style={{
+
+                backgroundColor: "var(--color-primary)",
+
+                color: "var(--foreground)",
+
+              }}
+
+            >
+
+              Ver planes
+
+            </Link>
+
+            <Link
+
+              href="/sucursales"
+
+              className="inline-flex min-h-12 items-center justify-center rounded-xl border px-6 py-3 text-sm font-bold transition-all hover:-translate-y-0.5 hover:brightness-125"
+
+              style={{
+
+                backgroundColor:
+
+                  "var(--color-surface-secondary)",
+
+                borderColor: "var(--color-border)",
+
+                color: "var(--foreground)",
+
+              }}
+
+            >
+
+              Ver sucursales
+
+            </Link>
+
+          </div>
+
         </div>
-      </footer>
+
+      </div>
+
     </main>
+
   );
+
 }

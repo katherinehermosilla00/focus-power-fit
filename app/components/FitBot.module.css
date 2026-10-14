@@ -1,0 +1,395 @@
+
+/* =========================================
+   FOCUS POWER FIT - FITBOT
+   Estilos exclusivos del chatbot
+   ========================================= */
+
+/* CONTENEDOR FLOTANTE */
+
+.container {
+  --bot-primary: #b91c1c;
+  --bot-primary-hover: #991b1b;
+  --bot-background: #171717;
+  --bot-surface: #262626;
+  --bot-border: #404040;
+  --bot-text: #ffffff;
+  --bot-secondary-text: #b3b3b3;
+
+  position: fixed;
+
+  /* Separado de otros botones flotantes */
+  bottom: 100px;
+  right: 24px;
+
+  z-index: 9999;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+
+  max-width: calc(100vw - 32px);
+}
+
+/* =========================================
+   BOTÓN FLOTANTE
+   ========================================= */
+
+.floatingButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 60px;
+  height: 60px;
+
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+
+  background-color: var(--bot-primary);
+  color: var(--bot-text);
+
+  font-size: 26px;
+  cursor: pointer;
+
+  box-shadow: 0 6px 24px rgba(185, 28, 28, 0.35);
+
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.floatingButton:hover {
+  background-color: var(--bot-primary-hover);
+  transform: scale(1.06);
+  box-shadow: 0 8px 28px rgba(185, 28, 28, 0.45);
+}
+
+.floatingButton:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+/* =========================================
+   VENTANA DEL CHAT
+   ========================================= */
+
+.chatWindow {
+  display: flex;
+  flex-direction: column;
+
+  width: 370px;
+  max-width: calc(100vw - 32px);
+
+  height: 490px;
+
+  /* Evita que la ventana salga de la pantalla */
+  max-height: calc(100dvh - 120px);
+
+  margin-bottom: 0;
+
+  overflow: hidden;
+
+  background-color: var(--bot-background);
+  color: var(--bot-text);
+
+  border: 1px solid var(--bot-border);
+  border-radius: 18px;
+
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+}
+
+/* =========================================
+   ENCABEZADO
+   ========================================= */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 15px 16px;
+
+  background-color: var(--bot-primary);
+  color: #ffffff;
+
+  flex-shrink: 0;
+}
+
+.headerInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  min-width: 0;
+}
+
+.avatar {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.title {
+  margin: 0;
+
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.subtitle {
+  margin: 3px 0 0;
+
+  font-size: 11px;
+  line-height: 1.4;
+  color: #ffe4e4;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+
+  background: transparent;
+  color: #ffffff;
+
+  font-size: 22px;
+  cursor: pointer;
+
+  flex-shrink: 0;
+
+  transition: background-color 0.2s ease;
+}
+
+.closeButton:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* =========================================
+   ÁREA DE MENSAJES
+   ========================================= */
+
+.messages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+
+  min-height: 0;
+  padding: 16px;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  scrollbar-width: thin;
+  scrollbar-color: #555555 transparent;
+}
+
+/* BARRA DE DESPLAZAMIENTO */
+
+.messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messages::-webkit-scrollbar-thumb {
+  background-color: #555555;
+  border-radius: 10px;
+}
+
+.messages::-webkit-scrollbar-thumb:hover {
+  background-color: #777777;
+}
+
+/* =========================================
+   BURBUJAS DE MENSAJES
+   ========================================= */
+
+.botMessage,
+.userMessage {
+  max-width: 88%;
+
+  padding: 12px 14px;
+
+  border-radius: 15px;
+
+  font-size: 13px;
+  line-height: 1.6;
+
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* RESPUESTAS DE FITBOT */
+
+.botMessage {
+  align-self: flex-start;
+
+  background-color: var(--bot-surface);
+  color: var(--bot-text);
+
+  border-bottom-left-radius: 5px;
+}
+
+/* MENSAJES DEL USUARIO */
+
+.userMessage {
+  align-self: flex-end;
+
+  background-color: var(--bot-primary);
+  color: #ffffff;
+
+  border-bottom-right-radius: 5px;
+}
+
+/* =========================================
+   CAMPO PARA ESCRIBIR
+   ========================================= */
+
+.inputArea {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 12px;
+
+  border-top: 1px solid var(--bot-border);
+  background-color: var(--bot-background);
+
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+
+  padding: 11px 12px;
+
+  background-color: var(--bot-surface);
+  color: #ffffff;
+
+  border: 1px solid var(--bot-border);
+  border-radius: 10px;
+
+  font-size: 13px;
+  outline: none;
+
+  transition: border-color 0.2s ease;
+}
+
+.input::placeholder {
+  color: #a3a3a3;
+}
+
+.input:focus {
+  border-color: #ef4444;
+}
+
+.sendButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 43px;
+  height: 43px;
+
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+
+  background-color: var(--bot-primary);
+  color: #ffffff;
+
+  font-size: 20px;
+  cursor: pointer;
+
+  flex-shrink: 0;
+
+  transition: background-color 0.2s ease;
+}
+
+.sendButton:hover:not(:disabled) {
+  background-color: var(--bot-primary-hover);
+}
+
+.sendButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sendButton:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* =========================================
+   DISEÑO RESPONSIVE
+   ========================================= */
+
+@media (max-width: 480px) {
+  .container {
+    bottom: 90px;
+    right: 16px;
+  }
+
+  .chatWindow {
+    width: calc(100vw - 32px);
+
+    height: min(490px, calc(100dvh - 110px));
+    max-height: calc(100dvh - 110px);
+
+    margin-bottom: 0;
+    border-radius: 16px;
+  }
+
+  .header {
+    padding: 13px 14px;
+  }
+
+  .messages {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .floatingButton {
+    width: 56px;
+    height: 56px;
+  }
+
+  .botMessage,
+  .userMessage {
+    font-size: 13px;
+  }
+}
+
+/* =========================================
+   PANTALLAS DE POCA ALTURA
+   ========================================= */
+
+@media (max-height: 600px) {
+  .container {
+    bottom: 72px;
+  }
+
+  .chatWindow {
+    height: min(390px, calc(100dvh - 88px));
+    max-height: calc(100dvh - 88px);
+  }
+}

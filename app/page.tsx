@@ -1,205 +1,760 @@
-"use client";
+
 
 import Link from "next/link";
-import { useAuth } from "./auth/AuthContext";
+
+import styles from "./page.module.css";
+
+import FitBot from "../app/components/FitBot";
+
+type Paquete = {
+
+  clases: number;
+
+  precio: number;
+
+  vigencia: number | null;
+
+};
+
+const planesIndividuales: Paquete[] = [
+
+  { clases: 5, precio: 100000, vigencia: 60 },
+
+  { clases: 8, precio: 152000, vigencia: 60 },
+
+  { clases: 12, precio: 216000, vigencia: 60 },
+
+  { clases: 20, precio: 340000, vigencia: null },
+
+  { clases: 24, precio: 388800, vigencia: 90 },
+
+  { clases: 36, precio: 558000, vigencia: 120 },
+
+  { clases: 72, precio: 1036800, vigencia: 240 },
+
+  { clases: 96, precio: 1324800, vigencia: 360 },
+
+  { clases: 120, precio: 1584000, vigencia: 360 },
+
+];
+
+const planesDupla: Paquete[] = [
+
+  { clases: 5, precio: 150000, vigencia: 60 },
+
+  { clases: 8, precio: 232000, vigencia: 60 },
+
+  { clases: 12, precio: 336000, vigencia: 60 },
+
+  { clases: 20, precio: 540000, vigencia: null },
+
+  { clases: 24, precio: 628800, vigencia: 90 },
+
+  { clases: 36, precio: 918000, vigencia: 120 },
+
+  { clases: 72, precio: 1684800, vigencia: 240 },
+
+  { clases: 96, precio: 2188800, vigencia: 360 },
+
+  { clases: 120, precio: 2544000, vigencia: 360 },
+
+];
+
+const formatoPrecio = (valor: number) =>
+
+  new Intl.NumberFormat("es-CL", {
+
+    style: "currency",
+
+    currency: "CLP",
+
+    maximumFractionDigits: 0,
+
+  }).format(valor);
+
+type IconoNombre = "entrenamiento" | "ubicacion" | "equipo";
+
+function Icono({
+
+  nombre,
+
+  className,
+
+}: {
+
+  nombre: IconoNombre;
+
+  className?: string;
+
+}) {
+
+  const rutas = {
+
+    entrenamiento: (
+
+      <>
+
+        <path d="M6.5 6.5 17.5 17.5" />
+
+        <path d="M4 9 9 4" />
+
+        <path d="M15 20 20 15" />
+
+        <path d="M2.5 7.5 7.5 2.5" />
+
+        <path d="M16.5 21.5 21.5 16.5" />
+
+      </>
+
+    ),
+
+    ubicacion: (
+
+      <>
+
+        <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+
+        <circle cx="12" cy="10" r="2.5" />
+
+      </>
+
+    ),
+
+    equipo: (
+
+      <>
+
+        <circle cx="9" cy="8" r="3" />
+
+        <path d="M3 20v-2a6 6 0 0 1 12 0v2" />
+
+        <path d="M16 5.2a3 3 0 0 1 0 5.6" />
+
+        <path d="M18 14a5 5 0 0 1 3 4.6V20" />
+
+      </>
+
+    ),
+
+  };
+
+  return (
+
+    <svg
+
+      className={className}
+
+      viewBox="0 0 24 24"
+
+      width="28"
+
+      height="28"
+
+      fill="none"
+
+      stroke="currentColor"
+
+      strokeWidth="1.7"
+
+      strokeLinecap="round"
+
+      strokeLinejoin="round"
+
+      aria-hidden="true"
+
+    >
+
+      {rutas[nombre]}
+
+    </svg>
+
+  );
+
+}
+
+function TarjetaInicio({
+
+  icono,
+
+  numero,
+
+  titulo,
+
+  descripcion,
+
+  href,
+
+  boton,
+
+}: {
+
+  icono: IconoNombre;
+
+  numero: string;
+
+  titulo: string;
+
+  descripcion: string;
+
+  href: string;
+
+  boton: string;
+
+}) {
+
+  return (
+
+    <article className={styles.card}>
+
+      <span className={styles.cardNumber} aria-hidden="true">
+
+        {numero}
+
+      </span>
+
+      <div className={styles.cardIcon}>
+
+        <Icono nombre={icono} />
+
+      </div>
+
+      <h3 className={styles.cardTitle}>{titulo}</h3>
+
+      <p className={styles.cardDescription}>
+
+        {descripcion}
+
+      </p>
+
+      <Link href={href} className={styles.cardButton}>
+
+        {boton}
+
+      </Link>
+
+    </article>
+
+  );
+
+}
+
+function TablaPlanes({
+
+  titulo,
+
+  descripcion,
+
+  paquetes,
+
+  destacado = false,
+
+}: {
+
+  titulo: string;
+
+  descripcion: string;
+
+  paquetes: Paquete[];
+
+  destacado?: boolean;
+
+}) {
+
+  return (
+
+    <article
+
+      className={`${styles.planCard} ${
+
+        destacado ? styles.planCardFeatured : ""
+
+      }`}
+
+    >
+
+      <div className={styles.planHeader}>
+
+        <div className={styles.planHeaderTop}>
+
+          <span className={styles.planEyebrow}>
+
+            PERSONAL TRAINING
+
+          </span>
+
+          <span className={styles.planTag}>
+
+            {destacado ? "2 PERSONAS" : "1 PERSONA"}
+
+          </span>
+
+        </div>
+
+        <h3 className={styles.planTitle}>{titulo}</h3>
+
+        <p className={styles.planDescription}>
+
+          {descripcion}
+
+        </p>
+
+      </div>
+
+      <div className={styles.tableWrapper}>
+
+        <table className={styles.planTable}>
+
+          <thead>
+
+            <tr>
+
+              <th scope="col">Clases</th>
+
+              <th scope="col">Precio total</th>
+
+              <th scope="col">Vigencia</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            {paquetes.map((paquete) => (
+
+              <tr key={paquete.clases}>
+
+                <td>
+
+                  <span className={styles.classCount}>
+
+                    {paquete.clases}
+
+                  </span>
+
+                </td>
+
+                <td>
+
+                  <span className={styles.price}>
+
+                    {formatoPrecio(paquete.precio)}
+
+                  </span>
+
+                </td>
+
+                <td>
+
+                  {paquete.vigencia !== null
+
+                    ? `${paquete.vigencia} días`
+
+                    : "Por confirmar"}
+
+                </td>
+
+              </tr>
+
+            ))}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <div className={styles.planFooter}>
+
+        <p>
+
+          Consulta disponibilidad y condiciones antes de
+
+          contratar.
+
+        </p>
+
+      </div>
+
+    </article>
+
+  );
+
+}
 
 export default function Home() {
-  const { usuario, cargando } = useAuth();
-  const destinoCuenta = usuario?.rol === "admin" ? "/admin" : "/mi-cuenta";
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#080808] text-white">
-      <nav className="sticky top-0 z-20 border-b border-white/10 bg-black/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-4 md:px-8">
-          <Link href="/" className="flex items-center gap-3" aria-label="Focus Power Fit, inicio">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-600 text-sm font-black tracking-tight shadow-lg shadow-red-950/60">
-              FP
-            </span>
-            <span className="text-lg font-black tracking-wide">
-              FOCUS <span className="text-red-500">POWER FIT</span>
-            </span>
-          </Link>
 
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-gray-300">
-            <Link href="/" className="transition hover:text-white">Inicio</Link>
-            <Link href="/sucursales" className="transition hover:text-white">Sucursales</Link>
-            <Link href="/profesores" className="transition hover:text-white">Profesores</Link>
-            {!cargando && usuario ? (
-              <Link
-                href={destinoCuenta}
-                className="rounded-full border border-red-500/50 bg-red-600/10 px-4 py-2 font-bold text-white transition hover:border-red-500 hover:bg-red-600"
-              >
-                {usuario.rol === "admin" ? "Administración" : "Mi Cuenta"}
-              </Link>
-            ) : !cargando ? (
-              <>
-                <Link href="/login" className="transition hover:text-white">Iniciar sesión</Link>
-                <Link
-                  href="/registro"
-                  className="rounded-full bg-red-600 px-4 py-2 font-bold text-white transition hover:bg-red-500"
-                >
-                  Registro
-                </Link>
-              </>
-            ) : (
-              <span aria-hidden="true" className="h-9 w-28 rounded-full bg-white/5" />
-            )}
-          </div>
-        </div>
+    <main className={styles.main}>
+
+      {/* NAVEGACIÓN */}
+
+      <nav className={styles.navbar} aria-label="Navegación principal">
+
+        <Link href="/" className={styles.brand}>
+
+          <span className={styles.logo}>F</span>
+
+          <span className={styles.brandName}>
+
+            Focus Power Fit
+
+          </span>
+
+        </Link>
+
+        <ul className={styles.navLinks}>
+
+          <li>
+
+            <Link href="/" className={styles.navLink}>
+
+              Inicio
+
+            </Link>
+
+          </li>
+
+          <li>
+
+            <Link href="/#planes" className={styles.navLink}>
+
+              Planes
+
+            </Link>
+
+          </li>
+
+          <li>
+
+            <Link href="/sucursales" className={styles.navLink}>
+
+              Sucursales
+
+            </Link>
+
+          </li>
+
+          <li>
+
+            <Link href="/profesores" className={styles.navLink}>
+
+              Profesores
+
+            </Link>
+
+          </li>
+
+          <li>
+
+            <Link href="/registro" className={styles.navLink}>
+
+              Registro
+
+            </Link>
+
+          </li>
+
+          <li>
+            <Link href="/terminos" className={styles.navLink}>
+              Términos y Condiciones
+            </Link>
+          </li>
+
+          <li>
+
+            <Link href="/login" className={styles.loginButton}>
+
+              Iniciar sesión
+
+            </Link>
+
+          </li>
+
+        </ul>
+
       </nav>
 
-      <section className="relative isolate">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_75%_45%,rgba(153,27,27,0.26),transparent_46%),linear-gradient(115deg,#080808_35%,#160909_100%)]" />
-        <div className="absolute -right-28 top-16 -z-10 h-80 w-80 rounded-full border border-red-500/10 md:right-12 md:top-12 md:h-[30rem] md:w-[30rem]" />
-        <div className="mx-auto grid min-h-[620px] max-w-7xl items-center gap-12 px-5 py-20 md:grid-cols-[1.05fr_0.95fr] md:px-8 md:py-24">
-          <div className="max-w-2xl">
-            <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-950/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-red-300">
-              <span className="h-2 w-2 rounded-full bg-red-500" />
-              Tu mejor versión empieza aquí
-            </p>
-            <h1 className="text-5xl font-black leading-[1.04] tracking-tight sm:text-6xl md:text-7xl">
-              Entrena fuerte.
-              <span className="mt-2 block text-red-500">Vive mejor.</span>
-            </h1>
-            <p className="mt-7 max-w-xl text-lg leading-8 text-gray-300">
-              Un espacio para superar tus límites, con profesores especializados,
-              planes para tus objetivos y el acompañamiento que necesitas para avanzar.
-            </p>
-            <div className="mt-9 flex flex-wrap gap-4">
-              {!cargando && usuario ? (
-                <Link
-                  href={destinoCuenta}
-                  className="rounded-xl bg-red-600 px-7 py-4 font-bold shadow-lg shadow-red-950/50 transition hover:-translate-y-0.5 hover:bg-red-500"
-                >
-                  {usuario.rol === "admin" ? "Ir a Administración" : "Ir a Mi Cuenta"}
-                </Link>
-              ) : (
-                <>
-                  <Link
-                    href="/registro"
-                    className="rounded-xl bg-red-600 px-7 py-4 font-bold shadow-lg shadow-red-950/50 transition hover:-translate-y-0.5 hover:bg-red-500"
-                  >
-                    Comienza hoy
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="rounded-xl border border-white/20 px-7 py-4 font-bold transition hover:border-white/50 hover:bg-white/5"
-                  >
-                    Iniciar sesión
-                  </Link>
-                </>
-              )}
-            </div>
-            <div className="mt-12 flex flex-wrap gap-x-10 gap-y-5 border-t border-white/10 pt-7">
-              <Dato valor="3" etiqueta="sucursales" />
-              <Dato valor="100%" etiqueta="enfoque en ti" />
-              <Dato valor="1:1" etiqueta="acompañamiento" />
-            </div>
+      {/* PORTADA */}
+
+      <section className={styles.hero}>
+
+        <div className={styles.heroContent}>
+
+          <div className={styles.heroBadge}>
+
+            <span className={styles.statusDot} />
+
+            ENTRENAMIENTO PERSONALIZADO
+
           </div>
 
-          <div className="relative mx-auto flex h-[360px] w-full max-w-lg items-center justify-center md:h-[470px]">
-            <div className="absolute h-[84%] w-[84%] rotate-6 rounded-[3rem] border border-red-500/20 bg-gradient-to-br from-red-950/70 via-zinc-950 to-black shadow-2xl shadow-red-950/30" />
-            <div className="absolute h-[72%] w-[72%] -rotate-6 rounded-[2.5rem] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.08),rgba(255,255,255,0.01))] backdrop-blur-sm" />
-            <div className="relative px-8 text-center">
-              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-red-600 text-3xl font-black shadow-xl shadow-red-950/60 md:h-28 md:w-28 md:text-4xl">
-                FP
-              </div>
-              <p className="text-sm font-bold uppercase tracking-[0.35em] text-red-400">
-                Focus Power Fit
-              </p>
-              <p className="mt-4 text-3xl font-black leading-tight md:text-4xl">
-                Fuerza para<br />llegar más lejos.
-              </p>
-              <div className="mx-auto mt-7 h-1 w-20 rounded-full bg-red-500" />
-            </div>
-            <span className="absolute right-2 top-10 rounded-2xl border border-white/10 bg-zinc-950/90 px-4 py-3 text-sm font-bold text-gray-200 shadow-xl md:-right-4">
-              DISCIPLINA <span className="text-red-500">·</span> CONSTANCIA
-            </span>
-            <span className="absolute bottom-8 left-0 rounded-2xl border border-white/10 bg-zinc-950/90 px-4 py-3 text-sm font-bold text-gray-200 shadow-xl md:-left-5">
-              SUPERA TUS LÍMITES
-            </span>
-          </div>
-        </div>
-      </section>
+          <p className={styles.heroKicker}>
 
-      <section className="mx-auto max-w-7xl px-5 pb-20 md:px-8 md:pb-28">
-        <div className="mb-10 max-w-2xl">
-          <p className="text-sm font-bold uppercase tracking-[0.24em] text-red-500">Entrena a tu manera</p>
-          <h2 className="mt-3 text-3xl font-black sm:text-4xl">Todo lo que necesitas para avanzar</h2>
-          <p className="mt-4 leading-7 text-gray-400">
-            Encuentra el espacio, la guía y la rutina que te acerquen a tus objetivos.
+            FOCUS POWER FIT
+
           </p>
+
+          <h1 className={styles.heroTitle}>
+
+            SUPERA TUS
+
+            <span>LÍMITES.</span>
+
+          </h1>
+
+          <p className={styles.heroDescription}>
+
+            Entrena con propósito. Alcanza tus objetivos
+
+            con el acompañamiento de nuestros profesores
+
+            en La Reina y Peñalolén.
+
+          </p>
+
+          <div className={styles.heroActions}>
+
+            <Link href="/#planes" className={styles.ctaButton}>
+
+              Explorar planes
+
+            </Link>
+
+            <Link
+
+              href="/sucursales"
+
+              className={styles.secondaryButton}
+
+            >
+
+              Conocer sucursales
+
+            </Link>
+
+          </div>
+
         </div>
 
-        <div className="grid gap-5 md:grid-cols-3">
-          <Tarjeta
+        {/* TARJETAS */}
+
+        <div className={styles.cards}>
+
+          <TarjetaInicio
+
+            icono="entrenamiento"
+
             numero="01"
-            titulo="Profesores especializados"
-            descripcion="Recibe orientación profesional y entrena con confianza en cada etapa."
-            href="/profesores"
-            accion="Conoce al equipo"
+
+            titulo="Entrenamiento personalizado"
+
+            descripcion="Planes individuales y Dupla diseñados para avanzar a tu ritmo."
+
+            href="/#planes"
+
+            boton="Ver planes"
+
           />
-          <Tarjeta
+
+          <TarjetaInicio
+
+            icono="ubicacion"
+
             numero="02"
-            titulo="Tres sucursales"
-            descripcion="Elige el lugar que mejor se adapta a tu rutina y sigue en movimiento."
+
+            titulo="Nuestras sucursales"
+
+            descripcion="Dos sedes para entrenar: La Reina y Peñalolén."
+
             href="/sucursales"
-            accion="Encuentra tu sucursal"
+
+            boton="Ver sucursales"
+
           />
-          <Tarjeta
+
+          <TarjetaInicio
+
+            icono="equipo"
+
             numero="03"
-            titulo="Un plan para ti"
-            descripcion="Da el primer paso y descubre una experiencia de entrenamiento hecha para ti."
-            href={!cargando && usuario ? destinoCuenta : "/registro"}
-            accion={!cargando && usuario ? "Ir a mi espacio" : "Únete a nosotros"}
+
+            titulo="Nuestro equipo"
+
+            descripcion="Profesores que te acompañan en cada etapa de tu entrenamiento."
+
+            href="/profesores"
+
+            boton="Ver profesores"
+
           />
+
         </div>
+
       </section>
 
-      <footer className="border-t border-white/10 bg-black/60">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-7 text-sm text-gray-500 sm:flex-row sm:items-center sm:justify-between md:px-8">
-          <p>© {new Date().getFullYear()} Focus Power Fit</p>
-          <p>Entrena con propósito. Avanza con confianza.</p>
+      {/* PLANES */}
+
+      <section
+
+        id="planes"
+
+        aria-labelledby="titulo-planes"
+
+        className={styles.plansSection}
+
+      >
+
+        <div className={styles.plansContainer}>
+
+          <header className={styles.sectionHeader}>
+
+            <span className={styles.sectionEyebrow}>
+
+              ELIGE TU ENTRENAMIENTO
+
+            </span>
+
+            <h2
+
+              id="titulo-planes"
+
+              className={styles.sectionTitle}
+
+            >
+
+              NUESTROS <span>PLANES</span>
+
+            </h2>
+
+            <div className={styles.sectionLine} />
+
+            <p className={styles.sectionDescription}>
+
+              Encuentra el paquete que se adapte a tus
+
+              objetivos, disponibilidad y estilo de vida.
+
+            </p>
+
+          </header>
+
+          <div className={styles.plansGrid}>
+
+            <TablaPlanes
+
+              titulo="Plan Individual"
+
+              descripcion="Entrenamiento personalizado para una persona."
+
+              paquetes={planesIndividuales}
+
+            />
+
+            <TablaPlanes
+
+              titulo="Plan Dupla"
+
+              descripcion="Entrenamiento compartido para dos personas."
+
+              paquetes={planesDupla}
+
+              destacado
+
+            />
+
+          </div>
+
+
+          {/* RESUMEN DE TÉRMINOS DEL ENTRENAMIENTO */}
+          <section className={styles.conditionsSection} aria-labelledby="titulo-condiciones">
+            <div className={styles.conditionsHeading}>
+              <span className={styles.sectionEyebrow}>ANTES DE COMENZAR</span>
+              <h3 id="titulo-condiciones" className={styles.conditionsTitle}>
+                Información importante <span>sobre tu plan</span>
+              </h3>
+              <p className={styles.conditionsIntro}>
+                Revisa las principales condiciones del entrenamiento personalizado.
+                Puedes abrir cada pregunta para conocer más detalles.
+              </p>
+            </div>
+            <div className={styles.conditionsGrid}>
+              {[
+                { pregunta: "¿Cómo funcionan las cancelaciones?", respuesta: "Debes avisar con al menos 6 horas hábiles de anticipación. Las cancelaciones fuera de plazo se rigen por el contrato suscrito." },
+                { pregunta: "¿Qué pasa si el profesor no asiste?", respuesta: "Si el profesor no asiste o se retrasa más de 20 minutos, puedes recuperar la sesión conforme a las condiciones del contrato." },
+                { pregunta: "¿Puedo congelar mi plan?", respuesta: "Los planes pueden contemplar congelamiento por accidentes, enfermedad, embarazo o viajes, sujeto a las condiciones contractuales y antecedentes necesarios." },
+                { pregunta: "¿Puedo extender la vigencia?", respuesta: "En los casos contemplados por el contrato, puedes solicitar una extensión presentando la documentación que respalde la situación." },
+                { pregunta: "¿Cómo se registra mi asistencia?", respuesta: "La asistencia se registra en el mesón de atención o mediante el sistema habilitado por Focus Power Fit." },
+                { pregunta: "¿Qué modalidades existen?", respuesta: "Hay entrenamiento personalizado individual y compartido (Dupla). Revisa las características específicas antes de contratar." },
+              ].map((item) => (
+                <details key={item.pregunta} className={styles.conditionItem}>
+                  <summary className={styles.conditionQuestion}>
+                    <span>{item.pregunta}</span>
+                    <span className={styles.conditionChevron} aria-hidden="true">⌄</span>
+                  </summary>
+                  <p className={styles.conditionAnswer}>{item.respuesta}</p>
+                </details>
+              ))}
+            </div>
+            <p className={styles.conditionsDisclaimer}>
+              Este resumen es informativo y no reemplaza el contrato firmado.
+            </p>
+            <Link href="/terminos" className={styles.conditionsLink}>
+              Leer términos y condiciones completos →
+            </Link>
+          </section>
+
+          <div className={styles.plansActions}>
+
+            <Link
+
+              href="/registro"
+
+              className={styles.ctaButton}
+
+            >
+
+              Regístrate para comenzar
+
+            </Link>
+
+          </div>
+
         </div>
+
+      </section>
+
+      {/* PIE DE PÁGINA */}
+
+      <footer className={styles.footer}>
+
+        <span className={styles.footerBrand}>
+
+          FOCUS POWER FIT
+
+        </span>
+
+          <Link href="/terminos" className={styles.navLink}>
+            Términos y Condiciones
+          </Link>
+
+        <p className={styles.footerText}>
+
+          © {new Date().getFullYear()} Focus Power Fit.
+
+          Todos los derechos reservados.
+
+        </p>
+
       </footer>
+
+      {/* CHATBOT */}
+
+      <FitBot />
+
     </main>
-  );
-}
 
-function Dato({ valor, etiqueta }: { valor: string; etiqueta: string }) {
-  return (
-    <div>
-      <p className="text-2xl font-black text-white">{valor}</p>
-      <p className="mt-1 text-xs uppercase tracking-wider text-gray-500">{etiqueta}</p>
-    </div>
   );
-}
 
-function Tarjeta({
-  numero,
-  titulo,
-  descripcion,
-  href,
-  accion,
-}: {
-  numero: string;
-  titulo: string;
-  descripcion: string;
-  href: string;
-  accion: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900 to-zinc-950 p-7 transition duration-200 hover:-translate-y-1 hover:border-red-500/50"
-    >
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-black tracking-widest text-red-500">{numero}</span>
-        <span className="text-xl text-gray-500 transition group-hover:translate-x-1 group-hover:text-red-400" aria-hidden="true">→</span>
-      </div>
-      <h3 className="mt-8 text-xl font-bold">{titulo}</h3>
-      <p className="mt-3 min-h-14 leading-6 text-gray-400">{descripcion}</p>
-      <p className="mt-6 text-sm font-bold text-red-400">{accion}</p>
-    </Link>
-  );
 }
