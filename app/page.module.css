@@ -1,0 +1,353 @@
+
+/* =====================================
+   FOCUS POWER FIT - PÁGINA PRINCIPAL
+   ===================================== */
+
+/* COLORES EXCLUSIVOS DE ESTA PÁGINA */
+
+.main {
+  --page-background: #000000;
+  --page-text: #ffffff;
+  --page-red: #ef4444;
+  --page-red-dark: #b91c1c;
+  --page-red-hover: #991b1b;
+  --page-card-background: #111827;
+  --page-text-secondary: #9ca3af;
+
+  min-height: 100vh;
+  background-color: var(--page-background);
+  color: var(--page-text);
+}
+
+/* =====================================
+   BARRA DE NAVEGACIÓN
+   ===================================== */
+
+.navbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  padding: 1rem 2rem;
+  background-color: #000000;
+  border-bottom: 1px solid var(--page-red);
+}
+
+/* IDENTIDAD DEL GIMNASIO */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 40px;
+  height: 40px;
+
+  border-radius: 50%;
+  background-color: var(--page-red-dark);
+  color: #ffffff;
+
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.brandName {
+  margin: 0;
+  color: var(--page-red);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* =====================================
+   MENÚ DE NAVEGACIÓN
+   ===================================== */
+
+.navLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.navLink {
+  color: #ffffff;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.navLink:hover {
+  color: var(--page-red);
+}
+
+/* =====================================
+   BOTÓN INICIAR SESIÓN
+   ===================================== */
+
+.loginButton {
+  display: inline-block;
+
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+
+  background-color: var(--page-red-dark);
+  color: #ffffff;
+
+  font-weight: 600;
+  text-decoration: none;
+
+  transition: background-color 0.2s ease;
+}
+
+.loginButton:hover {
+  background-color: var(--page-red-hover);
+}
+
+/* =====================================
+   CONTENIDO PRINCIPAL CON FOTOGRAFÍA
+   ===================================== */
+
+.hero {
+  position: relative;
+  isolation: isolate;
+
+  min-height: 650px;
+  padding: 4rem 2rem;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  background-color: #000000;
+
+  background-image:
+    linear-gradient(
+      rgba(0, 0, 0, 0.68),
+      rgba(0, 0, 0, 0.78)
+    ),
+    url("/focus-dashboard.png");
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* =====================================
+   TÍTULO PRINCIPAL
+   ===================================== */
+
+.heroTitle {
+  margin: 0 0 1rem;
+
+  color: var(--page-red);
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.2;
+
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+}
+
+/* DESCRIPCIÓN PRINCIPAL */
+
+.heroDescription {
+  max-width: 672px;
+  margin: 0 auto 2rem;
+
+  color: #e5e7eb;
+  font-size: 1rem;
+  line-height: 1.7;
+
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+/* =====================================
+   TARJETAS INFORMATIVAS
+   ===================================== */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+
+  width: 100%;
+  max-width: 1152px;
+  margin: 2.5rem auto 0;
+}
+
+.card {
+  padding: 1.5rem;
+
+  border: 1px solid var(--page-red);
+  border-radius: 0.75rem;
+
+  background-color: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(5px);
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: #f87171;
+  background-color: rgba(15, 15, 15, 0.94);
+}
+
+.cardTitle {
+  margin: 0;
+
+  color: #f87171;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.cardDescription {
+  margin: 0.75rem 0 0;
+
+  color: #e5e7eb;
+  line-height: 1.6;
+}
+
+.cardLink {
+  display: inline-block;
+  margin-top: 1.25rem;
+
+  color: #f87171;
+  font-weight: 600;
+  text-decoration: none;
+
+  transition: color 0.2s ease;
+}
+
+.cardLink:hover {
+  color: #fca5a5;
+}
+
+/* =====================================
+   BOTÓN PRINCIPAL
+   ===================================== */
+
+.ctaContainer {
+  margin-top: 3rem;
+}
+
+.ctaButton {
+  display: inline-block;
+
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+
+  background-color: var(--page-red-dark);
+  color: #ffffff;
+
+  font-weight: 600;
+  text-decoration: none;
+
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.ctaButton:hover {
+  transform: scale(1.05);
+  background-color: var(--page-red-hover);
+}
+
+/* =====================================
+   PIE DE PÁGINA
+   ===================================== */
+
+.footer {
+  padding: 1.5rem;
+
+  border-top: 1px solid #1f2937;
+  background-color: #000000;
+
+  text-align: center;
+}
+
+.footerText {
+  margin: 0;
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+/* =====================================
+   DISEÑO RESPONSIVE - TABLETS
+   ===================================== */
+
+@media (max-width: 900px) {
+  .hero {
+    min-height: 600px;
+    padding: 3.5rem 1.5rem;
+  }
+
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* =====================================
+   DISEÑO RESPONSIVE - CELULARES
+   ===================================== */
+
+@media (max-width: 640px) {
+  .navbar {
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .navLinks {
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .hero {
+    min-height: 650px;
+    padding: 3rem 1.5rem;
+
+    background-position: center;
+  }
+
+  .heroTitle {
+    font-size: 2.25rem;
+  }
+
+  .heroDescription {
+    font-size: 0.95rem;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .card {
+    padding: 1.25rem;
+  }
+
+  .cardTitle {
+    font-size: 1.35rem;
+  }
+
+  .ctaContainer {
+    margin-top: 2rem;
+  }
+}

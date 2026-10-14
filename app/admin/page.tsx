@@ -1,23 +1,208 @@
+
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../auth/AuthContext";
+
+
+type IconoNombre =
+  | "dashboard"
+  | "clientes"
+  | "entrenadores"
+  | "planes"
+  | "asistencias"
+  | "sucursales"
+  | "calendario"
+  | "contratos"
+  | "pagos"
+  | "recordatorios"
+  | "buscar"
+  | "salir";
+
+const navegacion: {
+  nombre: string;
+  ruta: string;
+  icono: IconoNombre;
+  pendiente?: boolean;
+}[] = [
+  { nombre: "Dashboard", ruta: "/admin", icono: "dashboard" },
+  { nombre: "Clientes", ruta: "/admin/clientes", icono: "clientes" },
+  { nombre: "Entrenadores", ruta: "/admin/profesores", icono: "entrenadores" },
+  { nombre: "Planes", ruta: "/admin/planes", icono: "planes" },
+  { nombre: "Asistencias", ruta: "/admin/asistencia", icono: "asistencias" },
+  {
+    nombre: "Sucursales",
+    ruta: "",
+    icono: "sucursales",
+    pendiente: true,
+  },
+  { nombre: "Horarios", ruta: "/admin/horarios", icono: "calendario" },
+  { nombre: "Contratos", ruta: "/admin/contratos", icono: "contratos" },
+  { nombre: "Pagos", ruta: "/admin/pagos", icono: "pagos" },
+  {
+    nombre: "Recordatorios",
+    ruta: "/admin/recordatorios",
+    icono: "recordatorios",
+  },
+];
+
+const clientes = {
+  total: 910,
+  penalolen: 629,
+  laReina: 281,
+};
+
+function porcentaje(cantidad: number) {
+  return ((cantidad / clientes.total) * 100)
+    .toFixed(1)
+    .replace(".", ",");
+}
+
+function Icono({ nombre }: { nombre: IconoNombre }) {
+  const trazos: Record<IconoNombre, React.ReactNode> = {
+    dashboard: (
+      <>
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" />
+      </>
+    ),
+    clientes: (
+      <>
+        <circle cx="9" cy="8" r="3" />
+        <path d="M3 20v-2a6 6 0 0 1 12 0v2" />
+        <path d="M17 5a3 3 0 0 1 0 6M17 14a5 5 0 0 1 4 5v1" />
+      </>
+    ),
+    entrenadores: (
+      <>
+        <circle cx="12" cy="7" r="4" />
+        <path d="M4 21v-2a8 8 0 0 1 16 0v2" />
+        <path d="M19 4l2 2-2 2" />
+      </>
+    ),
+    planes: (
+      <>
+        <rect x="5" y="3" width="14" height="18" rx="2" />
+        <path d="M9 8h6M9 12h6M9 16h4" />
+      </>
+    ),
+    asistencias: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2M8 3l1-2M16 3l-1-2" />
+      </>
+    ),
+    sucursales: (
+      <>
+        <path d="M12 22s7-6 7-13a7 7 0 1 0-14 0c0 7 7 13 7 13Z" />
+        <circle cx="12" cy="9" r="2" />
+      </>
+    ),
+    calendario: (
+      <>
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M7 3v4M17 3v4M3 10h18" />
+      </>
+    ),
+    contratos: (
+      <>
+        <path d="M6 3h9l4 4v14H6z" />
+        <path d="M15 3v5h4M9 13h7M9 17h7" />
+      </>
+    ),
+    pagos: (
+      <>
+        <rect x="2" y="5" width="20" height="14" rx="2" />
+        <path d="M2 10h20M6 15h4" />
+      </>
+    ),
+    recordatorios: (
+      <>
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+        <path d="M10 21h4" />
+      </>
+    ),
+    buscar: (
+      <>
+        <circle cx="10" cy="10" r="7" />
+        <path d="m15 15 6 6" />
+      </>
+    ),
+    salir: (
+      <>
+        <path d="M10 4H4v16h6M14 8l4 4-4 4M8 12h10" />
+      </>
+    ),
+  };
+
+  return (
+    <svg
+      className="icono"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {trazos[nombre]}
+    </svg>
+  );
+}
+
+function Panel({
+  titulo,
+  children,
+  enlace,
+  ruta,
+}: {
+  titulo: string;
+  children: React.ReactNode;
+  enlace?: string;
+  ruta?: string;
+}) {
+  return (
+    <section className="panel">
+      <div className="panelCabecera">
+        <h2>{titulo}</h2>
+        {enlace && ruta && (
+          <Link href={ruta} className="panelEnlace">
+            {enlace}
+          </Link>
+        )}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function EstadoVacio({ texto }: { texto: string }) {
+  return (
+    <div className="estadoVacio">
+      <span className="estadoVacioIcono">—</span>
+      <p>{texto}</p>
+    </div>
+  );
+}
 
 export default function AdminPage() {
   const router = useRouter();
   const { usuario, cargando, logout } = useAuth();
+
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
     if (cargando) return;
 
     if (!usuario) {
       router.replace("/login");
-      return;
-    }
-
-    if (usuario.rol !== "admin") {
+    } else if (usuario.rol !== "admin") {
       router.replace("/mi-cuenta");
     }
   }, [usuario, cargando, router]);
@@ -27,129 +212,299 @@ export default function AdminPage() {
     router.replace("/login");
   };
 
-  if (cargando) {
+  const buscar = (evento: React.FormEvent<HTMLFormElement>) => {
+    evento.preventDefault();
+
+    if (!busqueda.trim()) return;
+
+    router.push(
+      `/admin/clientes?buscar=${encodeURIComponent(busqueda.trim())}`
+    );
+  };
+
+  if (cargando || !usuario || usuario.rol !== "admin") {
     return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p>Cargando...</p>
+      <main className="cargando">
+        {cargando ? "Cargando..." : "Verificando acceso..."}
       </main>
     );
   }
 
-  if (!usuario || usuario.rol !== "admin") {
-    return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p>Verificando acceso...</p>
-      </main>
-    );
-  }
+  const indicadores = [
+    {
+      nombre: "Clientes Totales",
+      valor: clientes.total.toLocaleString("es-CL"),
+      detalle: "Clientes registrados",
+      icono: "clientes" as IconoNombre,
+    },
+    {
+      nombre: "Clientes Peñalolén",
+      valor: clientes.penalolen.toLocaleString("es-CL"),
+      detalle: `${porcentaje(clientes.penalolen)}% del total`,
+      icono: "sucursales" as IconoNombre,
+    },
+    {
+      nombre: "Clientes La Reina",
+      valor: clientes.laReina.toLocaleString("es-CL"),
+      detalle: `${porcentaje(clientes.laReina)}% del total`,
+      icono: "sucursales" as IconoNombre,
+    },
+    {
+      nombre: "Planes Vigentes",
+      valor: "—",
+      detalle: "Datos aún no conectados",
+      icono: "planes" as IconoNombre,
+    },
+    {
+      nombre: "Asistencias (Mes)",
+      valor: "—",
+      detalle: "Datos aún no conectados",
+      icono: "asistencias" as IconoNombre,
+    },
+  ];
 
   return (
-    <main className="min-h-screen bg-black text-white p-6 md:p-10">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-14">
-        <div>
-          <p className="text-gray-400 text-lg">
-            Administrador
-          </p>
+    <div className="dashboard">
+      {/* MENÚ LATERAL */}
+      <aside
+        className={`sidebar ${menuAbierto ? "sidebarAbierto" : ""}`}
+      >
+        <Link href="/admin" className="logo">
+          <span className="logoMarca">▥</span>
+          <span className="logoNombre">
+            <strong>FOCUS</strong>
+            <small>POWER FIT</small>
+          </span>
+        </Link>
 
-          <h1 className="text-4xl md:text-5xl font-black mt-1">
-            FOCUS{" "}
-            <span className="text-red-600">
-              POWER FIT
-            </span>
-          </h1>
+        <nav className="navegacion">
+          {navegacion.map((item) =>
+            item.pendiente ? (
+              <div
+                key={item.nombre}
+                className="navegacionPendiente"
+                title="Módulo pendiente de habilitar"
+              >
+                <Icono nombre={item.icono} />
+                <span>{item.nombre}</span>
+              </div>
+            ) : (
+              <Link
+                key={item.nombre}
+                href={item.ruta}
+                className={`navegacionItem ${
+                  item.ruta === "/admin" ? "navegacionActivo" : ""
+                }`}
+                onClick={() => setMenuAbierto(false)}
+              >
+                <Icono nombre={item.icono} />
+                <span>{item.nombre}</span>
+              </Link>
+            )
+          )}
+        </nav>
 
-          <p className="text-gray-400 mt-2">
-            Bienvenido, {usuario.nombre}
-          </p>
+        <div className="sidebarInferior">
+          <strong>FOCUS POWER FIT</strong>
+          <p>Gestión integral del gimnasio</p>
         </div>
+      </aside>
 
+      {menuAbierto && (
         <button
-          onClick={cerrarSesion}
-          className="bg-red-600 hover:bg-red-700 transition px-6 py-3 rounded-xl font-bold"
-        >
-          Cerrar sesión
-        </button>
-      </header>
+          type="button"
+          className="overlay"
+          aria-label="Cerrar menú"
+          onClick={() => setMenuAbierto(false)}
+        />
+      )}
 
-      <section>
-        <h2 className="text-3xl font-bold mb-8">
-          Panel Administrativo
-        </h2>
+      {/* CONTENIDO PRINCIPAL */}
+      <main className="principal">
+        <div className="encabezado">
+          <div className="barraSuperior">
+            <button
+              type="button"
+              className="botonMenu"
+              aria-label="Abrir menú"
+              onClick={() => setMenuAbierto(true)}
+            >
+              ☰
+            </button>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Tarjeta
-            titulo="Clientes"
-            descripcion="Administrar clientes existentes y nuevos."
-            href="/admin/clientes"
-          />
+            <form onSubmit={buscar} className="buscador">
+              <Icono nombre="buscar" />
+              <input
+                type="search"
+                placeholder="Buscar clientes..."
+                value={busqueda}
+                onChange={(evento) => setBusqueda(evento.target.value)}
+                aria-label="Buscar clientes"
+              />
+              <button type="submit" className="botonBuscar">
+                Buscar
+              </button>
+            </form>
 
-          <Tarjeta
-            titulo="Profesores"
-            descripcion="Administrar información de profesores."
-            href="/admin/profesores"
-          />
+            <div className="usuario">
+              <div className="avatar">
+                {usuario.nombre?.charAt(0).toUpperCase() || "A"}
+              </div>
+              <div className="usuarioDatos">
+                <strong>{usuario.nombre}</strong>
+                <span>Administrador/a</span>
+              </div>
+              <button
+                type="button"
+                className="botonSalir"
+                onClick={cerrarSesion}
+                title="Cerrar sesión"
+                aria-label="Cerrar sesión"
+              >
+                <Icono nombre="salir" />
+              </button>
+            </div>
+          </div>
 
-          <Tarjeta
-            titulo="Planes"
-            descripcion="Administrar los planes del gimnasio."
-            href="/admin/planes"
-          />
+          <div className="hero">
+            <div className="heroTexto">
+              <span className="heroEtiqueta">DASHBOARD</span>
+              <h1>Resumen General</h1>
+              <p>Focus Power Fit · Gestión Integral del Gimnasio</p>
+            </div>
 
-          <Tarjeta
-            titulo="Horarios"
-            descripcion="Gestionar horarios y clases."
-            href="/admin/horarios"
-          />
-
-          <Tarjeta
-            titulo="Asistencia"
-            descripcion="Registrar asistencia de clientes."
-            href="/admin/asistencia"
-          />
-
-          <Tarjeta
-            titulo="Contratos"
-            descripcion="Administrar copias digitales de contratos."
-            href="/admin/contratos"
-          />
-
-          <Tarjeta
-            titulo="Pagos"
-            descripcion="Registrar pagos realizados presencialmente."
-            href="/admin/pagos"
-          />
-
-          <Tarjeta
-            titulo="Recordatorios"
-            descripcion="Administrar recordatorios de clases por correo."
-            href="/admin/recordatorios"
-          />
+            <p className="heroFrase">
+              DISCIPLINA
+              <strong>HOY,</strong>
+              RESULTADOS
+              <strong>SIEMPRE.</strong>
+            </p>
+          </div>
         </div>
-      </section>
-    </main>
-  );
-}
 
-function Tarjeta({
-  titulo,
-  descripcion,
-  href,
-}: {
-  titulo: string;
-  descripcion: string;
-  href: string;
-}) {
-  return (
-    <Link href={href}>
-      <div className="h-full bg-zinc-950 border border-zinc-800 hover:border-red-600 hover:-translate-y-1 transition-all rounded-xl p-6 cursor-pointer">
-        <h3 className="text-2xl font-bold text-red-500 mb-3">
-          {titulo}
-        </h3>
+        <div className="contenido">
+          {/* INDICADORES */}
+          <section className="indicadores">
+            {indicadores.map((indicador) => (
+              <article
+                key={indicador.nombre}
+                className="indicador"
+              >
+                <div className="indicadorEncabezado">
+                  <span className="indicadorIcono">
+                    <Icono nombre={indicador.icono} />
+                  </span>
+                  <span className="indicadorNombre">
+                    {indicador.nombre}
+                  </span>
+                </div>
 
-        <p className="text-gray-400">
-          {descripcion}
-        </p>
-      </div>
-    </Link>
+                <strong className="indicadorNumero">
+                  {indicador.valor}
+                </strong>
+
+                <p className="indicadorDetalle">
+                  {indicador.detalle}
+                </p>
+
+                <div
+                  className="indicadorDecoracion"
+                  aria-hidden="true"
+                />
+              </article>
+            ))}
+          </section>
+
+          {/* GRÁFICOS */}
+          <section className="graficos">
+            <Panel titulo="Asistencias por Semana">
+              <EstadoVacio texto="Conectaremos aquí las asistencias reales por semana y sucursal." />
+            </Panel>
+
+            <Panel titulo="Distribución de Clientes por Sucursal">
+              <div className="distribucion">
+                <div className="distribucionGrafico">
+                  <div className="distribucionCentro">
+                    <strong>{clientes.total}</strong>
+                    <span>Clientes</span>
+                  </div>
+                </div>
+
+                <div className="distribucionLeyenda">
+                  <div className="leyendaItem">
+                    <span className="leyendaPenalolen" />
+                    <div>
+                      <strong>Peñalolén</strong>
+                      <small>
+                        {clientes.penalolen} clientes ·{" "}
+                        {porcentaje(clientes.penalolen)}%
+                      </small>
+                    </div>
+                  </div>
+
+                  <div className="leyendaItem">
+                    <span className="leyendaLaReina" />
+                    <div>
+                      <strong>La Reina</strong>
+                      <small>
+                        {clientes.laReina} clientes ·{" "}
+                        {porcentaje(clientes.laReina)}%
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Panel>
+
+            <Panel titulo="Estado de Planes">
+              <EstadoVacio texto="Los estados de los planes se mostrarán cuando estén conectados al backend." />
+            </Panel>
+          </section>
+
+          {/* TABLAS INFERIORES */}
+          <section className="tablas">
+            <Panel
+              titulo="Planes Más Contratados"
+              enlace="Ver planes →"
+              ruta="/admin/planes"
+            >
+              <div className="tablaEncabezado">
+                <span>Plan</span>
+                <span>Clientes</span>
+              </div>
+              <EstadoVacio texto="Sin estadísticas de contrataciones disponibles." />
+            </Panel>
+
+            <Panel
+              titulo="Rendimiento de Entrenadores"
+              enlace="Ver todos →"
+              ruta="/admin/profesores"
+            >
+              <div className="tablaEncabezado">
+                <span>Entrenador</span>
+                <span>Asistencias</span>
+              </div>
+              <EstadoVacio texto="Sin estadísticas de entrenadores disponibles." />
+            </Panel>
+
+            <Panel
+              titulo="Últimas Asistencias"
+              enlace="Ver todas →"
+              ruta="/admin/asistencia"
+            >
+              <div className="tablaEncabezado">
+                <span>Cliente</span>
+                <span>Estado</span>
+              </div>
+              <EstadoVacio texto="Sin registros recientes conectados." />
+            </Panel>
+          </section>
+
+          <footer className="footer">
+            Focus Power Fit · Panel Administrativo
+          </footer>
+        </div>
+      </main>
+    </div>
   );
 }

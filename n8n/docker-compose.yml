@@ -11,6 +11,11 @@ services:
       - TZ=America/Santiago
       - GENERIC_TIMEZONE=America/Santiago
       - N8N_SECURE_COOKIE=false
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - N8N_EDITOR_BASE_URL=http://localhost:5679
+      - WEBHOOK_URL=http://localhost:5679/
 
     volumes:
       - focus_n8n_data:/home/node/.n8n
