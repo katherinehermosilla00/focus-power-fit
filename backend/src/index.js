@@ -1,3 +1,4 @@
+
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
@@ -16,6 +17,7 @@ import contratosRoutes from "./routes/contratos.js";
 import pagosRoutes from "./routes/pagos.js";
 import recordatoriosRoutes from "./routes/recordatorios.js";
 import sucursalesRoutes from "./routes/sucursales.js";
+import authRoutes from "./auth.js";
 
 // MODELOS
 import "./models/cliente.js";
@@ -29,8 +31,6 @@ import "./models/pago.js";
 import "./models/recordatorio.js";
 import "./models/sucursal.js";
 
-import authRoutes from "./auth.js";
-
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -41,12 +41,11 @@ app.use(express.json());
 // ARCHIVOS PÚBLICOS
 app.use(
   "/uploads",
-  express.static(
-    path.join(process.cwd(), "uploads")
-  )
+  express.static(path.join(process.cwd(), "uploads"))
 );
 
 // RUTAS API
+app.use("/api/auth", authRoutes);
 app.use("/api/clientes", clientesRoutes);
 app.use("/api/profesores", profesoresRoutes);
 app.use("/api/planes", planesRoutes);
@@ -77,10 +76,7 @@ app.get("/health", async (req, res) => {
       database: "conectada",
     });
   } catch (error) {
-    console.error(
-      "Error MySQL:",
-      error.message
-    );
+    console.error("Error MySQL:", error.message);
 
     res.status(500).json({
       ok: false,
@@ -95,15 +91,11 @@ const iniciarServidor = async () => {
   try {
     await sequelize.authenticate();
 
-    console.log(
-      "MySQL conectado correctamente"
-    );
+    console.log("MySQL conectado correctamente");
 
     await sequelize.sync();
 
-    console.log(
-      "Modelos sincronizados correctamente"
-    );
+    console.log("Modelos sincronizados correctamente");
 
     app.listen(PORT, () => {
       console.log(
