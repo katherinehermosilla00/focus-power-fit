@@ -1,6 +1,7 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../auth/AuthContext";
@@ -27,7 +28,7 @@ export default function BienvenidaPage() {
     <main className="bg-black text-white min-h-screen">
       <nav className="flex justify-between items-center px-8 py-4 bg-black border-b border-red-500">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" className="w-10 h-10 rounded-full" alt="Logo" />
+          <Image src="/logo.png" width={40} height={40} className="w-10 h-10 rounded-full" alt="Logo" />
           <h1 className="text-xl font-bold text-red-500">Focus Power Fit</h1>
         </div>
 
