@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+﻿import jwt from "jsonwebtoken";
 
 export const verificarToken = (req, res, next) => {
   try {
@@ -18,10 +18,10 @@ export const verificarToken = (req, res, next) => {
     req.usuario = decoded;
 
     next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({
       ok: false,
-      mensaje: "Token inválido o expirado",
+      mensaje: "Token invÃ¡lido o expirado",
     });
   }
 };
@@ -38,7 +38,7 @@ export const verificarRol = (...rolesPermitidos) => {
     if (!rolesPermitidos.includes(req.usuario.rol)) {
       return res.status(403).json({
         ok: false,
-        mensaje: "No tienes permisos para esta acción",
+        mensaje: "No tienes permisos para esta acciÃ³n",
       });
     }
 
@@ -46,7 +46,7 @@ export const verificarRol = (...rolesPermitidos) => {
       res.on("finish", () => {
         if (res.statusCode >= 200 && res.statusCode < 400) {
           console.log(
-            `[ADMIN] ${req.usuario.email} realizó ${req.method} ${req.originalUrl} (${res.statusCode})`
+            `[ADMIN] ${req.usuario.email} realizÃ³ ${req.method} ${req.originalUrl} (${res.statusCode})`
           );
         }
       });
