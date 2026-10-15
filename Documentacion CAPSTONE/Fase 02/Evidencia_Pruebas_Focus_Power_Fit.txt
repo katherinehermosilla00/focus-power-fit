@@ -1,0 +1,110 @@
+﻿EVIDENCIA DE PRUEBAS - FOCUS POWER FIT
+Fecha: 2026-10-14
+Repositorio: https://github.com/katherinehermosilla00/focus-power-fit
+
+=== BACKEND: npm test ===
+
+> backend@1.0.0 test
+> node --test
+
+✔ POST /api/auth/login devuelve JWT válido (242.6253ms)
+✔ POST /api/auth/login distingue email no registrado (4.7217ms)
+✔ POST /api/auth/login informa contraseña incorrecta (63.3973ms)
+✔ GET /api/clientes/mi-dashboard busca al cliente por correo (76.9142ms)
+✔ POST /api/auth/register rechaza un RUT inválido por Módulo 11 (4.5899ms)
+✔ POST /api/auth/register rechaza contraseña débil y celular incompleto (4.9692ms)
+[ADMIN] admin@focuspowerfit.cl realizó GET /api/clientes (200)
+✔ GET /api/clientes exige token y rol admin (70.0712ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1066.5161
+EXIT_CODE=0
+
+=== FRONTEND: npm run lint ===
+
+> focus-power-fit@0.1.0 lint
+> eslint
+
+
+C:\Users\ErviW\Desktop\Proyecto CAPSTONE\focus-power-fit\app\auth\AuthContext.tsx
+  57:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\ErviW\Desktop\Proyecto CAPSTONE\focus-power-fit\app\auth\AuthContext.tsx:57:9
+  55 |
+  56 |       if (tokenGuardado && usuarioGuardado) {
+> 57 |         setToken(tokenGuardado);
+     |         ^^^^^^^^ Avoid calling setState() directly within an effect
+  58 |         setUsuario(JSON.parse(usuarioGuardado));
+  59 |       }
+  60 |     } catch (error) {  react-hooks/set-state-in-effect
+
+C:\Users\ErviW\Desktop\Proyecto CAPSTONE\focus-power-fit\app\bienvenida\page.tsx
+  30:11  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\ErviW\Desktop\Proyecto CAPSTONE\focus-power-fit\backend\src\authMiddleware.js
+  21:12  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 3 problems (1 error, 2 warnings)
+
+EXIT_CODE=1
+
+=== FRONTEND: npm run build ===
+
+> focus-power-fit@0.1.0 build
+> next build
+
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\ErviW\Desktop\Proyecto CAPSTONE\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\ErviW\Desktop\Proyecto CAPSTONE\focus-power-fit\package-lock.json
+System.Management.Automation.RemoteException
+▲ Next.js 16.2.4 (Turbopack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.9s
+  Running TypeScript ...
+  Finished TypeScript in 2.9s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/19) ...
+  Generating static pages using 11 workers (4/19) 
+  Generating static pages using 11 workers (9/19) 
+  Generating static pages using 11 workers (14/19) 
+✓ Generating static pages using 11 workers (19/19) in 464ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /admin
+├ ○ /admin/asignaciones
+├ ○ /admin/asistencia
+├ ○ /admin/clientes
+├ ○ /admin/horarios
+├ ○ /admin/pagos
+├ ○ /admin/planes
+├ ○ /admin/profesores
+├ ○ /bienvenida
+├ ○ /login
+├ ○ /mi-cuenta
+├ ○ /profesores
+├ ○ /registro
+├ ○ /sucursales
+└ ○ /terminos
+
+
+○  (Static)  prerendered as static content
+
+EXIT_CODE=0
