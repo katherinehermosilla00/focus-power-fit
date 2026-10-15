@@ -6,7 +6,7 @@ Repositorio: https://github.com/katherinehermosilla00/focus-power-fit
 
 > backend@1.0.0 test
 > node --test
-
+.
 ✔ POST /api/auth/login devuelve JWT válido (242.6253ms)
 ✔ POST /api/auth/login distingue email no registrado (4.7217ms)
 ✔ POST /api/auth/login informa contraseña incorrecta (63.3973ms)
