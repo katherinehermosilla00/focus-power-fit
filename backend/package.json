@@ -16,13 +16,15 @@
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
+    "exceljs": "^4.4.0",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "mysql2": "^3.23.3",
-    "nodemailer": "^9.0.5",
-    "sequelize": "^6.37.8",
-    "xlsx": "^0.18.5"
+    "nodemailer": "^10.2.1",
+    "sequelize": "^6.37.8"
   },
   "devDependencies": {
     "nodemon": "^3.1.14",
