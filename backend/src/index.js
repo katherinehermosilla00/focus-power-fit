@@ -20,8 +20,12 @@ import contratosRoutes from "./routes/contratos.js";
 import pagosRoutes from "./routes/pagos.js";
 import recordatoriosRoutes from "./routes/recordatorios.js";
 import sucursalesRoutes from "./routes/sucursales.js";
+import maquinasRoutes from "./routes/maquinas.js";
 import fitbotRoutes from "./routes/fitbot.js";
 import authRoutes from "./auth.js";
+
+// NUEVO: RUTAS DE GESTIÓN GENERAL DE IMÁGENES
+import imagenesRoutes from "./routes/imagenes.js";
 
 // ==========================================
 // MODELOS
@@ -36,6 +40,10 @@ import "./models/contrato.js";
 import "./models/pago.js";
 import "./models/recordatorio.js";
 import "./models/sucursal.js";
+import "./models/maquina.js";
+
+// NUEVO: MODELO GENERAL DE IMÁGENES
+import "./models/imagen.js";
 
 // ==========================================
 // CONFIGURACIÓN INICIAL
@@ -127,6 +135,7 @@ app.use(
 // Limitar el tamaño de solicitudes JSON.
 // No afecta directamente a las subidas
 // multipart/form-data gestionadas por Multer.
+
 app.use(
   express.json({
     limit: "20kb",
@@ -152,6 +161,28 @@ app.use("/uploads/contratos", (req, res) => {
 });
 
 // ==========================================
+// PROTECCIÓN DE IMÁGENES ADMINISTRADAS
+// ==========================================
+
+// Las imágenes administradas se almacenan
+// en backend/uploads/imagenes.
+//
+// No se permite acceder directamente a ellas.
+// Solo podrán consultarse mediante las rutas
+// controladas de /api/imagenes.
+//
+// Esto permite respetar la configuración
+// mostrarPublicamente de cada imagen.
+
+app.use("/uploads/imagenes", (req, res) => {
+  return res.status(403).json({
+    ok: false,
+    mensaje:
+      "Acceso directo a imágenes no permitido",
+  });
+});
+
+// ==========================================
 // ARCHIVOS PÚBLICOS
 // ==========================================
 
@@ -165,7 +196,8 @@ app.use("/uploads/contratos", (req, res) => {
 app.use(
   "/uploads",
   express.static(
-    path.join(process.cwd(), "uploads"), {
+    path.join(process.cwd(), "uploads"),
+    {
       dotfiles: "deny",
       index: false,
     }
@@ -195,6 +227,34 @@ app.use("/api/pagos", pagosRoutes);
 app.use("/api/recordatorios", recordatoriosRoutes);
 
 app.use("/api/sucursales", sucursalesRoutes);
+
+// ==========================================
+// GESTIÓN DE MÁQUINAS
+// ==========================================
+
+// Acceso protegido para administradores.
+// Incluye registro, consulta, edición,
+// eliminación y filtros por sucursal y estado.
+
+app.use("/api/maquinas", maquinasRoutes);
+
+// ==========================================
+// GESTIÓN GENERAL DE IMÁGENES
+// ==========================================
+
+// Permite administrar imágenes de:
+// - Profesores
+// - Sucursales
+// - Máquinas
+// - Sitio web
+//
+// Las operaciones administrativas requieren
+// autenticación y rol de administrador.
+//
+// Las imágenes públicas solo se entregan
+// cuando mostrarPublicamente es true.
+
+app.use("/api/imagenes", imagenesRoutes);
 
 // ==========================================
 // FITBOT - CHATBOT
