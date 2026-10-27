@@ -1,10 +1,24 @@
+
 import "dotenv/config";
-import path from "path";
-import XLSX from "xlsx";
+import path from "node:path";
+import ExcelJS from "exceljs";
 
 import sequelize from "../config/database.js";
 import Cliente from "../models/cliente.js";
 import Sucursal from "../models/sucursal.js";
+
+// ==========================================
+// CONFIGURACIÓN
+// ==========================================
+
+// Por defecto, NO se modifica la base de datos.
+// Solo se importará realmente al usar --apply.
+const MODO_SIMULACION =
+  !process.argv.includes("--apply");
+
+// ==========================================
+// FUNCIONES DE NORMALIZACIÓN
+// ==========================================
 
 const limpiarTexto = (valor) => {
   if (
@@ -18,14 +32,24 @@ const limpiarTexto = (valor) => {
   return String(valor).trim() || null;
 };
 
+const normalizarEncabezado = (valor) => {
+  return String(valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+};
+
 const obtenerValor = (fila, nombresPosibles) => {
   const claves = Object.keys(fila);
 
   for (const nombre of nombresPosibles) {
     const encontrada = claves.find(
       (clave) =>
-        clave.trim().toLowerCase() ===
-        nombre.trim().toLowerCase()
+        normalizarEncabezado(clave) ===
+        normalizarEncabezado(nombre)
     );
 
     if (encontrada) {
@@ -106,9 +130,11 @@ const normalizarGenero = (valor) => {
   const texto = genero
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
 
   if (
+    texto === "1" ||
     texto === "f" ||
     texto.includes("femen")
   ) {
@@ -116,6 +142,7 @@ const normalizarGenero = (valor) => {
   }
 
   if (
+    texto === "2" ||
     texto === "m" ||
     texto.includes("mascul")
   ) {
@@ -140,6 +167,10 @@ const convertirEntero = (valor) => {
     ? Math.trunc(numero)
     : null;
 };
+
+// ==========================================
+// FECHAS
+// ==========================================
 
 const construirFechaNacimiento = (
   dia,
@@ -183,34 +214,39 @@ const construirFechaNacimiento = (
 };
 
 const convertirFechaOrigen = (valor) => {
-  if (!valor) {
+  if (
+    valor === null ||
+    valor === undefined ||
+    valor === ""
+  ) {
     return null;
   }
 
   if (valor instanceof Date) {
-    return valor.toISOString().slice(0, 10);
-  }
-
-  if (typeof valor === "number") {
-    const fecha =
-      XLSX.SSF.parse_date_code(valor);
-
-    if (!fecha) {
+    if (Number.isNaN(valor.getTime())) {
       return null;
     }
 
-    return `${fecha.y}-${String(
-      fecha.m
-    ).padStart(2, "0")}-${String(
-      fecha.d
-    ).padStart(2, "0")}`;
+    return valor.toISOString().slice(0, 10);
+  }
+
+  // Fechas numéricas de Excel.
+  if (typeof valor === "number") {
+    const milisegundos =
+      Math.round((valor - 25569) * 86400000);
+
+    const fecha = new Date(milisegundos);
+
+    if (Number.isNaN(fecha.getTime())) {
+      return null;
+    }
+
+    return fecha.toISOString().slice(0, 10);
   }
 
   const texto = String(valor).trim();
 
-  if (
-    /^\d{4}-\d{2}-\d{2}/.test(texto)
-  ) {
+  if (/^\d{4}-\d{2}-\d{2}/.test(texto)) {
     return texto.slice(0, 10);
   }
 
@@ -221,14 +257,146 @@ const convertirFechaOrigen = (valor) => {
   if (match) {
     const [, dia, mes, anio] = match;
 
-    return `${anio}-${mes.padStart(
-      2,
-      "0"
-    )}-${dia.padStart(2, "0")}`;
+    return construirFechaNacimiento(
+      dia,
+      mes,
+      anio
+    );
   }
 
   return null;
 };
+
+// ==========================================
+// CONVERTIR CELDAS DE EXCELJS
+// ==========================================
+
+const convertirCelda = (celda) => {
+  const valor = celda.value;
+
+  if (
+    valor === null ||
+    valor === undefined
+  ) {
+    return null;
+  }
+
+  if (valor instanceof Date) {
+    return valor;
+  }
+
+  if (
+    typeof valor === "string" ||
+    typeof valor === "number" ||
+    typeof valor === "boolean"
+  ) {
+    return valor;
+  }
+
+  if (typeof valor === "object") {
+    if (valor.result !== undefined) {
+      return valor.result;
+    }
+
+    if (valor.text !== undefined) {
+      return valor.text;
+    }
+
+    if (Array.isArray(valor.richText)) {
+      return valor.richText
+        .map((parte) => parte.text)
+        .join("");
+    }
+
+    if (valor.hyperlink) {
+      return valor.text ?? valor.hyperlink;
+    }
+  }
+
+  return celda.text || null;
+};
+
+// ==========================================
+// LEER EXCEL CON EXCELJS
+// ==========================================
+
+const leerFilasExcel = async (rutaArchivo) => {
+  const workbook = new ExcelJS.Workbook();
+
+  await workbook.xlsx.readFile(rutaArchivo);
+
+  const hoja = workbook.worksheets[0];
+
+  if (!hoja) {
+    throw new Error(
+      "El archivo Excel no contiene hojas"
+    );
+  }
+
+  const filaEncabezados = hoja.getRow(1);
+
+  const encabezados = [];
+
+  for (
+    let columna = 1;
+    columna <= hoja.columnCount;
+    columna++
+  ) {
+    encabezados.push(
+      String(
+        convertirCelda(
+          filaEncabezados.getCell(columna)
+        ) ?? ""
+      ).trim()
+    );
+  }
+
+  const filas = [];
+
+  hoja.eachRow((fila, numeroFila) => {
+    if (numeroFila === 1) {
+      return;
+    }
+
+    const registro = {};
+    let tieneDatos = false;
+
+    encabezados.forEach(
+      (encabezado, indice) => {
+        if (!encabezado) {
+          return;
+        }
+
+        const valor = convertirCelda(
+          fila.getCell(indice + 1)
+        );
+
+        registro[encabezado] = valor;
+
+        if (
+          valor !== null &&
+          valor !== undefined &&
+          valor !== ""
+        ) {
+          tieneDatos = true;
+        }
+      }
+    );
+
+    if (tieneDatos) {
+      filas.push({
+        numeroFila,
+        datos: registro,
+      });
+    }
+  });
+
+  return filas;
+};
+
+// ==========================================
+// IMPORTAR CLIENTES POR SUCURSAL
+// ==========================================
 
 const importarArchivo = async (
   rutaArchivo,
@@ -237,27 +405,12 @@ const importarArchivo = async (
 ) => {
   console.log("");
   console.log(
-    `=== Importando ${nombreSucursal} ===`
+    `=== Procesando ${nombreSucursal} ===`
   );
 
-  const workbook = XLSX.readFile(
-    rutaArchivo,
-    {
-      cellDates: true,
-    }
+  const filas = await leerFilasExcel(
+    rutaArchivo
   );
-
-  const primeraHoja =
-    workbook.SheetNames[0];
-
-  const hoja =
-    workbook.Sheets[primeraHoja];
-
-  const filas =
-    XLSX.utils.sheet_to_json(hoja, {
-      defval: null,
-      raw: false,
-    });
 
   console.log(
     `Registros encontrados: ${filas.length}`
@@ -267,9 +420,11 @@ const importarArchivo = async (
   let actualizados = 0;
   let omitidos = 0;
   let errores = 0;
+  let preparados = 0;
 
-  for (let i = 0; i < filas.length; i++) {
-    const fila = filas[i];
+  for (const item of filas) {
+    const fila = item.datos;
+    const numeroFila = item.numeroFila;
 
     try {
       const nombres = limpiarTexto(
@@ -325,6 +480,7 @@ const importarArchivo = async (
             "Telefono secundario",
             "Teléfono 2",
             "Telefono 2",
+            "Teléfono secundario del cliente",
           ])
         );
 
@@ -352,28 +508,38 @@ const importarArchivo = async (
           "Género",
           "Genero",
           "Sexo",
+          "Género. 1 = Femenino, 2 = Masculino",
         ])
       );
 
-      const diaNacimiento =
-        obtenerValor(fila, [
+      const diaNacimiento = obtenerValor(
+        fila,
+        [
           "Día nacimiento",
           "Dia nacimiento",
           "Día de nacimiento",
-        ]);
+          "Día del nacimiento",
+        ]
+      );
 
-      const mesNacimiento =
-        obtenerValor(fila, [
+      const mesNacimiento = obtenerValor(
+        fila,
+        [
           "Mes nacimiento",
           "Mes de nacimiento",
-        ]);
+          "Mes del nacimiento",
+        ]
+      );
 
-      const anioNacimiento =
-        obtenerValor(fila, [
+      const anioNacimiento = obtenerValor(
+        fila,
+        [
           "Año nacimiento",
           "Ano nacimiento",
           "Año de nacimiento",
-        ]);
+          "Año de nacimiento.",
+        ]
+      );
 
       const fechaNacimiento =
         construirFechaNacimiento(
@@ -389,6 +555,7 @@ const importarArchivo = async (
             "Fecha creacion",
             "Fecha de creación",
             "Fecha de creacion",
+            "Fecha de creación.",
           ])
         );
 
@@ -409,7 +576,7 @@ const importarArchivo = async (
         omitidos++;
 
         console.log(
-          `Fila ${i + 2} omitida: sin datos identificables`
+          `Fila ${numeroFila} omitida: sin datos identificables`
         );
 
         continue;
@@ -418,14 +585,13 @@ const importarArchivo = async (
       const nombreFinal =
         nombre ||
         `Cliente sin nombre ${
-          numeroCliente || i + 2
+          numeroCliente || numeroFila
         }`;
 
       const datosCliente = {
         sucursalId,
         numeroCliente,
-        nombres:
-          nombres || nombreFinal,
+        nombres: nombres || nombreFinal,
         apellidos,
         nombre: nombreFinal,
         rut,
@@ -442,56 +608,61 @@ const importarArchivo = async (
         estado: "Activo",
       };
 
+      // ====================================
+      // MODO SIMULACIÓN
+      // ====================================
+      // Solo validar y preparar los datos.
+      // NO consultar ni modificar MySQL.
+      if (MODO_SIMULACION) {
+        preparados++;
+        continue;
+      }
+
+      // ====================================
+      // IMPORTACIÓN REAL
+      // ====================================
+
       let existente = null;
 
       if (numeroCliente) {
-        existente =
-          await Cliente.findOne({
-            where: {
-              sucursalId,
-              numeroCliente,
-            },
-          });
+        existente = await Cliente.findOne({
+          where: {
+            sucursalId,
+            numeroCliente,
+          },
+        });
       }
 
       if (!existente && rut) {
-        existente =
-          await Cliente.findOne({
-            where: {
-              sucursalId,
-              rut,
-            },
-          });
+        existente = await Cliente.findOne({
+          where: {
+            sucursalId,
+            rut,
+          },
+        });
       }
 
       if (!existente && email) {
-        existente =
-          await Cliente.findOne({
-            where: {
-              sucursalId,
-              email,
-            },
-          });
+        existente = await Cliente.findOne({
+          where: {
+            sucursalId,
+            email,
+          },
+        });
       }
 
       if (existente) {
-        await existente.update(
-          datosCliente
-        );
-
+        await existente.update(datosCliente);
         actualizados++;
       } else {
-        await Cliente.create(
-          datosCliente
-        );
-
+        await Cliente.create(datosCliente);
         creados++;
       }
     } catch (error) {
       errores++;
 
       console.error(
-        `Error fila ${i + 2}:`,
+        `Error fila ${numeroFila}:`,
         error.message
       );
     }
@@ -501,45 +672,61 @@ const importarArchivo = async (
     `Finalizado ${nombreSucursal}`
   );
 
-  console.log({
+  const resultado = {
+    registros: filas.length,
+    preparados,
     creados,
     actualizados,
     omitidos,
     errores,
-  });
-
-  return {
-    creados,
-    actualizados,
-    omitidos,
-    errores,
+    simulacion: MODO_SIMULACION,
   };
+
+  console.log(resultado);
+
+  return resultado;
 };
 
-const ejecutarImportacion = async () => {
-  try {
-    await sequelize.authenticate();
+// ==========================================
+// EJECUTAR IMPORTACIÓN
+// ==========================================
 
+const ejecutarImportacion = async () => {
+  let conexionAbierta = false;
+
+  try {
     console.log(
-      "MySQL conectado correctamente"
+      MODO_SIMULACION
+        ? "MODO SIMULACIÓN: no se modificará MySQL"
+        : "MODO REAL: se crearán o actualizarán clientes"
     );
 
-    const penalolen =
-      await Sucursal.findByPk(1);
+    // Solo conectar a MySQL en modo real.
+    if (!MODO_SIMULACION) {
+      await sequelize.authenticate();
+      conexionAbierta = true;
 
-    const laReina =
-      await Sucursal.findByPk(2);
-
-    if (!penalolen) {
-      throw new Error(
-        "No existe Peñalolén con id 1"
+      console.log(
+        "MySQL conectado correctamente"
       );
-    }
 
-    if (!laReina) {
-      throw new Error(
-        "No existe La Reina con id 2"
-      );
+      const penalolen =
+        await Sucursal.findByPk(1);
+
+      const laReina =
+        await Sucursal.findByPk(2);
+
+      if (!penalolen) {
+        throw new Error(
+          "No existe Peñalolén con id 1"
+        );
+      }
+
+      if (!laReina) {
+        throw new Error(
+          "No existe La Reina con id 2"
+        );
+      }
     }
 
     const carpeta = path.join(
@@ -586,8 +773,12 @@ const ejecutarImportacion = async () => {
       "ERROR GENERAL DE IMPORTACIÓN:",
       error.message
     );
+
+    process.exitCode = 1;
   } finally {
-    await sequelize.close();
+    if (conexionAbierta) {
+      await sequelize.close();
+    }
   }
 };
 

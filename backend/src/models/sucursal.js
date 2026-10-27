@@ -1,3 +1,4 @@
+
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 
@@ -42,10 +43,7 @@ const Sucursal = sequelize.define(
     },
 
     estado: {
-      type: DataTypes.ENUM(
-        "Activa",
-        "Inactiva"
-      ),
+      type: DataTypes.ENUM("Activa", "Inactiva"),
       allowNull: false,
       defaultValue: "Activa",
     },

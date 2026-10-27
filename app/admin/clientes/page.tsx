@@ -1,7 +1,6 @@
 
 "use client";
 
-import "../admin.css";
 
 import {
   FormEvent,
@@ -378,8 +377,8 @@ export default function ClientesPage() {
           </p>
         </div>
 
-        <Link href="/admin" className="clientes-volver">
-          ← Volver al panel
+        <Link href="/admin" className="clientes-volver fp-btn-volver">
+          Volver al panel
         </Link>
       </header>
 
@@ -521,7 +520,7 @@ export default function ClientesPage() {
             <div className="clientes-formulario-acciones">
               <button
                 type="submit"
-                className="clientes-boton-primario"
+                className="clientes-boton-primario fp-btn fp-btn-primary"
                 disabled={guardando}
               >
                 {guardando
@@ -533,7 +532,7 @@ export default function ClientesPage() {
 
               <button
                 type="button"
-                className="clientes-boton-secundario"
+                className="clientes-boton-secundario fp-btn fp-btn-secondary"
                 onClick={limpiarFormulario}
                 disabled={guardando}
               >
@@ -669,6 +668,7 @@ export default function ClientesPage() {
                               onClick={() =>
                                 setClienteDetalle(cliente)
                               }
+                              className="fp-btn-sm"
                               title="Ver detalles"
                             >
                               Ver
@@ -679,6 +679,7 @@ export default function ClientesPage() {
                               onClick={() =>
                                 editarCliente(cliente)
                               }
+                              className="fp-btn-sm"
                               title="Editar cliente"
                             >
                               Editar
@@ -689,6 +690,7 @@ export default function ClientesPage() {
                               onClick={() =>
                                 void cambiarEstado(cliente)
                               }
+                              className="fp-btn-sm"
                               title={
                                 cliente.estado === "Activo"
                                   ? "Desactivar cliente"
@@ -702,7 +704,7 @@ export default function ClientesPage() {
 
                             <button
                               type="button"
-                              className="clientes-accion-eliminar"
+                              className="clientes-accion-eliminar fp-btn-danger-outline fp-btn-sm"
                               onClick={() =>
                                 void eliminarCliente(cliente.id)
                               }
@@ -784,7 +786,7 @@ export default function ClientesPage() {
 
               <button
                 type="button"
-                className="clientes-modal-cerrar"
+                className="clientes-modal-cerrar fp-btn-sm"
                 onClick={() => setClienteDetalle(null)}
                 aria-label="Cerrar detalles"
               >
@@ -877,7 +879,7 @@ export default function ClientesPage() {
             <div className="clientes-modal-acciones">
               <button
                 type="button"
-                className="clientes-boton-primario"
+                className="clientes-boton-primario fp-btn fp-btn-primary"
                 onClick={() => {
                   editarCliente(clienteDetalle);
                   setClienteDetalle(null);
@@ -888,7 +890,7 @@ export default function ClientesPage() {
 
               <button
                 type="button"
-                className="clientes-boton-secundario"
+                className="clientes-boton-secundario fp-btn fp-btn-secondary"
                 onClick={() => setClienteDetalle(null)}
               >
                 Cerrar
