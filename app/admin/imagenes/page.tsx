@@ -1,10 +1,6 @@
-
-
 /* eslint-disable @next/next/no-img-element */
 
 "use client";
-
-
 
 import {
 
@@ -26,21 +22,11 @@ import Link from "next/link";
 
 import axios from "axios";
 
-
-
-const API = (
-
-  process.env.NEXT_PUBLIC_API_URL ||
-
-  "http://localhost:3001"
-
-).replace(/\/+$/, "");
+const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001").replace(/\/+$/, "");
 
 
 
-type Categoria = "profesor" | "sucursal" | "maquina" | "sitio";
-
-
+type Categoria = "profesor" | "sucursal" | "maquina" | "sitio" | "promo";
 
 type Imagen = {
 
@@ -58,8 +44,6 @@ type Imagen = {
 
 };
 
-
-
 type Registro = {
 
   id: number;
@@ -67,8 +51,6 @@ type Registro = {
   nombre: string;
 
 };
-
-
 
 const CATEGORIAS: { value: Categoria; label: string }[] = [
 
@@ -80,13 +62,11 @@ const CATEGORIAS: { value: Categoria; label: string }[] = [
 
   { value: "sitio", label: "Sitio web" },
 
+  { value: "promo", label: "Promociones" },
+
 ];
 
-
-
 const POR_PAGINA = 12;
-
-
 
 function obtenerToken() {
 
@@ -95,8 +75,6 @@ function obtenerToken() {
   return localStorage.getItem("focusPowerFitToken") || "";
 
 }
-
-
 
 function configuracionAuth() {
 
@@ -112,19 +90,13 @@ function configuracionAuth() {
 
 }
 
-
-
 function obtenerMensajeError(error: unknown): string {
 
   if (axios.isAxiosError(error)) {
 
     const mensaje = error.response?.data?.mensaje;
 
-
-
     if (typeof mensaje === "string") return mensaje;
-
-
 
     if (error.response?.status === 401) {
 
@@ -132,21 +104,15 @@ function obtenerMensajeError(error: unknown): string {
 
     }
 
-
-
     if (error.response?.status === 403) {
 
       return "No tienes permisos para administrar imágenes.";
 
     }
 
-
-
     return error.message;
 
   }
-
-
 
   return error instanceof Error
 
@@ -156,19 +122,13 @@ function obtenerMensajeError(error: unknown): string {
 
 }
 
-
-
 function extraerLista(datos: unknown, claves: string[]): unknown[] {
 
   if (Array.isArray(datos)) return datos;
 
-
-
   if (datos && typeof datos === "object") {
 
     const objeto = datos as Record<string, unknown>;
-
-
 
     for (const clave of [...claves, "data", "resultados"]) {
 
@@ -182,13 +142,9 @@ function extraerLista(datos: unknown, claves: string[]): unknown[] {
 
   }
 
-
-
   return [];
 
 }
-
-
 
 function normalizarRegistros(
 
@@ -215,8 +171,6 @@ function normalizarRegistros(
     .map((registro) => {
 
       const id = Number(registro.id);
-
-
 
       return {
 
@@ -246,8 +200,6 @@ function normalizarRegistros(
 
 }
 
-
-
 function nombreCategoria(categoria: Categoria) {
 
   return (
@@ -259,8 +211,6 @@ function nombreCategoria(categoria: Categoria) {
   );
 
 }
-
-
 
 function VistaPreviaImagen({
 
@@ -278,8 +228,6 @@ function VistaPreviaImagen({
 
   const [error, setError] = useState(false);
 
-
-
   useEffect(() => {
 
     const controlador = new AbortController();
@@ -287,8 +235,6 @@ function VistaPreviaImagen({
     let urlCreada = "";
 
     let activo = true;
-
-
 
     async function cargar() {
 
@@ -310,23 +256,15 @@ function VistaPreviaImagen({
 
         );
 
-
-
         if (!activo) return;
 
-
-
         const blob = respuesta.data as Blob;
-
-
 
         if (!blob.type.startsWith("image/")) {
 
           throw new Error("El servidor no devolvió una imagen.");
 
         }
-
-
 
         urlCreada = URL.createObjectURL(blob);
 
@@ -350,11 +288,7 @@ function VistaPreviaImagen({
 
     }
 
-
-
     void cargar();
-
-
 
     return () => {
 
@@ -367,8 +301,6 @@ function VistaPreviaImagen({
     };
 
   }, [imagen.id]);
-
-
 
   if (cargando) {
 
@@ -384,8 +316,6 @@ function VistaPreviaImagen({
 
   }
 
-
-
   if (error || !urlTemporal) {
 
     return (
@@ -399,8 +329,6 @@ function VistaPreviaImagen({
     );
 
   }
-
-
 
   return (
 
@@ -428,8 +356,6 @@ function VistaPreviaImagen({
 
 }
 
-
-
 export default function AdministrarImagenes() {
 
   const [imagenes, setImagenes] = useState<Imagen[]>([]);
@@ -442,8 +368,6 @@ export default function AdministrarImagenes() {
 
   const [registros, setRegistros] = useState<Registro[]>([]);
 
-
-
   const [busqueda, setBusqueda] = useState("");
 
   const [filtroVisibilidad, setFiltroVisibilidad] =
@@ -452,13 +376,9 @@ export default function AdministrarImagenes() {
 
   const [paginaActual, setPaginaActual] = useState(1);
 
-
-
   const [archivo, setArchivo] = useState<File | null>(null);
 
   const [ordenNuevo, setOrdenNuevo] = useState(0);
-
-
 
   const [cargando, setCargando] = useState(true);
 
@@ -472,31 +392,21 @@ export default function AdministrarImagenes() {
 
     useState<number | null>(null);
 
-
-
   const [imagenDetalle, setImagenDetalle] =
 
     useState<Imagen | null>(null);
-
-
 
   const [error, setError] = useState("");
 
   const [exito, setExito] = useState("");
 
-
-
   const inputArchivo = useRef<HTMLInputElement>(null);
 
   const operacionEnCurso = useRef(false);
 
-
-
   useEffect(() => {
 
     if (!exito) return;
-
-
 
     const temporizador = window.setTimeout(() => {
 
@@ -504,13 +414,9 @@ export default function AdministrarImagenes() {
 
     }, 3000);
 
-
-
     return () => window.clearTimeout(temporizador);
 
   }, [exito]);
-
-
 
   const cargarImagenes = useCallback(async () => {
 
@@ -522,8 +428,6 @@ export default function AdministrarImagenes() {
 
     );
 
-
-
     setImagenes(
 
       extraerLista(respuesta.data, ["imagenes"]) as Imagen[]
@@ -532,13 +436,9 @@ export default function AdministrarImagenes() {
 
   }, []);
 
-
-
   useEffect(() => {
 
     let activo = true;
-
-
 
     axios
 
@@ -547,8 +447,6 @@ export default function AdministrarImagenes() {
       .then((respuesta) => {
 
         if (!activo) return;
-
-
 
         setImagenes(
 
@@ -570,8 +468,6 @@ export default function AdministrarImagenes() {
 
       });
 
-
-
     return () => {
 
       activo = false;
@@ -580,23 +476,17 @@ export default function AdministrarImagenes() {
 
   }, []);
 
-
-
   useEffect(() => {
 
-    if (categoria === "sitio") {
+    if (categoria === "sitio" || categoria === "promo") {
 
       return;
 
     }
 
-
-
     let activo = true;
 
-
-
-    const rutas: Record<Exclude<Categoria, "sitio">, string> = {
+    const rutas: Record<Exclude<Categoria, "sitio" | "promo">, string> = {
 
       profesor: "/api/profesores",
 
@@ -606,11 +496,9 @@ export default function AdministrarImagenes() {
 
     };
 
-
-
     const claves: Record<
 
-      Exclude<Categoria, "sitio">,
+      Exclude<Categoria, "sitio" | "promo">,
 
       string[]
 
@@ -624,8 +512,6 @@ export default function AdministrarImagenes() {
 
     };
 
-
-
     axios
 
       .get(`${API}${rutas[categoria]}`, configuracionAuth())
@@ -633,8 +519,6 @@ export default function AdministrarImagenes() {
       .then((respuesta) => {
 
         if (!activo) return;
-
-
 
         setRegistros(
 
@@ -662,8 +546,6 @@ export default function AdministrarImagenes() {
 
       });
 
-
-
     return () => {
 
       activo = false;
@@ -671,8 +553,6 @@ export default function AdministrarImagenes() {
     };
 
   }, [categoria]);
-
-
 
   const seleccionarCategoria = (nueva: Categoria) => {
 
@@ -682,7 +562,7 @@ export default function AdministrarImagenes() {
 
     setRegistros([]);
 
-    setCargandoRegistros(nueva !== "sitio");
+    setCargandoRegistros(nueva !== "sitio" && nueva !== "promo");
 
     setBusqueda("");
 
@@ -692,8 +572,6 @@ export default function AdministrarImagenes() {
 
   };
 
-
-
   async function subirImagen(
 
     evento: FormEvent<HTMLFormElement>
@@ -702,17 +580,11 @@ export default function AdministrarImagenes() {
 
     evento.preventDefault();
 
-
-
     if (operacionEnCurso.current) return;
-
-
 
     setError("");
 
     setExito("");
-
-
 
     if (!archivo) {
 
@@ -722,11 +594,9 @@ export default function AdministrarImagenes() {
 
     }
 
-
-
     if (
 
-      categoria !== "sitio" &&
+      categoria !== "sitio" && categoria !== "promo" &&
 
       (!referenciaId || !Number(referenciaId))
 
@@ -742,8 +612,6 @@ export default function AdministrarImagenes() {
 
     }
 
-
-
     const tiposPermitidos = [
 
       "image/jpeg",
@@ -754,8 +622,6 @@ export default function AdministrarImagenes() {
 
     ];
 
-
-
     if (!tiposPermitidos.includes(archivo.type)) {
 
       setError("Solo se permiten imágenes JPG, PNG o WebP.");
@@ -763,8 +629,6 @@ export default function AdministrarImagenes() {
       return;
 
     }
-
-
 
     if (archivo.size > 5 * 1024 * 1024) {
 
@@ -774,8 +638,6 @@ export default function AdministrarImagenes() {
 
     }
 
-
-
     if (!Number.isSafeInteger(ordenNuevo) || ordenNuevo < 0) {
 
       setError("El orden debe ser un entero positivo o cero.");
@@ -784,19 +646,13 @@ export default function AdministrarImagenes() {
 
     }
 
-
-
     operacionEnCurso.current = true;
 
     setProcesando(true);
 
-
-
     try {
 
       const formulario = new FormData();
-
-
 
       formulario.append("imagen", archivo);
 
@@ -804,15 +660,11 @@ export default function AdministrarImagenes() {
 
       formulario.append("orden", String(ordenNuevo));
 
-
-
-      if (categoria !== "sitio") {
+      if (categoria !== "sitio" && categoria !== "promo") {
 
         formulario.append("referenciaId", referenciaId);
 
       }
-
-
 
       await axios.post(
 
@@ -824,13 +676,9 @@ export default function AdministrarImagenes() {
 
       );
 
-
-
       setArchivo(null);
 
       setOrdenNuevo(0);
-
-
 
       if (inputArchivo.current) {
 
@@ -838,11 +686,7 @@ export default function AdministrarImagenes() {
 
       }
 
-
-
       await cargarImagenes();
-
-
 
       setExito(
 
@@ -850,7 +694,11 @@ export default function AdministrarImagenes() {
 
           ? "Fotografía guardada. Solo los administradores pueden verla."
 
-          : "Fotografía guardada. Puedes publicarla desde la biblioteca."
+          : categoria === "promo"
+
+            ? "Promoción guardada. Pulsa Publicar en la biblioteca para mostrarla en el inicio."
+
+            : "Fotografía guardada. Puedes publicarla desde la biblioteca."
 
       );
 
@@ -868,13 +716,9 @@ export default function AdministrarImagenes() {
 
   }
 
-
-
   async function cambiarVisibilidad(imagen: Imagen) {
 
     if (operacionEnCurso.current) return;
-
-
 
     if (imagen.categoria === "maquina") {
 
@@ -888,8 +732,6 @@ export default function AdministrarImagenes() {
 
     }
 
-
-
     operacionEnCurso.current = true;
 
     setProcesandoId(imagen.id);
@@ -897,8 +739,6 @@ export default function AdministrarImagenes() {
     setError("");
 
     setExito("");
-
-
 
     try {
 
@@ -915,8 +755,6 @@ export default function AdministrarImagenes() {
         configuracionAuth()
 
       );
-
-
 
       await cargarImagenes();
 
@@ -936,8 +774,6 @@ export default function AdministrarImagenes() {
 
   }
 
-
-
   async function cambiarOrden(
 
     imagen: Imagen,
@@ -949,8 +785,6 @@ export default function AdministrarImagenes() {
     if (operacionEnCurso.current) return;
 
     if (nuevoOrden === imagen.orden) return;
-
-
 
     if (
 
@@ -970,8 +804,6 @@ export default function AdministrarImagenes() {
 
     }
 
-
-
     operacionEnCurso.current = true;
 
     setProcesandoId(imagen.id);
@@ -979,8 +811,6 @@ export default function AdministrarImagenes() {
     setError("");
 
     setExito("");
-
-
 
     try {
 
@@ -993,8 +823,6 @@ export default function AdministrarImagenes() {
         configuracionAuth()
 
       );
-
-
 
       await cargarImagenes();
 
@@ -1014,13 +842,9 @@ export default function AdministrarImagenes() {
 
   }
 
-
-
   async function eliminarImagen(imagen: Imagen) {
 
     if (operacionEnCurso.current) return;
-
-
 
     const confirmar = window.confirm(
 
@@ -1032,11 +856,7 @@ export default function AdministrarImagenes() {
 
     );
 
-
-
     if (!confirmar) return;
-
-
 
     operacionEnCurso.current = true;
 
@@ -1045,8 +865,6 @@ export default function AdministrarImagenes() {
     setError("");
 
     setExito("");
-
-
 
     try {
 
@@ -1058,13 +876,9 @@ export default function AdministrarImagenes() {
 
       );
 
-
-
       setImagenDetalle(null);
 
       await cargarImagenes();
-
-
 
       setExito(
 
@@ -1086,13 +900,9 @@ export default function AdministrarImagenes() {
 
   }
 
-
-
   const imagenesFiltradas = useMemo(() => {
 
     const textoBuscado = busqueda.trim().toLowerCase();
-
-
 
     return imagenes
 
@@ -1114,21 +924,15 @@ export default function AdministrarImagenes() {
 
           .toLowerCase();
 
-
-
         const coincideBusqueda =
 
           texto.includes(textoBuscado);
-
-
 
         const esPublica =
 
           imagen.categoria !== "maquina" &&
 
           imagen.mostrarPublicamente;
-
-
 
         const coincideVisibilidad =
 
@@ -1137,8 +941,6 @@ export default function AdministrarImagenes() {
           (filtroVisibilidad === "Publicas" && esPublica) ||
 
           (filtroVisibilidad === "Ocultas" && !esPublica);
-
-
 
         return coincideBusqueda && coincideVisibilidad;
 
@@ -1154,11 +956,7 @@ export default function AdministrarImagenes() {
 
   }, [imagenes, categoria, busqueda, filtroVisibilidad]);
 
-
-
   const total = imagenes.length;
-
-
 
   const publicas = imagenes.filter(
 
@@ -1170,11 +968,7 @@ export default function AdministrarImagenes() {
 
   ).length;
 
-
-
   const ocultas = total - publicas;
-
-
 
   const totalPaginas = Math.max(
 
@@ -1184,8 +978,6 @@ export default function AdministrarImagenes() {
 
   );
 
-
-
   const paginaSegura = Math.min(
 
     paginaActual,
@@ -1193,8 +985,6 @@ export default function AdministrarImagenes() {
     totalPaginas
 
   );
-
-
 
   const imagenesPaginadas = imagenesFiltradas.slice(
 
@@ -1204,15 +994,11 @@ export default function AdministrarImagenes() {
 
   );
 
-
-
   const actualizarBiblioteca = async () => {
 
     setCargando(true);
 
     setError("");
-
-
 
     try {
 
@@ -1230,58 +1016,139 @@ export default function AdministrarImagenes() {
 
   };
 
-
-
   return (
 
     <main className="admin-modulo admin-imagenes-pagina">
 
 <style>{`
-.admin-imagenes-pagina{background:#000!important;color:#fff!important;min-height:100vh;width:100%;}
-.admin-imagenes-pagina .admin-modulo-contenedor{max-width:1600px;margin:0 auto;padding:30px 28px 60px;}
-.admin-imagenes-pagina .admin-modulo-encabezado{display:flex;justify-content:space-between;align-items:center;gap:22px;margin-bottom:28px;flex-wrap:wrap;}
-.admin-imagenes-pagina .admin-modulo-etiqueta{color:#dc2626;font-size:12px;letter-spacing:.15em;font-weight:800;margin:0 0 8px;}
-.admin-imagenes-pagina .admin-modulo-titulo{font-size:clamp(28px,3vw,40px);font-weight:800;color:#fff;margin:0 0 10px;}
-.admin-imagenes-pagina .admin-modulo-titulo span{color:#dc2626;}
-.admin-imagenes-pagina .admin-modulo-descripcion{color:#aaa;font-size:14px;line-height:1.6;}
-.admin-imagenes-pagina .clientes-volver{display:inline-flex;align-items:center;justify-content:center;background:#202024!important;color:#fff!important;border:1px solid #414149!important;border-radius:12px!important;padding:14px 20px!important;font-size:14px;font-weight:700;text-decoration:none!important;white-space:nowrap;transition:none!important;}
-.admin-imagenes-pagina .clientes-volver:hover{background:#202024!important;color:#fff!important;border-color:#414149!important;}
-.admin-imagenes-pagina .admin-imagenes-resumen{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:0 0 24px;}
-.admin-imagenes-pagina .admin-modulo-indicador{background:#0d0d0f!important;border:1px solid #303036!important;border-left:4px solid #dc2626!important;border-radius:14px;padding:23px;display:flex;flex-direction:column;gap:12px;}
-.admin-imagenes-pagina .admin-modulo-indicador span{color:#b7b7bd;font-size:14px;}
-.admin-imagenes-pagina .admin-modulo-indicador strong{color:#fff;font-size:32px;line-height:1.1;}
-.admin-imagenes-pagina .admin-imagenes-distribucion{display:grid;grid-template-columns:minmax(290px,340px) minmax(0,1fr);align-items:start;gap:20px;}
-.admin-imagenes-pagina .admin-modulo-panel{min-width:0;background:#0d0d0f!important;border:1px solid #303036!important;border-radius:14px;padding:24px;color:#fff;}
-.admin-imagenes-pagina .admin-modulo-panel-titulo{font-size:20px;font-weight:750;color:#fff;margin:0 0 10px;}
-.admin-imagenes-pagina .admin-imagenes-formulario{display:grid;gap:16px;margin-top:22px;max-width:none;}
-.admin-imagenes-pagina .admin-modulo-campo{min-width:0;display:flex;flex-direction:column;gap:8px;}
-.admin-imagenes-pagina .admin-modulo-campo label{color:#eee;font-weight:650;font-size:14px;}
-.admin-imagenes-pagina input,.admin-imagenes-pagina select{background:#09090b!important;color:#fff!important;border:1px solid #414149!important;border-radius:9px!important;min-height:44px;padding:10px 12px;box-sizing:border-box;width:100%;font:inherit;}
-.admin-imagenes-pagina input[type=file]{height:auto;max-width:100%;font-size:13px;}
-.admin-imagenes-pagina input:focus,.admin-imagenes-pagina select:focus{outline:2px solid #dc2626;outline-offset:1px;}
-.admin-imagenes-pagina .fp-btn{border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;}
-.admin-imagenes-pagina .fp-btn-primary,.admin-imagenes-pagina .admin-modulo-boton--principal{background:#dc2626!important;color:#fff!important;border:1px solid #dc2626!important;}
-.admin-imagenes-pagina .fp-btn-secondary{background:#202024!important;color:#fff!important;border:1px solid #414149!important;}
-.admin-imagenes-pagina .fp-btn-danger{background:#55191e!important;color:#fff!important;border:1px solid #a72b34!important;}
-.admin-imagenes-pagina button:disabled{opacity:.55;cursor:not-allowed;}
-.admin-imagenes-pagina .admin-imagenes-cabecera{display:flex;align-items:start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:20px;}
-.admin-imagenes-pagina .admin-imagenes-filtros{display:grid;grid-template-columns:minmax(0,2fr) repeat(2,minmax(130px,1fr));gap:12px;margin-bottom:22px;}
-.admin-imagenes-pagina .admin-imagenes-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;}
-.admin-imagenes-pagina .admin-imagenes-tarjeta{min-width:0;overflow:hidden;background:#101012!important;border:1px solid #333339!important;border-radius:12px;}
-.admin-imagenes-pagina .admin-imagenes-preview{height:185px;display:flex;align-items:center;justify-content:center;background:#070709!important;overflow:hidden;}
-.admin-imagenes-pagina .admin-imagenes-detalles{padding:16px;display:flex;flex-direction:column;gap:12px;}
-.admin-imagenes-pagina .admin-imagenes-nombre{color:#fff;font-size:15px;overflow-wrap:anywhere;margin:0;}
-.admin-imagenes-pagina .admin-imagenes-categoria{color:#aaa;font-size:13px;}
-.admin-imagenes-pagina .admin-imagenes-acciones{display:flex;flex-wrap:wrap;gap:8px;}
-.admin-imagenes-pagina .admin-imagenes-paginacion{display:flex;justify-content:center;align-items:center;gap:15px;margin-top:22px;flex-wrap:wrap;}
-.admin-imagenes-pagina .admin-modulo-vacio,.admin-imagenes-pagina .admin-imagenes-oculta{color:#aaa;padding:25px;text-align:center;}
-.admin-imagenes-pagina .admin-modulo-estado{display:inline-flex;align-self:start;border-radius:30px;padding:5px 10px;font-size:12px;font-weight:700;background:#29292c;color:#eee;}
-.admin-imagenes-pagina .admin-modulo-estado--activo{background:#173e2a;color:#86efac;}
-.admin-imagenes-pagina .admin-modulo-estado--inactivo{background:#3b2024;color:#fca5a5;}
-@media(max-width:1150px){.admin-imagenes-pagina .admin-imagenes-distribucion{grid-template-columns:1fr}.admin-imagenes-pagina .admin-imagenes-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
-@media(max-width:650px){.admin-imagenes-pagina .admin-modulo-contenedor{padding:20px 14px 40px}.admin-imagenes-pagina .admin-imagenes-resumen{grid-template-columns:1fr}.admin-imagenes-pagina .admin-imagenes-filtros{grid-template-columns:1fr}.admin-imagenes-pagina .admin-imagenes-grid{grid-template-columns:1fr}.admin-imagenes-pagina .admin-modulo-panel{padding:17px}}
-`}</style>
 
+.admin-imagenes-pagina{background:#000!important;color:#fff!important;min-height:100vh;width:100%!important;max-width:none!important;display:block!important;padding:0!important;}
+
+.admin-imagenes-pagina .admin-modulo-contenedor{box-sizing:border-box;max-width:none!important;width:100%!important;margin:0!important;padding:30px clamp(16px,2.5vw,42px) 60px;}
+
+.admin-imagenes-pagina .admin-modulo-encabezado{display:flex;justify-content:space-between;align-items:center;gap:22px;margin-bottom:28px;flex-wrap:wrap;}
+
+.admin-imagenes-pagina .admin-modulo-etiqueta{color:#dc2626;font-size:12px;letter-spacing:.15em;font-weight:800;margin:0 0 8px;}
+
+.admin-imagenes-pagina .admin-modulo-titulo{font-size:clamp(28px,3vw,40px);font-weight:800;color:#fff;margin:0 0 10px;}
+
+.admin-imagenes-pagina .admin-modulo-titulo span{color:#dc2626;}
+
+.admin-imagenes-pagina .admin-modulo-descripcion{color:#aaa;font-size:14px;line-height:1.6;}
+
+.admin-imagenes-pagina .clientes-volver{display:inline-flex;align-items:center;justify-content:center;background:#202024!important;color:#fff!important;border:1px solid #414149!important;border-radius:12px!important;padding:14px 20px!important;font-size:14px;font-weight:700;text-decoration:none!important;white-space:nowrap;transition:none!important;}
+
+.admin-imagenes-pagina .clientes-volver:hover{background:#202024!important;color:#fff!important;border-color:#414149!important;}
+
+.admin-imagenes-pagina .admin-imagenes-resumen{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:0 0 24px;}
+
+.admin-imagenes-pagina .admin-modulo-indicador{background:#0d0d0f!important;border:1px solid #303036!important;border-left:4px solid #dc2626!important;border-radius:14px;padding:23px;display:flex;flex-direction:column;gap:12px;}
+
+.admin-imagenes-pagina .admin-modulo-indicador span{color:#b7b7bd;font-size:14px;}
+
+.admin-imagenes-pagina .admin-modulo-indicador strong{color:#fff;font-size:32px;line-height:1.1;}
+
+.admin-imagenes-pagina .admin-imagenes-distribucion{display:grid;grid-template-columns:minmax(290px,340px) minmax(0,1fr);align-items:start;gap:20px;}
+
+.admin-imagenes-pagina .admin-modulo-panel{min-width:0;background:#0d0d0f!important;border:1px solid #303036!important;border-radius:14px;padding:24px;color:#fff;}
+
+.admin-imagenes-pagina .admin-modulo-panel-titulo{font-size:20px;font-weight:750;color:#fff;margin:0 0 10px;}
+
+.admin-imagenes-pagina .admin-imagenes-formulario{display:grid;gap:16px;margin-top:22px;max-width:none;}
+
+.admin-imagenes-pagina .admin-modulo-campo{min-width:0;display:flex;flex-direction:column;gap:8px;}
+
+.admin-imagenes-pagina .admin-modulo-campo label{color:#eee;font-weight:650;font-size:14px;}
+
+.admin-imagenes-pagina input,.admin-imagenes-pagina select{background:#09090b!important;color:#fff!important;border:1px solid #414149!important;border-radius:9px!important;min-height:44px;padding:10px 12px;box-sizing:border-box;width:100%;font:inherit;}
+
+.admin-imagenes-pagina input[type=file]{height:auto;max-width:100%;font-size:13px;}
+
+.admin-imagenes-pagina input:focus,.admin-imagenes-pagina select:focus{outline:2px solid #dc2626;outline-offset:1px;}
+
+.admin-imagenes-pagina .fp-btn{border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;}
+
+.admin-imagenes-pagina .fp-btn-primary,.admin-imagenes-pagina .admin-modulo-boton--principal{background:#dc2626!important;color:#fff!important;border:1px solid #dc2626!important;}
+
+.admin-imagenes-pagina .fp-btn-secondary{background:#202024!important;color:#fff!important;border:1px solid #414149!important;}
+
+.admin-imagenes-pagina .fp-btn-danger{background:#55191e!important;color:#fff!important;border:1px solid #a72b34!important;}
+
+.admin-imagenes-pagina button:disabled{opacity:.55;cursor:not-allowed;}
+
+.admin-imagenes-pagina .admin-imagenes-cabecera{display:flex;align-items:start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:20px;}
+
+.admin-imagenes-pagina .admin-imagenes-filtros{display:grid;grid-template-columns:minmax(0,2fr) repeat(2,minmax(130px,1fr));gap:12px;margin-bottom:22px;}
+
+.admin-imagenes-pagina .admin-imagenes-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;}
+
+.admin-imagenes-pagina .admin-imagenes-tarjeta{min-width:0;overflow:hidden;background:#101012!important;border:1px solid #333339!important;border-radius:12px;}
+
+.admin-imagenes-pagina .admin-imagenes-preview{height:185px;display:flex;align-items:center;justify-content:center;background:#070709!important;overflow:hidden;}
+
+.admin-imagenes-pagina .admin-imagenes-detalles{padding:16px;display:flex;flex-direction:column;gap:12px;}
+
+.admin-imagenes-pagina .admin-imagenes-nombre{color:#fff;font-size:15px;overflow-wrap:anywhere;margin:0;}
+
+.admin-imagenes-pagina .admin-imagenes-categoria{color:#aaa;font-size:13px;}
+
+.admin-imagenes-pagina .admin-imagenes-acciones{display:flex;flex-wrap:wrap;gap:8px;}
+
+.admin-imagenes-pagina .admin-imagenes-paginacion{display:flex;justify-content:center;align-items:center;gap:15px;margin-top:22px;flex-wrap:wrap;}
+
+.admin-imagenes-pagina .admin-modulo-vacio,.admin-imagenes-pagina .admin-imagenes-oculta{color:#aaa;padding:25px;text-align:center;}
+
+.admin-imagenes-pagina .admin-modulo-estado{display:inline-flex;align-self:start;border-radius:30px;padding:5px 10px;font-size:12px;font-weight:700;background:#29292c;color:#eee;}
+
+.admin-imagenes-pagina .admin-modulo-estado--activo{background:#173e2a;color:#86efac;}
+
+.admin-imagenes-pagina .admin-modulo-estado--inactivo{background:#3b2024;color:#fca5a5;}
+
+@media(max-width:1150px){.admin-imagenes-pagina .admin-imagenes-distribucion{grid-template-columns:1fr}.admin-imagenes-pagina .admin-imagenes-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+
+@media(max-width:650px){.admin-imagenes-pagina .admin-modulo-contenedor{padding:20px 14px 40px}.admin-imagenes-pagina .admin-imagenes-resumen{grid-template-columns:1fr}.admin-imagenes-pagina .admin-imagenes-filtros{grid-template-columns:1fr}.admin-imagenes-pagina .admin-imagenes-grid{grid-template-columns:1fr}.admin-imagenes-pagina .admin-modulo-panel{padding:17px}}
+
+
+
+/* Estilo administrativo unificado — Gestión de Imágenes */
+
+.admin-imagenes-pagina { background:#000!important; color:#fff!important; }
+
+.admin-imagenes-pagina .admin-modulo-contenedor { box-sizing:border-box;max-width:none!important;width:100%!important;margin:0!important;padding:28px clamp(16px,2.5vw,42px) 60px; }
+
+.admin-imagenes-pagina .admin-modulo-etiqueta { color:#a1a1aa!important; letter-spacing:1.6px; font-size:11px; }
+
+.admin-imagenes-pagina .admin-modulo-titulo { font-size:clamp(28px,3vw,42px); font-weight:900; }
+
+.admin-imagenes-pagina .admin-modulo-indicador { background:#000!important; border:1px solid #383838!important; border-left:4px solid #cf292e!important; border-radius:16px; padding:26px; }
+
+.admin-imagenes-pagina .admin-modulo-panel { background:#000!important; border:1px solid #383838!important; border-radius:16px; padding:28px; }
+
+.admin-imagenes-pagina .admin-imagenes-tarjeta { background:#0d0d0f!important; border:1px solid #383838!important; border-radius:14px; }
+
+.admin-imagenes-pagina .clientes-volver,
+
+.admin-imagenes-pagina .clientes-volver:hover,
+
+.admin-imagenes-pagina .clientes-volver:focus { background:#202024!important; color:#fff!important; border:1px solid #414149!important; border-radius:12px!important; box-shadow:none!important; transform:none!important; transition:none!important; text-decoration:none!important; }
+
+.admin-imagenes-pagina .fp-btn-primary:hover:not(:disabled),
+
+.admin-imagenes-pagina .admin-modulo-boton--principal:hover:not(:disabled) { background:#a91e25!important; border-color:#a91e25!important; color:#fff!important; }
+
+.admin-imagenes-pagina .fp-btn-secondary:hover:not(:disabled) { background:#29292e!important; border-color:#cf292e!important; color:#fff!important; }
+
+.admin-imagenes-pagina .fp-btn-danger:hover:not(:disabled) { background:#742027!important; border-color:#cf292e!important; color:#fff!important; }
+
+.admin-imagenes-pagina input:focus-visible,
+
+.admin-imagenes-pagina select:focus-visible { outline:2px solid #cf292e!important; outline-offset:1px; }
+
+@media(max-width:650px) { .admin-imagenes-pagina .admin-modulo-contenedor { padding:20px 14px 40px; } .admin-imagenes-pagina .admin-modulo-panel { padding:18px; } }
+
+
+
+`}</style>
 
       <div className="admin-modulo-contenedor">
 
@@ -1297,27 +1164,21 @@ export default function AdministrarImagenes() {
 
             </p>
 
-
-
             <h1 className="admin-modulo-titulo">
 
               Gestión de <span>Imágenes</span>
 
             </h1>
 
-
-
             <p className="admin-modulo-descripcion">
 
               Administra las fotografías de profesores,
 
-              sucursales, máquinas y contenido del sitio web.
+              sucursales, máquinas, promociones y contenido del sitio web.
 
             </p>
 
           </div>
-
-
 
           <Link
 
@@ -1332,8 +1193,6 @@ export default function AdministrarImagenes() {
           </Link>
 
         </header>
-
-
 
         {/* MENSAJES */}
 
@@ -1369,8 +1228,6 @@ export default function AdministrarImagenes() {
 
         )}
 
-
-
         {exito && (
 
           <div
@@ -1386,8 +1243,6 @@ export default function AdministrarImagenes() {
           </div>
 
         )}
-
-
 
         {/* RESUMEN */}
 
@@ -1407,8 +1262,6 @@ export default function AdministrarImagenes() {
 
           </article>
 
-
-
           <article className="admin-modulo-indicador">
 
             <span>Imágenes públicas</span>
@@ -1416,8 +1269,6 @@ export default function AdministrarImagenes() {
             <strong>{publicas}</strong>
 
           </article>
-
-
 
           <article className="admin-modulo-indicador">
 
@@ -1428,8 +1279,6 @@ export default function AdministrarImagenes() {
           </article>
 
         </section>
-
-
 
         {/* FORMULARIO Y BIBLIOTECA */}
 
@@ -1445,15 +1294,11 @@ export default function AdministrarImagenes() {
 
             </h2>
 
-
-
             <p className="admin-modulo-descripcion">
 
               Formatos JPG, PNG y WebP. Tamaño máximo: 5 MB.
 
             </p>
-
-
 
             {categoria === "maquina" && (
 
@@ -1466,8 +1311,6 @@ export default function AdministrarImagenes() {
               </p>
 
             )}
-
-
 
             <form
 
@@ -1484,8 +1327,6 @@ export default function AdministrarImagenes() {
                   Categoría
 
                 </label>
-
-
 
                 <select
 
@@ -1527,9 +1368,7 @@ export default function AdministrarImagenes() {
 
               </div>
 
-
-
-              {categoria !== "sitio" && (
+              {categoria !== "sitio" && categoria !== "promo" && (
 
                 <div className="admin-modulo-campo">
 
@@ -1538,8 +1377,6 @@ export default function AdministrarImagenes() {
                     Seleccionar registro
 
                   </label>
-
-
 
                   <select
 
@@ -1573,8 +1410,6 @@ export default function AdministrarImagenes() {
 
                     </option>
 
-
-
                     {registros.map((registro) => (
 
                       <option
@@ -1597,8 +1432,6 @@ export default function AdministrarImagenes() {
 
               )}
 
-
-
               <div className="admin-modulo-campo">
 
                 <label htmlFor="archivo-imagen">
@@ -1606,8 +1439,6 @@ export default function AdministrarImagenes() {
                   Seleccionar fotografía
 
                 </label>
-
-
 
                 <input
 
@@ -1637,8 +1468,6 @@ export default function AdministrarImagenes() {
 
               </div>
 
-
-
               <div className="admin-modulo-campo">
 
                 <label htmlFor="orden-imagen">
@@ -1646,8 +1475,6 @@ export default function AdministrarImagenes() {
                   Orden de visualización
 
                 </label>
-
-
 
                 <input
 
@@ -1672,8 +1499,6 @@ export default function AdministrarImagenes() {
                 />
 
               </div>
-
-
 
               <button
 
@@ -1705,8 +1530,6 @@ export default function AdministrarImagenes() {
 
           </section>
 
-
-
           {/* BIBLIOTECA */}
 
           <section className="admin-modulo-panel admin-imagenes-biblioteca">
@@ -1720,8 +1543,6 @@ export default function AdministrarImagenes() {
                   Biblioteca de imágenes
 
                 </h2>
-
-
 
                 <p className="admin-modulo-descripcion">
 
@@ -1741,8 +1562,6 @@ export default function AdministrarImagenes() {
 
               </div>
 
-
-
               <button
 
                 type="button"
@@ -1760,8 +1579,6 @@ export default function AdministrarImagenes() {
               </button>
 
             </div>
-
-
 
             <div className="admin-imagenes-filtros">
 
@@ -1786,8 +1603,6 @@ export default function AdministrarImagenes() {
                 }}
 
               />
-
-
 
               <select
 
@@ -1826,8 +1641,6 @@ export default function AdministrarImagenes() {
                 </option>
 
               </select>
-
-
 
               <select
 
@@ -1869,8 +1682,6 @@ export default function AdministrarImagenes() {
 
             </div>
 
-
-
             {cargando ? (
 
               <div className="admin-modulo-vacio">
@@ -1909,8 +1720,6 @@ export default function AdministrarImagenes() {
 
                       </div>
 
-
-
                       <div className="admin-imagenes-detalles">
 
                         <h3 className="admin-imagenes-nombre">
@@ -1920,8 +1729,6 @@ export default function AdministrarImagenes() {
                             `Imagen #${imagen.id}`}
 
                         </h3>
-
-
 
                         <p className="admin-imagenes-categoria">
 
@@ -1934,8 +1741,6 @@ export default function AdministrarImagenes() {
                             : ""}
 
                         </p>
-
-
 
                         <span
 
@@ -1965,8 +1770,6 @@ export default function AdministrarImagenes() {
 
                         </span>
 
-
-
                         <div className="admin-modulo-campo">
 
                           <label htmlFor={`orden-${imagen.id}`}>
@@ -1974,8 +1777,6 @@ export default function AdministrarImagenes() {
                             Orden
 
                           </label>
-
-
 
                           <input
 
@@ -2007,8 +1808,6 @@ export default function AdministrarImagenes() {
 
                               );
 
-
-
                               if (valor !== imagen.orden) {
 
                                 void cambiarOrden(imagen, valor);
@@ -2020,8 +1819,6 @@ export default function AdministrarImagenes() {
                           />
 
                         </div>
-
-
 
                         <div className="admin-imagenes-acciones">
 
@@ -2042,8 +1839,6 @@ export default function AdministrarImagenes() {
                             Ver
 
                           </button>
-
-
 
                           {imagen.categoria !== "maquina" && (
 
@@ -2078,8 +1873,6 @@ export default function AdministrarImagenes() {
                             </button>
 
                           )}
-
-
 
                           <button
 
@@ -2121,8 +1914,6 @@ export default function AdministrarImagenes() {
 
                 </div>
 
-
-
                 {totalPaginas > 1 && (
 
                   <div className="admin-imagenes-paginacion">
@@ -2151,15 +1942,11 @@ export default function AdministrarImagenes() {
 
                     </button>
 
-
-
                     <span>
 
                       Página {paginaSegura} de {totalPaginas}
 
                     </span>
-
-
 
                     <button
 
@@ -2203,8 +1990,6 @@ export default function AdministrarImagenes() {
 
       </div>
 
-
-
       {/* VENTANA DE DETALLES */}
 
       {imagenDetalle && (
@@ -2237,15 +2022,11 @@ export default function AdministrarImagenes() {
 
             </h2>
 
-
-
             <div className="admin-imagenes-preview">
 
               <VistaPreviaImagen imagen={imagenDetalle} />
 
             </div>
-
-
 
             <div className="admin-imagenes-detalles">
 
@@ -2259,8 +2040,6 @@ export default function AdministrarImagenes() {
 
               </p>
 
-
-
               <p>
 
                 <strong>Categoría:</strong>{" "}
@@ -2268,8 +2047,6 @@ export default function AdministrarImagenes() {
                 {nombreCategoria(imagenDetalle.categoria)}
 
               </p>
-
-
 
               <p>
 
@@ -2281,8 +2058,6 @@ export default function AdministrarImagenes() {
 
               </p>
 
-
-
               <p>
 
                 <strong>Orden:</strong>{" "}
@@ -2290,8 +2065,6 @@ export default function AdministrarImagenes() {
                 {imagenDetalle.orden}
 
               </p>
-
-
 
               <p>
 
@@ -2310,8 +2083,6 @@ export default function AdministrarImagenes() {
               </p>
 
             </div>
-
-
 
             <div className="admin-imagenes-acciones">
 

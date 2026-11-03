@@ -1,3 +1,4 @@
+
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 
@@ -15,7 +16,8 @@ const Imagen = sequelize.define(
         "profesor",
         "sucursal",
         "maquina",
-        "sitio"
+        "sitio",
+        "promo"
       ),
       allowNull: false,
     },

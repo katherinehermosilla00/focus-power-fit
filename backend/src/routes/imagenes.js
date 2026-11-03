@@ -25,7 +25,9 @@ const router = express.Router();
 // RUTAS PÚBLICAS
 // ==========================================
 
-// Solo devuelve imágenes públicas permitidas.
+// Devuelve imágenes publicadas.
+// También permite consultar promociones con:
+// GET /api/imagenes/publicas?categoria=promo
 // Las imágenes de máquinas están excluidas
 // desde el controlador.
 
@@ -34,8 +36,9 @@ router.get(
   obtenerImagenesPublicas
 );
 
-// Archivo público de profesores, sucursales
-// y otras categorías autorizadas.
+// Permite visualizar archivos públicos,
+// incluidas las promociones publicadas.
+// GET /api/imagenes/:id/archivo
 
 router.get(
   "/:id/archivo",
@@ -55,6 +58,9 @@ router.use(
 // LISTAR IMÁGENES - ADMIN
 // ==========================================
 
+// Permite filtrar promociones con:
+// GET /api/imagenes?categoria=promo
+
 router.get(
   "/",
   obtenerImagenes
@@ -72,6 +78,11 @@ router.get(
 // ==========================================
 // SUBIR IMAGEN - ADMIN
 // ==========================================
+
+// Para subir una promoción:
+// categoria = "promo"
+// imagen = archivo seleccionado
+// No necesita referenciaId.
 
 router.post(
   "/",
@@ -102,6 +113,8 @@ router.post(
 // ACTUALIZAR VISIBILIDAD - ADMIN
 // ==========================================
 
+// Permite publicar u ocultar promociones.
+
 router.patch(
   "/:id/visibilidad",
   actualizarVisibilidadImagen
@@ -111,6 +124,8 @@ router.patch(
 // ACTUALIZAR ORDEN - ADMIN
 // ==========================================
 
+// Permite cambiar el orden de las promociones.
+
 router.patch(
   "/:id/orden",
   actualizarOrdenImagen
@@ -119,6 +134,8 @@ router.patch(
 // ==========================================
 // ELIMINAR IMAGEN - ADMIN
 // ==========================================
+
+// Permite eliminar promociones y otras imágenes.
 
 router.delete(
   "/:id",

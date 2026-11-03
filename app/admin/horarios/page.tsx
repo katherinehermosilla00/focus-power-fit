@@ -593,14 +593,109 @@ export default function HorariosPage() {
         @media(max-width:1100px) { .horarios-distribucion { grid-template-columns:1fr; } }
         @media(max-width:750px) { .horarios-resumen { grid-template-columns:repeat(2,minmax(0,1fr)); } .horarios-encabezado { flex-direction:column; } .horarios-filtros { grid-template-columns:1fr; } }
         @media(max-width:520px) { .horarios-resumen { grid-template-columns:1fr; } .horarios-panel { padding:18px; } }
-      `}</style>
+
+        /* Unificación visual del panel administrativo Focus Power Fit */
+        .horarios-negro-rojo {
+          --fp-rojo:#cf292e;
+          --fp-borde:#383838;
+          --fp-gris:#202024;
+          padding:24px 42px 60px !important;
+          background:#000 !important;
+          color:#fff !important;
+        }
+        .horarios-negro-rojo .horarios-encabezado { margin-bottom:30px; }
+        .horarios-negro-rojo .horarios-encabezado h1 { font-size:clamp(30px,3vw,42px); }
+        .horarios-negro-rojo .horarios-encabezado h1 span { color:var(--fp-rojo); }
+        .horarios-negro-rojo .horarios-volver {
+          background:var(--fp-gris) !important;
+          border:1px solid #414149 !important;
+          border-radius:12px !important;
+          color:#fff !important;
+          padding:14px 20px !important;
+          box-shadow:none !important;
+          transition:none !important;
+        }
+        .horarios-negro-rojo .horarios-volver:hover,
+        .horarios-negro-rojo .horarios-volver:focus-visible {
+          background:var(--fp-gris) !important;
+          border-color:#414149 !important;
+          color:#fff !important;
+          box-shadow:none !important;
+        }
+        .horarios-negro-rojo .horarios-tarjeta {
+          background:#000 !important;
+          border:1px solid var(--fp-borde) !important;
+          border-left:4px solid var(--fp-rojo) !important;
+          border-radius:16px !important;
+          padding:26px !important;
+        }
+        .horarios-negro-rojo .horarios-panel {
+          background:#000 !important;
+          border:1px solid var(--fp-borde) !important;
+          border-radius:16px !important;
+          padding:28px !important;
+        }
+        .horarios-negro-rojo .horarios-control {
+          background:#000 !important;
+          color:#fff !important;
+          border:1px solid #414141 !important;
+          border-radius:10px !important;
+        }
+        .horarios-negro-rojo .horarios-control:focus-visible {
+          outline:2px solid var(--fp-rojo) !important;
+          outline-offset:1px;
+        }
+        .horarios-negro-rojo .horarios-boton {
+          border:1px solid #414141 !important;
+          border-radius:10px !important;
+          background:#202024 !important;
+          color:#fff !important;
+          transition:background-color .18s ease,border-color .18s ease !important;
+        }
+        .horarios-negro-rojo .horarios-boton:hover:not(:disabled) {
+          background:#303036 !important;
+          border-color:var(--fp-rojo) !important;
+          color:#fff !important;
+        }
+        .horarios-negro-rojo .horarios-boton-rojo {
+          background:#c8272e !important;
+          border-color:#c8272e !important;
+          color:#fff !important;
+        }
+        .horarios-negro-rojo .horarios-boton-rojo:hover:not(:disabled) {
+          background:#a91e25 !important;
+          border-color:#a91e25 !important;
+        }
+        .horarios-negro-rojo .horarios-boton-peligro {
+          background:#000 !important;
+          border-color:#9b292d !important;
+          color:#ffb4b4 !important;
+        }
+        .horarios-negro-rojo .horarios-boton-peligro:hover:not(:disabled) {
+          background:#351014 !important;
+          border-color:#e0474c !important;
+        }
+        .horarios-negro-rojo .horarios-cal-seleccionado,
+        .horarios-negro-rojo .horarios-cal-seleccionado:hover:not(:disabled) {
+          background:#c8272e !important;
+          border-color:#c8272e !important;
+        }
+        .horarios-negro-rojo .horarios-cal-hoy { border-color:var(--fp-rojo) !important; }
+        .horarios-negro-rojo .horarios-tabla th { border-bottom:1px solid #414141; }
+        .horarios-negro-rojo .horarios-tabla tbody tr:hover { background:#111 !important; }
+        @media(max-width:750px) {
+          .horarios-negro-rojo { padding:20px 16px 40px !important; }
+          .horarios-negro-rojo .horarios-panel { padding:20px !important; }
+          .horarios-negro-rojo .horarios-tarjeta { padding:20px !important; }
+        }
+`}</style>
       <header className="horarios-encabezado">
         <div>
           <p className="horarios-etiqueta">PANEL ADMINISTRATIVO / HORARIOS</p>
           <h1>Gestión de <span>Horarios</span></h1>
           <p className="horarios-subtitulo">Organiza los horarios de entrenamiento, profesores, modalidades y cupos.</p>
         </div>
-        <Link href="/admin" className="horarios-volver">← Volver al panel</Link>
+        <Link href="/admin" className="horarios-volver">Volver al panel</Link>
       </header>
 
       {/* TARJETAS DE RESUMEN */}

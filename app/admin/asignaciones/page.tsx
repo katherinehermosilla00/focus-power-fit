@@ -475,7 +475,7 @@ export default function AsignacionesPage() {
           <h1>Gestión de <span>Asignaciones</span></h1>
           <p className="asig-subtitle">Vincula clientes con planes y horarios, y consulta sus asignaciones.</p>
         </div>
-        <Link href="/admin" className="asig-back" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", backgroundColor: "#202024", border: "1px solid #414149", borderRadius: "12px", color: "#ffffff", padding: "14px 20px", fontSize: "14px", fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap" }}>Volver al panel</Link>
+        <Link href="/admin" className="asig-back">Volver al panel</Link>
       </header>
 
       <section className="asig-kpis" aria-label="Resumen de asignaciones">
@@ -623,7 +623,8 @@ export default function AsignacionesPage() {
         .asig-header h1 span { color:#dc2626; }
         .asig-subtitle { color:#b3b3b3; font-size:14px; line-height:1.6; margin:0; }
         .asig-back { display:inline-flex; align-items:center; justify-content:center; text-decoration:none; white-space:nowrap; border:1px solid #444; border-radius:9px; background:#202024; color:#fff; padding:14px 20px; font-size:13px; font-weight:700; }
-        .asig-back:hover { border-color:#dc2626; color:#fff; }
+        .asig-back:hover { background:#dc2626; border-color:#dc2626; color:#fff; }
+        .asig-back:focus-visible { outline:2px solid #dc2626; outline-offset:3px; }
         .asig-kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; margin: 24px 0; }
         .asig-kpi { min-width: 0; background: #000; border: 1px solid #404040; border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 12px; }
         .asig-kpi span { color: #c4c4c4; font-size: 14px; }

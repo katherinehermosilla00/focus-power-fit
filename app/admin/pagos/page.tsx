@@ -1165,8 +1165,33 @@ export default function PagosPage() {
       </div>
 
       <style jsx global>{`
-        .pagos-pagina { background: #000 !important; color: #fff !important; min-height: 100vh; }
-        .pagos-pagina .admin-modulo-contenedor { max-width: 1400px; }
+        .pagos-pagina {
+          background: #000 !important;
+          color: #fff !important;
+          min-height: 100vh;
+          width: 100vw !important;
+          max-width: none !important;
+          margin-left: calc(50% - 50vw) !important;
+          margin-right: 0 !important;
+          padding: 28px clamp(16px, 3vw, 52px) 64px !important;
+          box-sizing: border-box;
+        }
+        .pagos-pagina .admin-modulo-contenedor {
+          width: 100% !important;
+          max-width: none !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          box-sizing: border-box;
+        }
+        .pagos-pagina .pagos-distribucion {
+          display: grid;
+          grid-template-columns: minmax(320px, 0.9fr) minmax(0, 2.1fr);
+          gap: 22px;
+          width: 100%;
+          align-items: start;
+        }
+        .pagos-pagina .pagos-panel { min-width: 0; }
+        .pagos-pagina .admin-modulo-tabla-contenedor { width: 100%; overflow-x: auto; }
         .pagos-pagina .admin-modulo-etiqueta, .pagos-pagina .admin-modulo-titulo span { color: #dc2626; }
         .pagos-pagina .admin-modulo-titulo, .pagos-pagina .admin-modulo-panel-titulo { color: #fff; }
         .pagos-pagina .admin-modulo-descripcion { color: #a1a1aa; }
@@ -1195,7 +1220,7 @@ export default function PagosPage() {
         .pagos-pagina .clientes-modal { background: #0b0b0b !important; color: #fff !important; border: 1px solid #333; }
         .pagos-pagina .clientes-detalles, .pagos-pagina .clientes-detalles p { color: #e4e4e7; }
         .pagos-pagina .clientes-paginacion { color: #eee; }
-        @media (max-width: 900px) { .pagos-pagina .admin-modulo-distribucion { grid-template-columns: 1fr; } .pagos-pagina .admin-modulo-resumen { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+        @media (max-width: 1050px) { .pagos-pagina .pagos-distribucion { grid-template-columns: 1fr; } .pagos-pagina .admin-modulo-resumen { grid-template-columns: repeat(2,minmax(0,1fr)); } }
         @media (max-width: 520px) { .pagos-pagina .admin-modulo-resumen { grid-template-columns: 1fr; } .pagos-pagina .admin-modulo-panel { padding: 16px; } }
       `}</style>
     </main>

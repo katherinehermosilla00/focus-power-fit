@@ -1,0 +1,519 @@
+
+/* ==========================================
+   FOCUS POWER FIT - REGISTRO COMPLETO
+   ========================================== */
+
+.registro-pagina,
+.registro-pagina * {
+  box-sizing: border-box;
+}
+
+.registro-pagina {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  background: #09090f;
+  color: #ffffff;
+  overflow-x: hidden;
+  font-family: inherit;
+}
+
+/* FONDO NEGRO ANIMADO */
+
+.registro-fondo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: #09090f;
+  pointer-events: none;
+}
+
+.registro-fondo-grid {
+  position: absolute;
+  inset: -40%;
+  background-image:
+    linear-gradient(
+      rgba(255, 255, 255, 0.035) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.035) 1px,
+      transparent 1px
+    );
+  background-size: 65px 65px;
+  transform: perspective(650px) rotateX(48deg);
+  animation: registro-grid 20s linear infinite;
+  opacity: 0.35;
+}
+
+.registro-orbe,
+.registro-haz {
+  display: none;
+}
+
+/* CONTENEDOR */
+
+.registro-contenedor {
+  width: min(100% - 32px, 900px);
+  margin: 0 auto;
+  padding: 18px 0 28px;
+}
+
+/* ENCABEZADO */
+
+.registro-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.registro-marca {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-decoration: none;
+}
+
+.registro-marca span {
+  color: #ff4052;
+}
+
+/* BOTÓN VOLVER CON BORDE ROJO */
+
+.registro-volver {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 18px;
+  background: transparent;
+  border: 1px solid #ff4052;
+  border-radius: 9px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.registro-volver:hover {
+  background: rgba(255, 64, 82, 0.12);
+  border-color: #ff6575;
+  color: #ffffff;
+}
+
+/* TARJETA */
+
+.registro-tarjeta {
+  position: relative;
+  width: min(100%, 574px);
+  margin: 0 auto;
+  padding: 25px 30px;
+  background: #09090f;
+  border: 1px solid rgba(240, 68, 68, 0.35);
+  border-radius: 16px;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.35);
+}
+
+.registro-tarjeta::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #ff4052,
+    transparent
+  );
+  box-shadow: 0 0 14px rgba(255, 64, 82, 0.6);
+  animation: registro-brillo 4s ease-in-out infinite;
+}
+
+/* CABECERA DEL FORMULARIO */
+
+.registro-tarjeta-cabecera {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.registro-emblema {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 10px;
+  border: 1px solid #873146;
+  border-radius: 12px;
+  background: #30111b;
+  color: #ff5364;
+  font-size: 21px;
+}
+
+.registro-eyebrow {
+  margin: 0 0 7px;
+  color: #ff5364;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.registro-tarjeta h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(25px, 3vw, 32px);
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.registro-tarjeta h1 span {
+  color: #ff4052;
+}
+
+.registro-introduccion {
+  margin: 7px 0 15px;
+  color: #aaaab5;
+  font-size: 12px;
+}
+
+/* PASOS */
+
+.registro-pasos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+}
+
+.registro-paso {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #858590;
+  font-size: 11px;
+}
+
+.registro-paso b {
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border: 1px solid #444;
+  border-radius: 50%;
+  font-size: 10px;
+}
+
+.registro-paso.activo {
+  color: #ffffff;
+}
+
+.registro-paso.activo b {
+  background: #c92038;
+  border-color: #e63c51;
+  color: #ffffff;
+}
+
+.registro-paso-linea {
+  width: 30px;
+  height: 1px;
+  background: #4a3540;
+}
+
+/* FORMULARIO */
+
+.registro-formulario {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.registro-ancho {
+  grid-column: 1 / -1;
+}
+
+.registro-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.registro-campo label {
+  color: #f1f1f4;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.registro-campo input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 41px;
+  padding: 9px 12px;
+  background: #090a0f;
+  border: 1px solid #44424b;
+  border-radius: 9px;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.registro-campo input::placeholder {
+  color: #777784;
+}
+
+.registro-campo input:focus {
+  border-color: #ff4052;
+  box-shadow: 0 0 0 3px rgba(255, 64, 82, 0.15);
+}
+
+.registro-campo small {
+  color: #9999a5;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+/* CELULAR */
+
+.registro-telefono {
+  display: flex;
+  align-items: center;
+  min-height: 41px;
+  background: #090a0f;
+  border: 1px solid #44424b;
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.registro-telefono > span {
+  padding: 0 12px;
+  border-right: 1px solid #44424b;
+  color: #d4d4da;
+  font-size: 12px;
+}
+
+.registro-telefono input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.registro-telefono:focus-within {
+  border-color: #ff4052;
+  box-shadow: 0 0 0 3px rgba(255, 64, 82, 0.15);
+}
+
+/* CONTRASEÑAS */
+
+.registro-password {
+  display: flex;
+  align-items: center;
+  min-height: 41px;
+  background: #090a0f;
+  border: 1px solid #44424b;
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.registro-password input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.registro-password button {
+  flex-shrink: 0;
+  padding: 10px;
+  border: 0;
+  background: transparent;
+  color: #ff5364;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.registro-password button:hover {
+  color: #ffffff;
+}
+
+.registro-password:focus-within {
+  border-color: #ff4052;
+  box-shadow: 0 0 0 3px rgba(255, 64, 82, 0.15);
+}
+
+/* BOTÓN */
+
+.registro-enviar {
+  display: block;
+  width: 100%;
+  min-height: 43px;
+  padding: 10px 16px;
+  background: linear-gradient(110deg, #a71930, #e32c45);
+  border: 1px solid #ed4056;
+  border-radius: 9px;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.registro-enviar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(220, 38, 65, 0.35);
+}
+
+.registro-enviar:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* ERRORES */
+
+.registro-error {
+  padding: 12px;
+  background: rgba(73, 19, 33, 0.5);
+  border: 1px solid #9c344d;
+  border-radius: 9px;
+  color: #ffb5c0;
+  font-size: 12px;
+}
+
+/* VERIFICACIÓN */
+
+.registro-verificacion {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.registro-correo-mensaje {
+  color: #aaaab5;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.registro-correo-mensaje strong {
+  color: #ffffff;
+}
+
+.registro-codigo {
+  text-align: center;
+  font-size: 22px !important;
+  letter-spacing: 0.3em;
+}
+
+/* PIE */
+
+.registro-pie {
+  margin: 16px 0 0;
+  color: #aaaab5;
+  text-align: center;
+  font-size: 12px;
+}
+
+.registro-pie a {
+  color: #ff5364;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.registro-pie a:hover {
+  text-decoration: underline;
+}
+
+.registro-footer {
+  margin: 15px 0 0;
+  color: #898994;
+  text-align: center;
+  font-size: 11px;
+}
+
+/* ANIMACIONES */
+
+@keyframes registro-grid {
+  to {
+    background-position: 0 130px;
+  }
+}
+
+@keyframes registro-brillo {
+  0%, 100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 640px) {
+  .registro-contenedor {
+    width: min(100% - 24px, 900px);
+    padding-top: 15px;
+  }
+
+  .registro-tarjeta {
+    width: 100%;
+    padding: 22px 18px;
+  }
+
+  .registro-formulario {
+    grid-template-columns: 1fr;
+    gap: 13px;
+  }
+
+  .registro-ancho {
+    grid-column: auto;
+  }
+
+  .registro-encabezado {
+    gap: 12px;
+  }
+
+  .registro-marca {
+    font-size: 13px;
+  }
+
+  .registro-volver {
+    font-size: 12px;
+  }
+}
+
+/* ACCESIBILIDAD */
+
+@media (prefers-reduced-motion: reduce) {
+  .registro-fondo-grid,
+  .registro-tarjeta::before {
+    animation: none;
+  }
+
+  .registro-enviar {
+    transition: none;
+  }
+}
