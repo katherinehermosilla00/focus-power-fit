@@ -1,0 +1,516 @@
+.bienvenida-pagina,
+.bienvenida-pagina * {
+  box-sizing: border-box;
+}
+
+.bienvenida-pagina {
+  min-height: 100vh;
+  background: #050505;
+  color: #ffffff;
+  font-family: inherit;
+  overflow-x: hidden;
+}
+
+/* CARGANDO */
+
+.bienvenida-cargando {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: #050505;
+  color: #f04444;
+}
+
+.bienvenida-loader {
+  width: 42px;
+  height: 42px;
+  border: 3px solid #333;
+  border-top-color: #e02020;
+  border-radius: 50%;
+  animation: bienvenida-girar 0.8s linear infinite;
+}
+
+@keyframes bienvenida-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* HEADER */
+
+.bienvenida-header {
+  width: 100%;
+  min-height: 86px;
+  padding: 16px clamp(20px, 5vw, 80px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  background: #080808;
+  border-bottom: 1px solid #292929;
+}
+
+.bienvenida-marca {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  color: #fff;
+  min-width: 0;
+}
+
+.bienvenida-marca:hover {
+  color: #fff;
+}
+
+.bienvenida-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #4b2020;
+  flex-shrink: 0;
+}
+
+.bienvenida-marca-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bienvenida-marca-texto strong {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+  color: #f04444;
+}
+
+.bienvenida-marca-texto span {
+  color: #a1a1aa;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+}
+
+.bienvenida-nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: clamp(12px, 2vw, 32px);
+}
+
+.bienvenida-nav a {
+  text-decoration: none;
+  color: #d4d4d8;
+  font-size: 14px;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.bienvenida-nav a:hover {
+  color: #f04444;
+}
+
+.bienvenida-nav .bienvenida-nav-cuenta {
+  padding: 11px 18px;
+  border: 1px solid #a92323;
+  border-radius: 9px;
+  color: #fff;
+  background: #241010;
+}
+
+.bienvenida-nav .bienvenida-nav-cuenta:hover {
+  background: #b91c1c;
+  color: #fff;
+}
+
+/* CONTENEDOR */
+
+.bienvenida-contenido {
+  width: min(100%, 1440px);
+  margin: 0 auto;
+  padding: 0 clamp(20px, 5vw, 80px);
+}
+
+/* HERO */
+
+.bienvenida-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 500px;
+  padding: 65px 0;
+  overflow: hidden;
+  border-bottom: 1px solid #292929;
+}
+
+.bienvenida-hero-interior {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 700px);
+}
+
+.bienvenida-etiqueta,
+.bienvenida-seccion-etiqueta {
+  display: inline-block;
+  color: #f04444;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+}
+
+.bienvenida-hero h1 {
+  margin: 24px 0 18px;
+  font-size: clamp(46px, 6vw, 82px);
+  line-height: 1.08;
+  font-weight: 900;
+  letter-spacing: -2px;
+  color: #fff;
+}
+
+.bienvenida-hero h1 span {
+  color: #e52b2b;
+}
+
+.bienvenida-subtitulo {
+  max-width: 600px;
+  color: #b4b4bc;
+  font-size: clamp(16px, 1.5vw, 19px);
+  line-height: 1.8;
+  margin: 0;
+}
+
+.bienvenida-hero-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 34px;
+}
+
+.bienvenida-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 49px;
+  padding: 13px 23px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.bienvenida-boton:hover {
+  transform: translateY(-2px);
+}
+
+.bienvenida-boton-principal {
+  background: #d92323;
+  border: 1px solid #d92323;
+  color: #fff;
+}
+
+.bienvenida-boton-principal:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  color: #fff;
+}
+
+.bienvenida-boton-secundario {
+  background: #141414;
+  border: 1px solid #444;
+  color: #fff;
+}
+
+.bienvenida-boton-secundario:hover {
+  background: #242424;
+  border-color: #666;
+  color: #fff;
+}
+
+/* DECORACIÓN HERO */
+
+.bienvenida-hero-decoracion {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  opacity: 0.09;
+  pointer-events: none;
+  user-select: none;
+}
+
+.bienvenida-hero-decoracion span {
+  font-size: clamp(90px, 11vw, 170px);
+  line-height: 0.88;
+  font-weight: 900;
+  letter-spacing: -8px;
+  color: #f04444;
+}
+
+/* SECCIONES */
+
+.bienvenida-secciones {
+  padding: 72px 0 90px;
+}
+
+.bienvenida-secciones-encabezado {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 32px;
+}
+
+.bienvenida-secciones-encabezado h2 {
+  margin: 13px 0 0;
+  color: #fff;
+  font-size: clamp(27px, 3vw, 38px);
+  font-weight: 800;
+  letter-spacing: -0.8px;
+}
+
+.bienvenida-secciones-encabezado > p {
+  max-width: 340px;
+  margin: 0;
+  color: #a1a1aa;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.bienvenida-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.bienvenida-tarjeta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 260px;
+  padding: 30px;
+  background: #101010;
+  border: 1px solid #303030;
+  border-radius: 16px;
+  color: #fff;
+  text-decoration: none;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.bienvenida-tarjeta:hover {
+  background: #171111;
+  border-color: #a92323;
+  transform: translateY(-4px);
+  color: #fff;
+}
+
+.bienvenida-tarjeta-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 24px;
+  background: #301313;
+  border: 1px solid #612222;
+  border-radius: 13px;
+  color: #f04444;
+}
+
+.bienvenida-tarjeta-icono .material-icons {
+  font-size: 27px;
+}
+
+.bienvenida-tarjeta h3 {
+  margin: 0 0 12px;
+  color: #fff;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.bienvenida-tarjeta p {
+  margin: 0;
+  color: #a1a1aa;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.bienvenida-tarjeta-enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 26px;
+  color: #f04444;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* MENSAJE FINAL */
+
+.bienvenida-mensaje {
+  margin-bottom: 85px;
+  padding: 55px 30px;
+  background:
+    radial-gradient(
+      ellipse at 50% 100%,
+      rgba(185, 28, 28, 0.15),
+      transparent 65%
+    ),
+    #111;
+  border: 1px solid #343434;
+  border-radius: 18px;
+  text-align: center;
+}
+
+.bienvenida-mensaje > span {
+  color: #f04444;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 3px;
+}
+
+.bienvenida-mensaje h2 {
+  margin: 17px 0 12px;
+  color: #fff;
+  font-size: clamp(26px, 3vw, 38px);
+  font-weight: 900;
+}
+
+.bienvenida-mensaje p {
+  max-width: 530px;
+  margin: 0 auto;
+  color: #b4b4bc;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+/* FOOTER */
+
+.bienvenida-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 24px clamp(20px, 5vw, 80px);
+  border-top: 1px solid #292929;
+  color: #8b8b93;
+  font-size: 12px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 1024px) {
+  .bienvenida-header {
+    flex-wrap: wrap;
+  }
+
+  .bienvenida-nav {
+    justify-content: flex-start;
+  }
+
+  .bienvenida-tarjetas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bienvenida-hero-decoracion {
+    opacity: 0.045;
+  }
+}
+
+@media (max-width: 700px) {
+  .bienvenida-header {
+    padding: 18px 20px;
+  }
+
+  .bienvenida-nav {
+    width: 100%;
+    gap: 18px;
+  }
+
+  .bienvenida-hero {
+    min-height: 420px;
+    padding: 65px 0;
+  }
+
+  .bienvenida-hero h1 {
+    letter-spacing: -1px;
+  }
+
+  .bienvenida-hero-decoracion {
+    display: none;
+  }
+
+  .bienvenida-secciones {
+    padding: 55px 0 65px;
+  }
+
+  .bienvenida-secciones-encabezado {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .bienvenida-tarjetas {
+    grid-template-columns: 1fr;
+  }
+
+  .bienvenida-tarjeta {
+    min-height: 235px;
+  }
+
+  .bienvenida-mensaje {
+    margin-bottom: 55px;
+    padding: 45px 22px;
+  }
+}
+
+@media (max-width: 420px) {
+  .bienvenida-marca-texto strong {
+    font-size: 14px;
+  }
+
+  .bienvenida-nav {
+    gap: 12px 18px;
+  }
+
+  .bienvenida-nav a {
+    font-size: 12px;
+  }
+
+  .bienvenida-hero-acciones {
+    flex-direction: column;
+  }
+
+  .bienvenida-boton {
+    width: 100%;
+  }
+
+  .bienvenida-tarjeta {
+    padding: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bienvenida-loader {
+    animation: none;
+  }
+
+  .bienvenida-boton,
+  .bienvenida-tarjeta {
+    transition: none;
+  }
+}

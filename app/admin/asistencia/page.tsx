@@ -385,65 +385,13 @@ export default function AsistenciaPage() {
 
   return (
     <main className="asistencia-pagina">
-      <style>{`
-.asistencia-pagina{background:#000!important;color:#fff!important;min-height:100vh;width:100%;min-width:0;padding:24px 42px 60px;box-sizing:border-box}
-.asistencia-pagina *{box-sizing:border-box}
-.asistencia-encabezado{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:30px}
-.asistencia-etiqueta-superior,.asistencia-panel-kicker{color:#ef343a!important;font-size:13px;font-weight:800;letter-spacing:1.7px;text-transform:uppercase;margin:0 0 14px}
-.asistencia-encabezado h1{font-size:clamp(32px,3.1vw,52px);line-height:1.1;font-weight:800;color:#fff;margin:0 0 14px}
-.asistencia-encabezado h1 span{color:#cf292e}
-.asistencia-encabezado p:not(.asistencia-etiqueta-superior){color:#c5c5c5;margin:0;font-size:16px}
-.asistencia-pagina .asistencia-volver{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;text-decoration:none!important;background:#202024!important;border:1px solid #414149!important;border-radius:12px!important;color:#fff!important;padding:14px 20px!important;font-weight:700!important;min-height:50px;transition:background .2s,border-color .2s}
-/* Hover del botón Volver pendiente: mantenerlo fijo como solicitaste. */
-.asistencia-pagina .asistencia-volver:hover{background:#202024!important;color:#fff!important;border-color:#414149!important}
-.asistencia-pagina .asistencia-resumen{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:18px;margin:0 0 28px}
-.asistencia-pagina .asistencia-resumen-tarjeta{background:#000!important;border:1px solid #383838!important;border-left:4px solid #cf292e!important;border-radius:16px!important;padding:26px!important;display:flex;flex-direction:column;gap:16px;min-width:0;box-shadow:none!important}
-.asistencia-pagina .asistencia-resumen-tarjeta span{font-size:14px;color:#ccc}
-.asistencia-pagina .asistencia-resumen-tarjeta strong{font-size:38px;line-height:1;font-weight:800;color:#fff}
-.asistencia-pagina .asistencia-distribucion{display:grid!important;grid-template-columns:minmax(310px,0.85fr) minmax(0,2.65fr)!important;gap:24px;align-items:start}
-.asistencia-pagina .asistencia-panel{background:#000!important;border:1px solid #383838!important;border-radius:16px!important;padding:28px!important;min-width:0;box-shadow:none!important}
-.asistencia-pagina .asistencia-panel::before{content:'FORMULARIO';display:block;color:#ef343a;font-size:13px;font-weight:800;letter-spacing:1.5px;margin-bottom:18px}
-.asistencia-pagina .asistencia-panel:nth-child(2)::before{content:'DIRECTORIO'}
-.asistencia-pagina .asistencia-panel h2{font-size:25px!important;font-weight:800;color:#fff!important;margin:0 0 12px!important}
-.asistencia-pagina .asistencia-ayuda,.asistencia-pagina .asistencia-texto-secundario{color:#bdbdbd;font-size:14px;line-height:1.6;margin:0}
-.asistencia-pagina .asistencia-formulario{display:grid;gap:18px;margin-top:28px}
-.asistencia-pagina .asistencia-formulario>div{min-width:0}
-.asistencia-pagina .asistencia-etiqueta{display:block;color:#fff;font-size:14px;font-weight:700;margin-bottom:9px}
-.asistencia-pagina .asistencia-control,.asistencia-pagina .asistencia-filtros input,.asistencia-pagina .asistencia-filtros select{width:100%;min-width:0;min-height:51px;background:#000!important;border:1px solid #414141!important;border-radius:11px!important;color:#fff!important;padding:12px 15px;font:inherit;color-scheme:dark}
-.asistencia-pagina .asistencia-control:focus,.asistencia-pagina .asistencia-filtros input:focus,.asistencia-pagina .asistencia-filtros select:focus{outline:2px solid #d12b30;outline-offset:1px}
-.asistencia-pagina .asistencia-ancho{width:100%;min-height:46px}
-.asistencia-pagina .asistencia-listado-cabecera{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
-.asistencia-pagina .asistencia-filtros{display:grid;grid-template-columns:minmax(0,2fr) minmax(155px,1fr);gap:12px;margin-bottom:24px}
-.asistencia-pagina .asistencia-tabla-scroll{overflow-x:auto;width:100%}
-.asistencia-pagina .asistencia-tabla{width:100%;border-collapse:collapse;min-width:680px;text-align:left}
-.asistencia-pagina .asistencia-tabla th{background:#000!important;color:#c9c9c9;font-size:12px;font-weight:800;letter-spacing:.4px;padding:17px 12px;border-top:1px solid #343434;border-bottom:1px solid #414141;text-transform:uppercase}
-.asistencia-pagina .asistencia-tabla td{background:#000!important;color:#fff;border-bottom:1px solid #303030;padding:16px 12px;font-size:13px;vertical-align:middle}
-.asistencia-pagina .asistencia-tabla td strong{display:block;color:#fff;font-weight:700}
-.asistencia-pagina .asistencia-tabla td small{display:block;color:#bbb;margin-top:6px}
-.asistencia-pagina .asistencia-tabla-acciones{display:flex;gap:8px}
-.asistencia-pagina .asistencia-tabla-acciones button{white-space:nowrap;background:#000!important;color:#fff!important;border:1px solid #444!important;border-radius:10px!important;padding:9px 13px!important}
-.asistencia-pagina .asistencia-tabla-acciones button:hover{border-color:#cf292e!important;color:#fff!important}
-.asistencia-pagina .asistencia-estado{display:inline-flex;padding:7px 12px;border:1px solid #414141;border-radius:999px;font-weight:700;font-size:12px;background:#000!important;color:#fff!important}
-.asistencia-pagina .asistencia-estado--presente::before{content:'●';color:#20c46b;margin-right:7px}
-.asistencia-pagina .asistencia-estado--ausente::before{content:'●';color:#e23a41;margin-right:7px}
-.asistencia-pagina .asistencia-estado--justificada::before{content:'●';color:#e6b34a;margin-right:7px}
-.asistencia-pagina .asistencia-paginacion{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:22px;color:#ddd}
-.asistencia-pagina .asistencia-paginacion button,.asistencia-pagina .asistencia-listado-cabecera button{background:#000!important;border:1px solid #414141!important;color:#fff!important;border-radius:10px!important;padding:10px 15px!important}
-.asistencia-pagina button[type=submit]{background:#c8272e!important;color:#fff!important;border:1px solid #c8272e!important;border-radius:10px!important}
-.asistencia-pagina button[type=submit]:hover{background:#a91e25!important}
-.asistencia-pagina .asistencia-error{color:#ff9999}.asistencia-pagina .asistencia-exito{color:#86efac}
-.asistencia-pagina .asistencia-advertencia{color:#ffaaaa;font-size:12px}
-.asistencia-pagina .clientes-modal{background:#080808!important;color:#fff!important;border:1px solid #444!important}
-@media(max-width:1150px){.asistencia-pagina .asistencia-distribucion{grid-template-columns:1fr!important}.asistencia-pagina .asistencia-resumen{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-@media(max-width:650px){.asistencia-pagina{padding:20px 16px 40px}.asistencia-encabezado{flex-direction:column}.asistencia-pagina .asistencia-resumen{gap:10px}.asistencia-pagina .asistencia-resumen-tarjeta{padding:16px!important}.asistencia-pagina .asistencia-panel{padding:18px!important}.asistencia-pagina .asistencia-filtros{grid-template-columns:1fr}.asistencia-pagina .asistencia-listado-cabecera{flex-wrap:wrap}}
-`}</style>
       <header className="asistencia-encabezado">
         <div>
           <p className="asistencia-etiqueta-superior">PANEL ADMINISTRATIVO / ASISTENCIA</p>
           <h1>Registro de <span>Asistencia</span></h1>
           <p>Registra, consulta y actualiza la asistencia de los clientes.</p>
         </div>
-        <Link href="/admin" className="asistencia-volver">Volver al panel</Link>
+        <Link href="/admin" className="asistencia-volver fp-btn-volver">Volver al panel</Link>
       </header>
 
       {/* INDICADORES */}
