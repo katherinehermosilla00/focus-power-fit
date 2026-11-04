@@ -193,16 +193,12 @@ app.use("/uploads/imagenes", (req, res) => {
 // Revisar que no existan otros documentos
 // privados dentro de /uploads.
 
-app.use(
-  "/uploads",
-  express.static(
-    path.join(process.cwd(), "uploads"),
-    {
-      dotfiles: "deny",
-      index: false,
-    }
-  )
-);
+app.use("/uploads", (req, res) => {
+  return res.status(403).json({
+    ok: false,
+    mensaje: "Acceso directo a archivos no permitido",
+  });
+});
 
 // ==========================================
 // RUTAS API
@@ -330,10 +326,6 @@ const iniciarServidor = async () => {
     } else {
       console.log("Sincronización automática de modelos desactivada");
     }
-
-    console.log(
-      "Modelos sincronizados correctamente"
-    );
 
     app.listen(PORT, () => {
       console.log(
