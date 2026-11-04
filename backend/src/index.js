@@ -324,7 +324,12 @@ const iniciarServidor = async () => {
       "MySQL conectado correctamente"
     );
 
-    await sequelize.sync();
+    if (process.env.DB_SYNC === "true") {
+      await sequelize.sync();
+      console.log("Modelos sincronizados correctamente");
+    } else {
+      console.log("Sincronización automática de modelos desactivada");
+    }
 
     console.log(
       "Modelos sincronizados correctamente"
