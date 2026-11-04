@@ -174,7 +174,7 @@ export default function MiCuentaPage() {
     try {
       setErrorContrato("");
       const respuesta = await fetch(
-        `http://localhost:3001/api/contratos/${perfil.contrato.id}/archivo`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/contratos/${perfil.contrato.id}/archivo`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
