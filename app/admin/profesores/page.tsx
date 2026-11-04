@@ -50,9 +50,9 @@ type FormularioProfesor = {
 };
 
 const API_PROFESORES =
-  "http://localhost:3001/api/profesores";
+  `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/profesores`;
 const API_SUCURSALES =
-  "http://localhost:3001/api/sucursales/admin";
+  `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/sucursales/admin`;
 const POR_PAGINA = 10;
 
 const FORMULARIO_INICIAL: FormularioProfesor = {

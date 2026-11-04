@@ -46,7 +46,7 @@ type Horario = {
   profesor?: Profesor | null;
 };
 
-const API_URL = "http://localhost:3001/api";
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api`;
 const POR_PAGINA = 10;
 
 const DIAS: DiaSemana[] = [
