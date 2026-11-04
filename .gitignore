@@ -49,3 +49,5 @@ backend/data/
 
 # Respaldos de base de datos
 *.sql
+# Respaldos locales de codigo
+*.backup

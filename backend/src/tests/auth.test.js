@@ -39,7 +39,8 @@ test.before(async () => {
 
   await Cliente.create({
     id: 75,
-    nombres: 'Nombre desde Clientes',
+    nombres: 'Nombre',
+    apellidos: 'desde Clientes',
     nombre: 'Nombre desde Clientes',
     email: 'cliente@focuspowerfit.cl',
     rut: '12345678-9',

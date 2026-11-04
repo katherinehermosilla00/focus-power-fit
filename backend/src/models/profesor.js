@@ -1,3 +1,4 @@
+
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 import Sucursal from "./sucursal.js";
@@ -27,13 +28,13 @@ const Profesor = sequelize.define(
 
     rut: {
       type: DataTypes.STRING(20),
-      allowNull: false,
+      allowNull: true,
       unique: true,
     },
 
     email: {
       type: DataTypes.STRING(150),
-      allowNull: false,
+      allowNull: true,
       unique: true,
       validate: {
         isEmail: true,
@@ -50,11 +51,18 @@ const Profesor = sequelize.define(
       allowNull: true,
     },
 
+    instagram: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+
+    turno: {
+      type: DataTypes.ENUM("AM", "PM", "AM y PM"),
+      allowNull: true,
+    },
+
     estado: {
-      type: DataTypes.ENUM(
-        "Activo",
-        "Inactivo"
-      ),
+      type: DataTypes.ENUM("Activo", "Inactivo"),
       allowNull: false,
       defaultValue: "Activo",
     },

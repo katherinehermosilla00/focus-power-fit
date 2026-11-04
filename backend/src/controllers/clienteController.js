@@ -1,9 +1,9 @@
 import Asignacion from "../models/asignacion.js";
-import Cliente from "../models/cliente.js";
-import Contrato from "../models/contrato.js";
-import Horario from "../models/horario.js";
-import Plan from "../models/plan.js";
 import Profesor from "../models/profesor.js";
+import Plan from "../models/plan.js";
+import Horario from "../models/horario.js";
+import Contrato from "../models/contrato.js";
+import Cliente from "../models/cliente.js";
 import Sucursal from "../models/sucursal.js";
 
 const includeSucursal = [
@@ -417,9 +417,11 @@ export const obtenerMiDashboard = async (req, res) => {
       });
     }
 
+    const clienteId = cliente.id;
+
     const asignacion = await Asignacion.findOne({
       where: {
-        clienteId: cliente.id,
+        clienteId,
         estado: "Activa",
       },
       include: [
@@ -452,7 +454,9 @@ export const obtenerMiDashboard = async (req, res) => {
     });
 
     const contrato = await Contrato.findOne({
-      where: { clienteId: cliente.id },
+      where: {
+        clienteId,
+      },
       order: [["createdAt", "DESC"]],
     });
 
@@ -479,7 +483,7 @@ export const obtenerMiDashboard = async (req, res) => {
 
     return res.status(500).json({
       ok: false,
-      mensaje: "No se pudo cargar la información del cliente",
+      mensaje: "No se pudo cargar la informaci├│n del cliente",
       error: error.message,
     });
   }

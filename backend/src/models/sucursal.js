@@ -1,3 +1,4 @@
+
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 
@@ -26,16 +27,23 @@ const Sucursal = sequelize.define(
       allowNull: false,
     },
 
+    ciudad: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+
+    horarioAtencion: {
+      type: DataTypes.STRING(200),
+      allowNull: true,
+    },
+
     telefono: {
       type: DataTypes.STRING(30),
       allowNull: true,
     },
 
     estado: {
-      type: DataTypes.ENUM(
-        "Activa",
-        "Inactiva"
-      ),
+      type: DataTypes.ENUM("Activa", "Inactiva"),
       allowNull: false,
       defaultValue: "Activa",
     },

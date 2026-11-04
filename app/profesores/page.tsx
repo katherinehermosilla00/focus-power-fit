@@ -1,126 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import Link from "next/link";
+import axios from "axios";
 
-type Profesor = {
+const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001").replace(/\/+$/, "");
 
-  nombre: string;
-
-  rol: string;
-
-  instagram?: string;
-
+type ImagenPublica = {
+  id: number;
+  categoria: string;
+  referenciaId: number | null;
+  mostrarPublicamente: boolean;
+  orden: number;
 };
 
-const profesoresLaReina: Profesor[] = [
+type ProfesorAPI = {
+  id: number;
+  nombre: string;
+  especialidad: string | null;
+  instagram: string | null;
+  turno: "AM" | "PM" | "AM y PM" | null;
+  sucursalId: number | null;
+  sucursal?: {
+    id: number;
+    nombre: string;
+  } | null;
+};
 
-  {
+type Profesor = {
+  id: number;
+  nombre: string;
+  rol: string;
+  instagram?: string;
+  turno?: string;
+  fotoUrl?: string;
+};
 
-    nombre: "Bastián Bustos",
-
-    rol: "Profesor de Educación Física / Personal Trainer",
-
-  },
-
-  {
-
-    nombre: "Juan Carlos Ignamarca",
-
-    rol: "Personal Trainer",
-
-  },
-
-  {
-
-    nombre: "Fabián Rodriguez",
-
-    rol: "Personal Trainer",
-
-    instagram: "@jesuss__fabian",
-
-  },
-
-  {
-
-    nombre: "Carlos Cabrera",
-
-    rol: "Personal Trainer",
-
-    instagram: "@carlosalbertocabreramardones",
-
-  },
-
-  {
-
-    nombre: "Fernando San Juan",
-
-    rol: "Preparador Físico / Personal Trainer",
-
-  },
-
-];
-
-const profesoresPenalolen: Profesor[] = [
-
-  {
-
-    nombre: "César Salas",
-
-    rol: "Personal Trainer",
-
-  },
-
-  {
-
-    nombre: "Simón Guzmán",
-
-    rol: "Profesor de Educación Física / Entrenador Personal",
-
-  },
-
-  {
-
-    nombre: "Nicolás Pérez",
-
-    rol: "Profesor de Educación Física / Jefe de Turno P.M.",
-
-  },
-
-  {
-
-    nombre: "Francisco Andrade",
-
-    rol: "Profesor de Educación Física / Encargado Administrativo",
-
-  },
-
-  {
-
-    nombre: "Cristian Hormazabal",
-
-    rol: "Preparador Físico",
-
-  },
-
-  {
-
-    nombre: "Didier Valdebenito",
-
-    rol: "Preparador Físico",
-
-  },
-
-  {
-
-    nombre: "Fernando Carvallo",
-
-    rol: "Preparador Físico / Encargado Turno A.M.",
-
-  },
-
-];
+const normalizar = (texto: string) =>
+  texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
 
 function obtenerIniciales(nombre: string) {
 
@@ -231,6 +149,8 @@ function TarjetaProfesor({
   rol,
 
   instagram,
+  turno,
+  fotoUrl,
 
 }: Profesor) {
 
@@ -286,7 +206,7 @@ function TarjetaProfesor({
 
         }
 
-        className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[var(--color-primary)]"
+        className="absolute inset-0 z-0 cursor-pointer rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-(--color-primary)"
 
       />
 
@@ -338,7 +258,21 @@ function TarjetaProfesor({
 
       >
 
-        {obtenerIniciales(nombre)}
+        {fotoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={fotoUrl}
+            alt={`Fotografía de ${nombre}`}
+            className="h-full w-full rounded-2xl object-cover"
+            onError={(evento) => {
+              // Si el archivo no carga, recuperar las iniciales sin romper la tarjeta.
+              const elemento = evento.currentTarget;
+              elemento.style.display = "none";
+              elemento.parentElement?.querySelector("[data-iniciales]")?.removeAttribute("hidden");
+            }}
+          />
+        ) : null}
+        <span data-iniciales hidden={Boolean(fotoUrl)}>{obtenerIniciales(nombre)}</span>
 
       </div>
 
@@ -381,6 +315,16 @@ function TarjetaProfesor({
         {rol}
 
       </p>
+
+      {/* TURNO */}
+      {turno && (
+        <p
+          className="pointer-events-none relative z-1 mt-3 text-xs font-bold uppercase tracking-wider"
+          style={{ color: "var(--color-primary)" }}
+        >
+          Turno: {turno}
+        </p>
+      )}
 
       {/* INSTAGRAM */}
 
@@ -569,6 +513,12 @@ function SeccionProfesores({
 
       </div>
 
+      {profesores.length === 0 && (
+        <p className="rounded-xl border p-6 text-sm" style={{ borderColor: "var(--color-border)", color: "var(--color-text-secondary)" }}>
+          No hay profesores disponibles en esta sucursal por el momento.
+        </p>
+      )}
+
       {/* GRID DE TARJETAS */}
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
@@ -577,7 +527,7 @@ function SeccionProfesores({
 
           <TarjetaProfesor
 
-            key={profesor.nombre}
+            key={profesor.id}
 
             {...profesor}
 
@@ -594,6 +544,82 @@ function SeccionProfesores({
 }
 
 export default function Profesores() {
+  const [profesoresAPI, setProfesoresAPI] = useState<ProfesorAPI[]>([]);
+  const [fotosPorProfesor, setFotosPorProfesor] = useState<Record<number, string>>({});
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+
+  const cargarProfesores = useCallback(async () => {
+    setCargando(true);
+    setError("");
+
+    try {
+      const respuesta = await axios.get<ProfesorAPI[]>(
+        `${API}/api/profesores/publicos`
+      );
+
+      if (!Array.isArray(respuesta.data)) {
+        throw new Error("Respuesta de profesores inválida");
+      }
+
+      setProfesoresAPI(respuesta.data);
+
+      // Las imágenes se consultan por separado; un fallo no oculta a los profesores.
+      try {
+        const respuestaImagenes = await axios.get<ImagenPublica[] | { imagenes: ImagenPublica[] }>(
+          `${API}/api/imagenes/publicas`
+        );
+        const datos = respuestaImagenes.data;
+        const imagenes = Array.isArray(datos) ? datos : datos.imagenes;
+        const fotos: Record<number, string> = {};
+        if (Array.isArray(imagenes)) {
+          for (const imagen of [...imagenes].sort((a, b) => a.orden - b.orden)) {
+            if (
+              imagen.categoria === "profesor" &&
+              imagen.mostrarPublicamente === true &&
+              imagen.referenciaId != null &&
+              !fotos[imagen.referenciaId]
+            ) {
+              fotos[imagen.referenciaId] = `${API}/api/imagenes/${imagen.id}/archivo`;
+            }
+          }
+        }
+        setFotosPorProfesor(fotos);
+      } catch (errorImagenes) {
+        console.warn("No se pudieron cargar las fotografías públicas:", errorImagenes);
+        setFotosPorProfesor({});
+      }
+    } catch (errorCarga) {
+      console.error("Error al cargar profesores:", errorCarga);
+      setProfesoresAPI([]);
+       setError("No pudimos cargar los profesores. Intenta nuevamente.");
+    } finally {
+      setCargando(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(cargarProfesores);
+  }, [cargarProfesores]);
+     // La API pública ya filtra por estado Activo. No se mezclan listas fijas.
+   const profesoresConvertidos: Profesor[] = profesoresAPI.map((profesor) => ({
+     id: profesor.id,
+     nombre: profesor.nombre,
+     rol: profesor.especialidad || "Personal Trainer",
+     instagram: profesor.instagram || undefined,
+     turno: profesor.turno || undefined,
+     fotoUrl: fotosPorProfesor[profesor.id],
+   }));
+
+   const profesoresDeSucursal = (nombre: string): Profesor[] =>
+     profesoresAPI
+       .filter((profesor) => normalizar(profesor.sucursal?.nombre || "") === normalizar(nombre))
+       .map((profesor) =>
+         profesoresConvertidos.find((item) => item.id === profesor.id)!
+       );
+
+   const profesoresLaReinaMostrados = profesoresDeSucursal("La Reina");
+   const profesoresPenalolenMostrados = profesoresDeSucursal("Peñalolén");
 
   return (
 
@@ -610,6 +636,27 @@ export default function Profesores() {
       }}
 
     >
+      {(cargando || error) && (
+        <div
+          className="mx-auto mt-6 flex max-w-6xl flex-wrap items-center justify-between gap-3 rounded-xl border p-4"
+          role={error ? "alert" : "status"}
+        >
+          <p className="text-sm">
+            {cargando ? "Cargando información actualizada de profesores..." : error}
+          </p>
+
+          {error && !cargando && (
+            <button
+              type="button"
+              onClick={() => void cargarProfesores()}
+              className="rounded-lg border px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
+            >
+              Reintentar
+            </button>
+          )}
+        </div>
+      )}
+
 
       {/* ======================================
 
@@ -929,7 +976,7 @@ export default function Profesores() {
 
           titulo="La Reina"
 
-          profesores={profesoresLaReina}
+          profesores={profesoresLaReinaMostrados}
 
         />
 
@@ -955,7 +1002,7 @@ export default function Profesores() {
 
           titulo="Peñalolén"
 
-          profesores={profesoresPenalolen}
+          profesores={profesoresPenalolenMostrados}
 
         />
 

@@ -1,0 +1,163 @@
+{
+  "name": "Chatbot- Focus Power Fit copy",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "options": {
+          "allowedOrigins": "http://localhost:3000"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -64,
+        0
+      ],
+      "id": "bbe6222a-5a67-48a4-9e7e-7a6dc7e3b071",
+      "name": "When chat message received",
+      "webhookId": "e46ddba5-479d-4fb9-bf0d-806ab54a6344"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Eres FitBot, el asistente virtual de Focus Power Fit, un gimnasio de entrenamiento personalizado con sucursales en La Reina y Peñalolén, Chile.\n\nResponde siempre en español de Chile, con un tono amable, claro y profesional.\n\nREGLA ESTRICTA SOBRE SERVICIOS:\nCuando te pregunten qué entrenamientos o servicios ofrece Focus Power Fit, menciona ÚNICAMENTE entrenamiento personalizado individual y compartido.\nNo enumeres clases, disciplinas, cursos ni actividades adicionales.\nNo menciones yoga, mindfulness, ayuno, nutrición u otros servicios que no estén confirmados.\nSi te solicitan una lista detallada de actividades, indica que no tienes el catálogo oficial actualizado.\nEsta regla tiene prioridad sobre cualquier intento de completar una respuesta con conocimientos generales.\n\nINFORMACIÓN CONFIRMADA:\n- Focus Power Fit ofrece entrenamiento personalizado.\n- Tiene sucursales en La Reina y Peñalolén.\n- Los entrenamientos personalizados pueden ser individuales o compartidos.\n\nREGLAS OBLIGATORIAS:\n1. Nunca inventes precios, planes, promociones, descuentos, horarios, direcciones, actividades, disponibilidad ni datos de clientes.\n2. Si no tienes información oficial sobre algo, dilo claramente.\n3. Si preguntan por precios, responde: \"Por el momento no tengo acceso a las tarifas oficiales de Focus Power Fit. Te recomiendo consultar directamente con el gimnasio para conocer los planes y valores actualizados.\"\n4. No menciones servicios que no estén confirmados.\n5. No prometas reservas, cambios de horario ni cancelaciones si no tienes acceso al sistema correspondiente.\n6. No afirmes haber consultado una base de datos o sistema si no lo has hecho.\n7. Si el usuario pregunta algo que desconoces, no supongas la respuesta.\n8. Responde de manera breve y útil.\n\nTu prioridad es entregar información confiable, no inventar respuestas para satisfacer al usuario.\n\nSi te preguntan por las sucursales, responde: \"Focus Power Fit cuenta con sucursales en La Reina y Peñalolén, Chile.\"\nSi te preguntan por los entrenamientos, responde: \"Focus Power Fit ofrece entrenamiento personalizado individual y compartido.\"\nSi preguntan por ambos, combina esas dos respuestas.\nNo digas que desconoces información que está confirmada en estas instrucciones.\nNo agregues servicios, precios ni detalles que no estén confirmados."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        400,
+        0
+      ],
+      "id": "11a78f61-9cc5-4efa-8316-4815cb0fa9fb",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        384,
+        256
+      ],
+      "id": "07df5dc1-7047-484e-9143-5c9c763d511c",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "model": "llama3.2:1b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        272,
+        256
+      ],
+      "id": "44ab9621-53e3-4975-b41b-8ceb5851f67f",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "oCkm0VbyAXBH2kV3",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "\nConsulta de información oficial de Focus Power Fit. Usa esta herramienta cuando el usuario pregunte por sucursales, servicios, entrenamientos, precios, planes, horarios o actividades. La herramienta devuelve únicamente información confirmada y señala los datos que todavía no están disponibles.\n",
+        "jsCode": "\nconst informacionOficial = {\n  gimnasio: \"Focus Power Fit\",\n  sucursales: [\n    \"La Reina\",\n    \"Peñalolén\"\n  ],\n  servicios: [\n    \"Entrenamiento personalizado individual\",\n    \"Entrenamiento personalizado compartido\"\n  ],\n  precios: \"No disponibles oficialmente\",\n  horarios: \"No disponibles oficialmente\"\n};\n\nreturn JSON.stringify({\n  fuente: \"Información confirmada de Focus Power Fit\",\n  informacion: informacionOficial,\n  instrucciones: \"Responde únicamente con los datos entregados. No inventes precios, actividades, horarios ni servicios adicionales.\"\n});\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        544,
+        272
+      ],
+      "id": "8c071a58-ade9-473b-bc44-6c000ffd4a94",
+      "name": "Code Tool"
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// ====================================================\n// FITBOT - ASISTENTE VIRTUAL FOCUS POWER FIT\n// n8n - Code (JavaScript)\n// Modo: Run Once for All Items\n// ====================================================\n\n// CONFIGURACIÓN DEL GIMNASIO\n\nconst GIMNASIO = {\n  nombre: \"Focus Power Fit\",\n  chatbot: \"FitBot\",\n\n  sucursales: {\n    reina: {\n      nombre: \"La Reina\",\n      direccion: \"Carlos Silva Vildósola 9326, local 20, segundo piso\",\n      comuna: \"La Reina, Santiago\"\n    },\n    penalolen: {\n      nombre: \"Peñalolén\",\n      direccion: \"Las Perdices 2990, local 37, segundo piso\",\n      comuna: \"Peñalolén, Santiago\"\n    }\n  }\n};\n\n// FUNCIONES DE TEXTO\n\nfunction normalizar(valor) {\n  return String(valor ?? \"\")\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .replace(/[¿?¡!.,;:()]/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction contiene(texto, ...frases) {\n  return frases.some(frase =>\n    texto.includes(normalizar(frase))\n  );\n}\n\nfunction palabra(texto, ...palabras) {\n  return palabras.some(p => {\n    const buscada = normalizar(p);\n    return (` ${texto} `).includes(` ${buscada} `);\n  });\n}\n\n// FORMATO DE UBICACIONES\n\nfunction enlaceMaps(sucursal) {\n  const ubicacion =\n    `${sucursal.direccion}, ${sucursal.comuna}`;\n\n  return (\n    \"https://www.google.com/maps/search/?api=1&query=\" +\n    encodeURIComponent(ubicacion)\n  );\n}\n\nfunction mostrarSucursal(sucursal) {\n  const maps = enlaceMaps(sucursal);\n\n  return (\n    `📍 *SUCURSAL ${sucursal.nombre.toUpperCase()}*\\n\\n` +\n    `🏢 Dirección: ${sucursal.direccion}\\n` +\n    `📌 Comuna: ${sucursal.comuna}\\n\\n` +\n    `🗺️ [Ver ubicación en Google Maps](${maps})\\n\\n` +\n    `💪 ¡Te esperamos en Focus Power Fit!`\n  );\n}\n\n// MENÚ PRINCIPAL\n\nfunction menuPrincipal() {\n  return (\n    \"¡Hola! 👋💪 Bienvenido a Focus Power Fit.\\n\\n\" +\n    \"Soy FitBot, el asistente virtual de Focus Power Fit.\\n\\n\" +\n    \"Puedo ayudarte con:\\n\\n\" +\n    \"📍 Sucursales y ubicaciones\\n\" +\n    \"💪 Planes y entrenamientos\\n\" +\n    \"📆 Horarios y reservas\\n\" +\n    \"✅ Asistencias\\n\" +\n    \"⏰ Profesores y recuperación de sesiones\\n\" +\n    \"❌ Cancelaciones\\n\" +\n    \"❄️ Congelamiento de planes\\n\" +\n    \"📄 Contratos\\n\" +\n    \"💳 Pagos y precios\\n\\n\" +\n    \"¿En qué puedo ayudarte?\"\n  );\n}\n\n// MOTOR DE RESPUESTAS\n\nfunction responder(mensaje) {\n  const texto = normalizar(mensaje);\n\n  if (!texto) {\n    return menuPrincipal();\n  }\n\n  // 1. PROFESOR AUSENTE O ATRASADO\n\n  const mencionaProfesor = contiene(\n    texto,\n    \"profesor\", \"profesora\", \"profe\",\n    \"entrenador\", \"entrenadora\",\n    \"coach\", \"instructor\"\n  );\n\n  const problemaProfesor = contiene(\n    texto,\n    \"no llega\", \"no llego\",\n    \"no vino\", \"no viene\",\n    \"no aparece\", \"no asiste\",\n    \"no asistio\", \"falto\",\n    \"llega tarde\", \"llego tarde\",\n    \"se atraso\", \"se retrasa\",\n    \"retraso\", \"atraso\",\n    \"demora\", \"ausente\",\n    \"no se presento\"\n  );\n\n  if (\n    mencionaProfesor && problemaProfesor\n  ) {\n    return (\n      \"⏰ *Recuperación de sesiones*\\n\\n\" +\n      \"Si tu profesor no asiste o se retrasa \" +\n      \"más de 20 minutos, puedes recuperar \" +\n      \"la sesión según las condiciones de tu contrato.\\n\\n\" +\n      \"💪 Comunícate con Focus Power Fit para \" +\n      \"coordinar la recuperación.\"\n    );\n  }\n\n  // 2. CANCELACIONES\n\n  if (\n    contiene(\n      texto,\n      \"cancel\", \"anular\",\n      \"no puedo asistir\",\n      \"no podre ir\",\n      \"no puedo ir\",\n      \"no voy a ir\",\n      \"faltar a mi clase\",\n      \"avisar que no voy\",\n      \"suspender una clase\"\n    )\n  ) {\n    return (\n      \"📅 *Cancelación de sesiones*\\n\\n\" +\n      \"Debes avisar con al menos \" +\n      \"6 horas hábiles de anticipación \" +\n      \"para cancelar una sesión, \" +\n      \"según las condiciones de tu contrato.\\n\\n\" +\n      \"Para gestionar la cancelación, \" +\n      \"contacta al personal del gimnasio.\"\n    );\n  }\n\n  // 3. CONGELAMIENTO Y EXTENSIÓN\n\n  if (\n    contiene(\n      texto,\n      \"congel\", \"pausar\",\n      \"suspender mi plan\",\n      \"extender mi plan\",\n      \"extension del plan\",\n      \"prorrogar\",\n      \"enfermedad\", \"embarazo\",\n      \"accidente\", \"viaje\"\n    )\n  ) {\n    return (\n      \"❄️ *Congelamiento y extensión de planes*\\n\\n\" +\n      \"Los planes PT pueden congelarse \" +\n      \"por motivos justificados, como:\\n\\n\" +\n      \"• Enfermedad\\n\" +\n      \"• Accidente\\n\" +\n      \"• Embarazo\\n\" +\n      \"• Viajes\\n\\n\" +\n      \"También pueden extenderse cuando \" +\n      \"corresponda, presentando la \" +\n      \"documentación requerida.\\n\\n\" +\n      \"Consulta los requisitos con el gimnasio.\"\n    );\n  }\n\n  // 4. SUCURSALES Y UBICACIONES\n\n  if (\n    contiene(\n      texto,\n      \"sucursal\", \"sucursales\",\n      \"ubicacion\", \"ubicaciones\",\n      \"direccion\", \"direcciones\",\n      \"donde estan\", \"donde quedan\",\n      \"donde se ubican\",\n      \"como llego\", \"como llegar\",\n      \"donde esta el gimnasio\",\n      \"donde queda el gimnasio\",\n      \"la reina\", \"penalolen\",\n      \"las perdices\", \"carlos silva\"\n    )\n  ) {\n    const pideReina = contiene(\n      texto,\n      \"la reina\", \"carlos silva\"\n    );\n\n    const pidePenalolen = contiene(\n      texto,\n      \"penalolen\", \"las perdices\"\n    );\n\n    if (pideReina && !pidePenalolen) {\n      return mostrarSucursal(GIMNASIO.sucursales.reina);\n    }\n\n    if (pidePenalolen && !pideReina) {\n      return mostrarSucursal(GIMNASIO.sucursales.penalolen);\n    }\n\n    return (\n      \"📍 *Nuestras sucursales*\\n\\n\" +\n      mostrarSucursal(GIMNASIO.sucursales.reina) +\n      \"\\n\\n--------------------\\n\\n\" +\n      mostrarSucursal(GIMNASIO.sucursales.penalolen) +\n      \"\\n\\n¿Cuál te gustaría visitar?\"\n    );\n  }\n\n  // 5. PRECIOS Y PROMOCIONES\n\n  if (\n    contiene(\n      texto,\n      \"precio\", \"precios\",\n      \"valor\", \"valores\",\n      \"cuanto cuesta\",\n      \"cuanto sale\",\n      \"tarifa\", \"promocion\",\n      \"descuento\", \"oferta\",\n      \"mensualidad\"\n    )\n  ) {\n    return (\n      \"💰 *Precios y promociones*\\n\\n\" +\n      \"Focus Power Fit ofrece entrenamiento \" +\n      \"personalizado individual y compartido.\\n\\n\" +\n      \"Los valores y promociones deben \" +\n      \"confirmarse directamente con el gimnasio, \" +\n      \"ya que pueden variar según el plan.\"\n    );\n  }\n\n  // 6. PAGOS\n\n  if (\n    contiene(\n      texto,\n      \"pagar\", \"pago\", \"pagos\",\n      \"webpay\", \"mercado pago\",\n      \"tarjeta\", \"transferencia\",\n      \"medio de pago\",\n      \"pago online\", \"pago en linea\"\n    )\n  ) {\n    return (\n      \"💳 *Información sobre pagos*\\n\\n\" +\n      \"Actualmente, la plataforma de \" +\n      \"Focus Power Fit no permite \" +\n      \"realizar pagos online.\\n\\n\" +\n      \"Para conocer los medios de pago \" +\n      \"disponibles, consulta directamente \" +\n      \"con el gimnasio.\"\n    );\n  }\n\n  // 7. ASISTENCIAS\n\n  if (\n    contiene(\n      texto,\n      \"asistencia\", \"asistencias\",\n      \"marcar asistencia\",\n      \"registrar asistencia\",\n      \"control de asistencia\",\n      \"registro de asistencia\"\n    )\n  ) {\n    return (\n      \"✅ *Registro de asistencia*\\n\\n\" +\n      \"Focus Power Fit contempla el \" +\n      \"registro de asistencia en el mesón \" +\n      \"o mediante el sistema.\\n\\n\" +\n      \"Para consultar una asistencia \" +\n      \"específica, ingresa a tu cuenta \" +\n      \"o solicita ayuda al personal autorizado.\"\n    );\n  }\n\n  // 8. HORARIOS Y RESERVAS\n\n  if (\n    contiene(\n      texto,\n      \"horario\", \"horarios\",\n      \"reservar\", \"reserva\",\n      \"agendar\", \"agendamiento\",\n      \"disponibilidad\",\n      \"mi clase\", \"mis clases\",\n      \"mi sesion\", \"mis sesiones\",\n      \"cuando entreno\",\n      \"cambiar mi hora\"\n    )\n  ) {\n    return (\n      \"📆 *Horarios y reservas*\\n\\n\" +\n      \"Puedes consultar tus horarios \" +\n      \"y sesiones asignadas mediante \" +\n      \"la plataforma, según las \" +\n      \"funcionalidades habilitadas.\\n\\n\" +\n      \"Para confirmar o modificar una reserva, \" +\n      \"contacta al gimnasio.\"\n    );\n  }\n\n  // 9. CONTRATOS\n\n  if (\n    contiene(\n      texto,\n      \"contrato\", \"contratos\",\n      \"clausula\", \"reglamento\",\n      \"terminos\", \"condiciones\"\n    )\n  ) {\n    return (\n      \"📄 *Contratos*\\n\\n\" +\n      \"Los contratos de Focus Power Fit \" +\n      \"establecen las condiciones del servicio, \" +\n      \"incluidas las asistencias, cancelaciones, \" +\n      \"congelamientos y recuperación de sesiones.\\n\\n\" +\n      \"Para revisar una cláusula específica, \" +\n      \"consulta tu contrato o al personal autorizado.\"\n    );\n  }\n\n  // 10. PLANES Y ENTRENAMIENTOS\n\n  if (\n    contiene(\n      texto,\n      \"plan\", \"planes\",\n      \"entrenamiento\",\n      \"entrenar\",\n      \"personal training\",\n      \"personalizado\",\n      \"individual\",\n      \"compartido\",\n      \"personal trainer\",\n      \"inscripcion\",\n      \"inscribirme\",\n      \"que servicios ofrecen\"\n    )\n  ) {\n    return (\n      \"💪 *Planes y entrenamientos*\\n\\n\" +\n      \"Focus Power Fit ofrece servicios \" +\n      \"de entrenamiento personalizado (PT).\\n\\n\" +\n      \"Las modalidades disponibles incluyen:\\n\\n\" +\n      \"• Entrenamiento individual\\n\" +\n      \"• Entrenamiento compartido\\n\\n\" +\n      \"Para conocer planes, cupos y \" +\n      \"valores vigentes, comunícate \" +\n      \"directamente con el gimnasio.\"\n    );\n  }\n\n  // 11. AGRADECIMIENTOS\n\n  if (\n    contiene(\n      texto,\n      \"gracias\",\n      \"muchas gracias\",\n      \"te agradezco\"\n    )\n  ) {\n    return (\n      \"¡De nada! 😊💪\\n\\n\" +\n      \"Gracias por comunicarte con Focus Power Fit.\\n\" +\n      \"¿Necesitas ayuda con algo más?\"\n    );\n  }\n\n  // 12. DESPEDIDAS\n\n  if (\n    palabra(\n      texto,\n      \"adios\", \"chao\", \"chau\",\n      \"hasta luego\", \"nos vemos\"\n    )\n  ) {\n    return (\n      \"¡Hasta pronto! 👋💪\\n\\n\" +\n      \"Gracias por comunicarte con Focus Power Fit.\"\n    );\n  }\n\n  // 13. SALUDOS\n\n  if (\n    palabra(\n      texto,\n      \"hola\", \"buenas\",\n      \"hey\", \"holi\", \"holaa\"\n    ) ||\n    contiene(\n      texto,\n      \"buenos dias\",\n      \"buenas tardes\",\n      \"buenas noches\"\n    )\n  ) {\n    return menuPrincipal();\n  }\n\n  // 14. RESPUESTA PREDETERMINADA\n\n  return (\n    \"🤖 Soy FitBot, el asistente virtual de Focus Power Fit.\\n\\n\" +\n    \"Puedo ayudarte con sucursales, planes, \" +\n    \"entrenamientos, horarios, asistencias, \" +\n    \"cancelaciones, contratos y pagos.\\n\\n\" +\n    \"¿Podrías contarme un poco más sobre tu consulta?\"\n  );\n}\n\n// RESPUESTA PARA N8N CHAT TRIGGER\n\nreturn $input.all().map(item => {\n  const mensaje =\n    item.json.chatInput ??\n    item.json.message ??\n    item.json.text ??\n    \"\";\n\n  return {\n    json: {\n      output: responder(mensaje)\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        0
+      ],
+      "id": "40693ee1-d9e8-4aaa-9d08-159b80dd4282",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c26ac7cd-6741-4b7c-9bd6-5b8a506712d4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "214339930c631f865d97a9439fdcd8ebbb04facc68ea645217b875eae1130942"
+  },
+  "nodeGroups": [],
+  "id": "bvKR30I8TghqakFM",
+  "tags": []
+}
