@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string
   ): Promise<ResultadoLogin> => {
     try {
-      const respuesta = await fetch("http://localhost:3001/api/auth/login", {
+      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -145,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     datos: DatosRegistro
   ): Promise<ResultadoLogin> => {
     try {
-      const respuesta = await fetch("http://localhost:3001/api/auth/register", {
+      const respuesta = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -182,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ): Promise<ResultadoLogin> => {
     try {
       const respuesta = await fetch(
-        "http://localhost:3001/api/auth/register/verify",
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/auth/register/verify`,
         {
           method: "POST",
           headers: {

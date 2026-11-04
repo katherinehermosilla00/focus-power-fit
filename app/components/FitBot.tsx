@@ -24,7 +24,7 @@ type Message = {
 // =====================================================
 
 const WEBHOOK_URL =
-  "http://localhost:3001/api/fitbot/chat";
+  `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/fitbot/chat`;
 
 const MAX_MESSAGE_LENGTH = 500;
 const MAX_RESPONSE_LENGTH = 5000;

@@ -36,7 +36,7 @@ type FormularioPlan = {
   modalidad: ModalidadPlan | "";
 };
 
-const API_URL = "http://localhost:3001/api/planes";
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/planes`;
 const POR_PAGINA = 10;
 
 const FORMULARIO_INICIAL: FormularioPlan = {
