@@ -1,0 +1,13 @@
+﻿Ô£ö Contrato: rechaza descarga sin token (121.4345ms)
+Ô£ö Contrato: bloquea a otro cliente (10.5448ms)
+Ô£ö Contrato: permite acceso al propietario (9.1501ms)
+Ô£ö Contrato: permite acceso al administrador (6.3619ms)
+Ô£ö Contrato: bloquea acceso p├║blico directo (3.146ms)
+Ôä╣ tests 5
+Ôä╣ suites 0
+Ôä╣ pass 5
+Ôä╣ fail 0
+Ôä╣ cancelled 0
+Ôä╣ skipped 0
+Ôä╣ todo 0
+Ôä╣ duration_ms 1087.251
