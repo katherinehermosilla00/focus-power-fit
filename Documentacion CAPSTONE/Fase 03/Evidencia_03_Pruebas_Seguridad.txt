@@ -1,0 +1,29 @@
+﻿Ô£ö POST /api/auth/login devuelve JWT v├ílido (311.603ms)
+Ô£ö POST /api/auth/login distingue email no registrado (10.2647ms)
+Ô£ö POST /api/auth/login informa contrase├▒a incorrecta (83.6039ms)
+Ô£ö GET /api/clientes/mi-dashboard busca al cliente por correo (93.4958ms)
+Ô£ö POST /api/auth/register rechaza un RUT inv├ílido por M├│dulo 11 (11.2608ms)
+Ô£ö POST /api/auth/register rechaza contrase├▒a d├®bil y celular incompleto (8.8637ms)
+[ADMIN] admin@focuspowerfit.cl realiz├│ GET /api/clientes (200)
+Ô£ö GET /api/clientes exige token y rol admin (83.1448ms)
+Ô£ö Bloquea el acceso de un usuario inactivo (63.8453ms)
+Ô£ö Bloquea un JWT perteneciente a un usuario eliminado (8.059ms)
+Ô£ö Impide conservar permisos de administrador despu├®s de cambiar a cliente (6.3057ms)
+Ô£ö Rechaza solicitudes sin token JWT (3.8698ms)
+Ô£ö Rechaza un token JWT malformado (2.9692ms)
+Ô£ö Rechaza un JWT firmado con otra clave (3.6794ms)
+Ô£ö Rechaza un JWT expirado (3.8502ms)
+Ô£ö Rechaza un JWT con ID de usuario inv├ílido (4.7404ms)
+Ô£ö Helmet incorpora encabezados de seguridad HTTP (27.7824ms)
+Ô£ö El login bloquea la solicitud n├║mero 11 con HTTP 429 (62.2827ms)
+Ô£ö El login rechaza credenciales con tipos inv├ílidos (4.4138ms)
+Ô£ö El login rechaza correos con formato inv├ílido (4.4431ms)
+Ô£ö El login rechaza contrase├▒as demasiado largas (4.2999ms)
+Ôä╣ tests 20
+Ôä╣ suites 0
+Ôä╣ pass 20
+Ôä╣ fail 0
+Ôä╣ cancelled 0
+Ôä╣ skipped 0
+Ôä╣ todo 0
+Ôä╣ duration_ms 1607.5677

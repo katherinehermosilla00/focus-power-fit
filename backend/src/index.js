@@ -2,6 +2,9 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
+
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -24,7 +27,7 @@ import maquinasRoutes from "./routes/maquinas.js";
 import fitbotRoutes from "./routes/fitbot.js";
 import authRoutes from "./auth.js";
 
-// NUEVO: RUTAS DE GESTIÓN GENERAL DE IMÁGENES
+// RUTAS DE GESTIÓN GENERAL DE IMÁGENES
 import imagenesRoutes from "./routes/imagenes.js";
 
 // ==========================================
@@ -41,8 +44,6 @@ import "./models/pago.js";
 import "./models/recordatorio.js";
 import "./models/sucursal.js";
 import "./models/maquina.js";
-
-// NUEVO: MODELO GENERAL DE IMÁGENES
 import "./models/imagen.js";
 
 // ==========================================
@@ -55,14 +56,47 @@ const PORT = process.env.PORT || 3001;
 app.disable("x-powered-by");
 
 // ==========================================
+// SEGURIDAD - ISO/IEC 27001
+// ==========================================
+
+// Encabezados de seguridad HTTP.
+app.use(helmet());
+
+// Configuración de proxy:
+// En Render, Express está detrás de un proxy HTTPS.
+// Confiar únicamente en el primer proxy, no en
+// cualquier valor X-Forwarded-For.
+//
+// Esta configuración debe verificarse en Render
+// antes del despliegue a producción.
+if (process.env.RENDER === "true") {
+  app.set("trust proxy", 1);
+}
+
+// Limitar intentos repetidos de inicio de sesión.
+// 10 solicitudes por IP cada 15 minutos.
+//
+// El almacenamiento por defecto es en memoria.
+// Para múltiples instancias, se recomienda
+// utilizar un almacenamiento compartido.
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    ok: false,
+    mensaje:
+      "Demasiados intentos de inicio de sesión. Intenta nuevamente en 15 minutos.",
+  },
+});
+
+// ==========================================
 // CONFIGURACIÓN DE CORS
 // ==========================================
 
 // En producción, definir CORS_ORIGINS
 // con los dominios reales del frontend.
-//
-// Ejemplo:
-// CORS_ORIGINS=https://midominio.cl
 //
 // En desarrollo se permiten los puertos
 // habituales de React, Vite y Next.js.
@@ -94,9 +128,9 @@ const origenesPermitidos = new Set(
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Las solicitudes sin Origin, como
-      // las de servicios backend o curl,
-      // no necesitan permisos CORS.
+      // Las solicitudes sin Origin, como las
+      // de servicios backend o curl, no
+      // necesitan permisos CORS.
       if (!origin) {
         return callback(null, false);
       }
@@ -106,7 +140,7 @@ app.use(
       }
 
       // No enviar cabeceras CORS para
-      // orígenes que no estén autorizados.
+      // orígenes no autorizados.
       return callback(null, false);
     },
 
@@ -183,15 +217,12 @@ app.use("/uploads/imagenes", (req, res) => {
 });
 
 // ==========================================
-// ARCHIVOS PÚBLICOS
+// PROTECCIÓN DE ARCHIVOS
 // ==========================================
 
-// Mantener disponibles otros archivos
-// destinados a ser públicos.
-//
-// IMPORTANTE:
-// Revisar que no existan otros documentos
-// privados dentro de /uploads.
+// Bloquear el acceso directo a /uploads.
+// Los archivos deben entregarse mediante
+// rutas controladas por el backend.
 
 app.use("/uploads", (req, res) => {
   return res.status(403).json({
@@ -268,6 +299,14 @@ app.use("/api/fitbot", fitbotRoutes);
 // AUTENTICACIÓN
 // ==========================================
 
+// Aplicar limitación al login.
+// Durante las pruebas automatizadas se
+// omite el límite para evitar interferencias.
+// Se agregarán pruebas específicas del
+// limitador en la auditoría de seguridad.
+
+app.use("/api/auth/login", loginLimiter);
+
 app.use("/api/auth", authRoutes);
 
 // ==========================================
@@ -322,9 +361,13 @@ const iniciarServidor = async () => {
 
     if (process.env.DB_SYNC === "true") {
       await sequelize.sync();
-      console.log("Modelos sincronizados correctamente");
+      console.log(
+        "Modelos sincronizados correctamente"
+      );
     } else {
-      console.log("Sincronización automática de modelos desactivada");
+      console.log(
+        "Sincronización automática de modelos desactivada"
+      );
     }
 
     app.listen(PORT, () => {
