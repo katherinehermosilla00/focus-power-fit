@@ -1,20 +1,22 @@
 import { Op } from "sequelize";
 import Asignacion from "../models/asignacion.js";
+import Asistencia from "../models/asistencia.js";
 import Cliente from "../models/cliente.js";
 import Horario from "../models/horario.js";
 import Profesor from "../models/profesor.js";
 import Recordatorio from "../models/recordatorio.js";
 import { enviarCorreo } from "../config/mailer.js";
+import {
+  DIAS_SEMANA,
+  HORAS_MINIMAS_CANCELACION,
+  PREFIJO_CLASE,
+  WHATSAPP_GIMNASIO,
+  crearFechaClase,
+  limiteDeCancelacion,
+  mostrarDiaHora,
+  obtenerFechaLocal,
+} from "../utils/clases.js";
 
-const DIAS_SEMANA = [
-  "Domingo",
-  "Lunes",
-  "Martes",
-  "Miércoles",
-  "Jueves",
-  "Viernes",
-  "Sábado",
-];
 const INTERVALO_MS = 60_000;
 const HORAS_ANTICIPACION_MS = 24 * 60 * 60 * 1000;
 
@@ -25,26 +27,6 @@ const escaparHtml = (valor) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-
-const obtenerFechaLocal = (fecha) =>
-  [
-    fecha.getFullYear(),
-    String(fecha.getMonth() + 1).padStart(2, "0"),
-    String(fecha.getDate()).padStart(2, "0"),
-  ].join("-");
-
-const crearFechaClase = (fecha, hora) => {
-  const [horas, minutos] = hora.split(":").map(Number);
-  return new Date(
-    fecha.getFullYear(),
-    fecha.getMonth(),
-    fecha.getDate(),
-    horas,
-    minutos,
-    0,
-    0
-  );
-};
 
 async function programarRecordatoriosClases(ahora) {
   const asignaciones = await Asignacion.findAll({
@@ -101,13 +83,14 @@ async function programarRecordatoriosClases(ahora) {
       const fechaEnvio = new Date(
         inicioClase.getTime() - HORAS_ANTICIPACION_MS
       );
-      const titulo = `Recordatorio de clase - ${fechaClaseTexto}`;
+      const titulo = `${PREFIJO_CLASE}${fechaClaseTexto}`;
       const horaClase = asignacion.horario.horaInicio.slice(0, 5);
       const profesor = asignacion.horario.profesor?.nombre;
       const mensaje = [
         `Hola ${asignacion.cliente.nombre},`,
         `te recordamos tu clase del ${asignacion.horario.diaSemana} ${fechaClaseTexto} a las ${horaClase}.`,
         profesor ? `Tu profesor será ${profesor}.` : "",
+        `Si no puedes asistir, cancela tu clase desde Mi cuenta o avisa por WhatsApp al ${WHATSAPP_GIMNASIO} hasta el ${mostrarDiaHora(limiteDeCancelacion(inicioClase))}, es decir, con al menos ${HORAS_MINIMAS_CANCELACION} horas de anticipación. Si cancelas después o no asistes, pierdes la clase y se descuenta de tu plan.`,
       ]
         .filter(Boolean)
         .join(" ");
@@ -136,6 +119,64 @@ async function programarRecordatoriosClases(ahora) {
   return creados;
 }
 
+const esRecordatorioDeClase = (recordatorio) =>
+  recordatorio.tipo === "Clase" &&
+  Boolean(recordatorio.titulo?.startsWith(PREFIJO_CLASE));
+
+// Un recordatorio de clase se crea hasta 8 días antes. Si mientras tanto el
+// plan se congela, se finaliza, cambia de horario o de hora, o el cliente
+// cancela esa clase, ya no corresponde enviarlo.
+async function claseSigueVigente(recordatorio, inicioClase) {
+  if (!esRecordatorioDeClase(recordatorio)) return true;
+
+  const fechaClase = recordatorio.titulo.slice(PREFIJO_CLASE.length, PREFIJO_CLASE.length + 10);
+  const dia = DIAS_SEMANA[new Date(`${fechaClase}T12:00:00`).getDay()];
+  const hora = [inicioClase.getHours(), inicioClase.getMinutes()]
+    .map((valor) => String(valor).padStart(2, "0"))
+    .join(":");
+
+  const asignaciones = await Asignacion.findAll({
+    where: { clienteId: recordatorio.clienteId, estado: "Activa" },
+    attributes: ["id", "fechaInicio", "fechaTermino"],
+    include: [
+      {
+        model: Horario,
+        as: "horario",
+        where: { estado: "Activo", diaSemana: dia },
+        attributes: ["id", "horaInicio"],
+      },
+    ],
+  });
+
+  // Si la hora del horario cambió, este aviso trae la hora antigua: el
+  // recordatorio con la hora nueva se programa aparte.
+  const vigentes = asignaciones.filter((asignacion) => {
+    const inicio = String(asignacion.fechaInicio).slice(0, 10);
+    const termino = asignacion.fechaTermino
+      ? String(asignacion.fechaTermino).slice(0, 10)
+      : null;
+
+    return (
+      fechaClase >= inicio &&
+      (!termino || fechaClase <= termino) &&
+      String(asignacion.horario.horaInicio).slice(0, 5) === hora
+    );
+  });
+
+  if (vigentes.length === 0) return false;
+
+  // Una clase con asistencia ya registrada antes de ocurrir es una clase que
+  // el cliente canceló.
+  const cancelada = await Asistencia.count({
+    where: {
+      asignacionId: vigentes.map(({ id }) => id),
+      fecha: fechaClase,
+    },
+  });
+
+  return cancelada === 0;
+}
+
 async function enviarPendientes(ahora, enviar) {
   const recordatorios = await Recordatorio.findAll({
     where: {
@@ -155,6 +196,23 @@ async function enviarPendientes(ahora, enviar) {
   let enviados = 0;
   for (const recordatorio of recordatorios) {
     try {
+      const inicioClase = new Date(
+        new Date(recordatorio.fechaEnvio).getTime() + HORAS_ANTICIPACION_MS
+      );
+
+      // Si la clase ya ocurrió (por ejemplo, porque el servidor estuvo
+      // apagado), el aviso llegaría tarde: se cancela sin enviarlo.
+      if (esRecordatorioDeClase(recordatorio) && inicioClase <= ahora) {
+        await recordatorio.update({ estado: "Cancelado" });
+        continue;
+      }
+
+      // Mientras la clase no pase, queda en espera: si el plan se reactiva
+      // a tiempo, se envía. Cuando la clase ocurre, se cancela arriba.
+      if (!(await claseSigueVigente(recordatorio, inicioClase))) {
+        continue;
+      }
+
       if (!recordatorio.cliente?.email) {
         throw new Error(`El cliente del recordatorio ${recordatorio.id} no tiene email`);
       }

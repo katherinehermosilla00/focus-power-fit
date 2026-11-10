@@ -11,6 +11,7 @@ import {
   eliminarCliente,
   obtenerMiDashboard,
   obtenerMiContrato,
+  cancelarMiClase,
 } from "../controllers/clienteController.js";
 
 const router = express.Router();
@@ -34,6 +35,13 @@ router.get(
   verificarToken,
   verificarRol("cliente"),
   obtenerMiContrato
+);
+
+router.post(
+  "/mi-clase/cancelar",
+  verificarToken,
+  verificarRol("cliente"),
+  cancelarMiClase
 );
 
 router.post(

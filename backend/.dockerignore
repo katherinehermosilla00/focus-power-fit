@@ -1,0 +1,13 @@
+# Nada de datos reales, claves ni dependencias locales dentro de la imagen.
+node_modules
+.env
+.env.*
+!.env.example
+uploads
+data
+evidencias
+src/tests
+*.log
+*.sql
+Dockerfile
+.dockerignore

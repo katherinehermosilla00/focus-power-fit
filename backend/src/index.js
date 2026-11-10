@@ -3,12 +3,13 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { rateLimit } from "express-rate-limit";
+import multer from "multer";
 
 import path from "path";
 import { fileURLToPath } from "url";
 
 import sequelize from "./config/database.js";
+import { iniciarRecordatorioScheduler } from "./services/recordatorioScheduler.js";
 
 // ==========================================
 // RUTAS
@@ -52,44 +53,35 @@ import "./models/imagen.js";
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Las fechas y recordatorios usan la hora de Chile, aunque el servidor esté en
+// otra zona. Se puede cambiar con la variable TZ.
+process.env.TZ ||= "America/Santiago";
+
 // Evitar revelar Express en las respuestas HTTP.
 app.disable("x-powered-by");
 
 // ==========================================
-// SEGURIDAD - ISO/IEC 27001
+// SEGURIDAD DE LA APLICACIÓN
+// Referencia: ISO/IEC 27002:2022, controles
+// 8.26 y 8.28 (no implica certificación).
 // ==========================================
 
 // Encabezados de seguridad HTTP.
 app.use(helmet());
 
 // Configuración de proxy:
-// En Render, Express está detrás de un proxy HTTPS.
-// Confiar únicamente en el primer proxy, no en
-// cualquier valor X-Forwarded-For.
-//
-// Esta configuración debe verificarse en Render
-// antes del despliegue a producción.
-if (process.env.RENDER === "true") {
-  app.set("trust proxy", 1);
-}
+// Detrás de un proxy HTTPS (Caddy, Nginx o Render), todas las solicitudes
+// llegan desde la dirección del proxy. Sin esta opción, los límites de
+// intentos serían uno solo para todos los visitantes.
+// TRUST_PROXY indica cuántos proxies hay delante (normalmente 1). Se confía
+// solo en esos, no en cualquier valor X-Forwarded-For que envíe el cliente.
+const proxiesDeConfianza = Number(
+  process.env.TRUST_PROXY ?? (process.env.RENDER === "true" ? 1 : 0)
+);
 
-// Limitar intentos repetidos de inicio de sesión.
-// 10 solicitudes por IP cada 15 minutos.
-//
-// El almacenamiento por defecto es en memoria.
-// Para múltiples instancias, se recomienda
-// utilizar un almacenamiento compartido.
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 10,
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
-  message: {
-    ok: false,
-    mensaje:
-      "Demasiados intentos de inicio de sesión. Intenta nuevamente en 15 minutos.",
-  },
-});
+if (Number.isInteger(proxiesDeConfianza) && proxiesDeConfianza > 0) {
+  app.set("trust proxy", proxiesDeConfianza);
+}
 
 // ==========================================
 // CONFIGURACIÓN DE CORS
@@ -299,13 +291,8 @@ app.use("/api/fitbot", fitbotRoutes);
 // AUTENTICACIÓN
 // ==========================================
 
-// Aplicar limitación al login.
-// Durante las pruebas automatizadas se
-// omite el límite para evitar interferencias.
-// Se agregarán pruebas específicas del
-// limitador en la auditoría de seguridad.
-
-app.use("/api/auth/login", loginLimiter);
+// Los límites de intentos de cada ruta
+// pública están definidos en auth.js.
 
 app.use("/api/auth", authRoutes);
 
@@ -348,11 +335,74 @@ app.get("/health", async (req, res) => {
 });
 
 // ==========================================
+// RUTA NO ENCONTRADA Y ERRORES
+// ==========================================
+
+app.use((req, res) => {
+  return res.status(404).json({
+    ok: false,
+    mensaje: "Ruta no encontrada",
+  });
+});
+
+// Ninguna respuesta incluye detalles internos.
+// Express exige los cuatro parámetros.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((error, req, res, next) => {
+  if (error instanceof multer.MulterError) {
+    return res.status(400).json({
+      ok: false,
+      mensaje:
+        error.code === "LIMIT_FILE_SIZE"
+          ? "El archivo supera el tamaño máximo permitido"
+          : "No se pudo procesar el archivo",
+    });
+  }
+
+  if (error.expuesto) {
+    return res.status(error.status).json({
+      ok: false,
+      mensaje: error.message,
+    });
+  }
+
+  if (error.type === "entity.parse.failed") {
+    return res.status(400).json({
+      ok: false,
+      mensaje: "El cuerpo de la solicitud no es válido",
+    });
+  }
+
+  if (error.type === "entity.too.large") {
+    return res.status(413).json({
+      ok: false,
+      mensaje: "La solicitud supera el tamaño permitido",
+    });
+  }
+
+  console.error(
+    `Error no controlado en ${req.method} ${req.path}:`,
+    error.message
+  );
+
+  return res.status(500).json({
+    ok: false,
+    mensaje: "Ocurrió un error interno",
+  });
+});
+
+// ==========================================
 // INICIAR SERVIDOR
 // ==========================================
 
 const iniciarServidor = async () => {
   try {
+    if ((process.env.JWT_SECRET ?? "").length < 32) {
+      throw new Error(
+        "JWT_SECRET debe definirse con al menos 32 caracteres"
+      );
+    }
+
     await sequelize.authenticate();
 
     console.log(
@@ -367,6 +417,16 @@ const iniciarServidor = async () => {
     } else {
       console.log(
         "Sincronización automática de modelos desactivada"
+      );
+    }
+
+    // Recordatorios de clases 24 horas antes (RF-15).
+    if (process.env.EMAIL_HOST) {
+      iniciarRecordatorioScheduler();
+      console.log("Recordatorios automáticos activos");
+    } else {
+      console.warn(
+        "Recordatorios desactivados: falta configurar EMAIL_HOST"
       );
     }
 

@@ -1,6 +1,8 @@
 
 import jwt from "jsonwebtoken";
 import Usuario from "./models/Usuario.js";
+import { registrarEvento } from "./utils/auditoria.js";
+import { huellaPassword } from "./utils/sesion.js";
 
 // ==========================================
 // VERIFICAR TOKEN Y ESTADO DEL USUARIO
@@ -35,7 +37,9 @@ export const verificarToken = async (req, res, next) => {
       });
     }
 
-    decoded = jwt.verify(token, process.env.JWT_SECRET);
+    decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      algorithms: ["HS256"],
+    });
 
     if (
       !decoded ||
@@ -69,11 +73,25 @@ export const verificarToken = async (req, res, next) => {
       });
     }
 
-    // Cuenta desactivada.
+    // Cuenta desactivada: 401 y no 403, porque la sesión deja de valer y el
+    // frontend debe volver al inicio de sesión. El login también la rechaza.
     if (usuario.estado !== "activo") {
-      return res.status(403).json({
+      return res.status(401).json({
         ok: false,
         mensaje: "Usuario inactivo",
+      });
+    }
+
+    // La contraseña cambió después de emitir el token: la sesión ya no vale.
+    // Los tokens emitidos antes de esta medida no traen la huella y
+    // expiran solos, según JWT_EXPIRES_IN.
+    if (
+      decoded.sv !== undefined &&
+      decoded.sv !== huellaPassword(usuario.passwordHash)
+    ) {
+      return res.status(401).json({
+        ok: false,
+        mensaje: "Token inválido o expirado",
       });
     }
 
@@ -123,6 +141,13 @@ export const verificarRol = (...rolesPermitidos) => {
     // ======================================
 
     if (!rolesPermitidos.includes(req.usuario.rol)) {
+      registrarEvento("acceso_denegado", {
+        usuarioId: req.usuario.id,
+        rol: req.usuario.rol,
+        metodo: req.method,
+        ruta: req.originalUrl,
+      });
+
       return res.status(403).json({
         ok: false,
         mensaje: "No tienes permisos para esta acción",
@@ -135,14 +160,12 @@ export const verificarRol = (...rolesPermitidos) => {
 
     if (req.usuario.rol === "admin") {
       res.on("finish", () => {
-        if (
-          res.statusCode >= 200 &&
-          res.statusCode < 400
-        ) {
-          console.log(
-            `[ADMIN] ${req.usuario.email} realizó ${req.method} ${req.originalUrl} (${res.statusCode})`
-          );
-        }
+        registrarEvento("accion_admin", {
+          usuarioId: req.usuario.id,
+          metodo: req.method,
+          ruta: req.originalUrl,
+          estado: res.statusCode,
+        });
       });
     }
 

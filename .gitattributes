@@ -1,0 +1,3 @@
+# Los scripts de shell corren en Linux: siempre con saltos de línea LF,
+# aunque el repositorio se use en Windows.
+*.sh text eol=lf

@@ -1,4 +1,15 @@
 import Plan from "../models/plan.js";
+import { responderError, soloCampos, validarPlan } from "../utils/reglas.js";
+
+const CAMPOS_EDITABLES = [
+  "nombre",
+  "descripcion",
+  "duracionMeses",
+  "sesiones",
+  "precio",
+  "modalidad",
+  "estado",
+];
 
 export const obtenerPlanes = async (req, res) => {
   try {
@@ -8,58 +19,25 @@ export const obtenerPlanes = async (req, res) => {
 
     res.json(planes);
   } catch (error) {
-    console.error(
-      "Error al obtener planes:",
-      error.message
-    );
-
-    res.status(500).json({
-      ok: false,
-      mensaje: "Error al obtener planes",
-    });
+    responderError(res, error, "Error al obtener planes", "Error al obtener planes", 500);
   }
 };
 
 export const crearPlan = async (req, res) => {
   try {
-    const {
-      nombre,
-      descripcion,
-      duracionMeses,
-      sesiones,
-      precio,
-      modalidad,
-    } = req.body;
-
-    const plan = await Plan.create({
-      nombre,
-      descripcion,
-      duracionMeses,
-      sesiones,
-      precio,
-      modalidad,
-    });
+    const plan = await Plan.create(
+      validarPlan(soloCampos(req.body, CAMPOS_EDITABLES))
+    );
 
     res.status(201).json(plan);
   } catch (error) {
-    console.error(
-      "Error al crear plan:",
-      error.message
-    );
-
-    res.status(400).json({
-      ok: false,
-      mensaje: "No se pudo crear el plan",
-      error: error.message,
-    });
+    responderError(res, error, "Error al crear plan", "No se pudo crear el plan");
   }
 };
 
 export const actualizarPlan = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const plan = await Plan.findByPk(id);
+    const plan = await Plan.findByPk(req.params.id);
 
     if (!plan) {
       return res.status(404).json({
@@ -68,28 +46,20 @@ export const actualizarPlan = async (req, res) => {
       });
     }
 
-    await plan.update(req.body);
+    const cambios = soloCampos(req.body, CAMPOS_EDITABLES);
+
+    await plan.update(validarPlan({ ...plan.get(), ...cambios }, cambios));
 
     res.json(plan);
   } catch (error) {
-    console.error(
-      "Error al actualizar plan:",
-      error.message
-    );
-
-    res.status(400).json({
-      ok: false,
-      mensaje: "No se pudo actualizar el plan",
-      error: error.message,
-    });
+    responderError(res, error, "Error al actualizar plan", "No se pudo actualizar el plan");
   }
 };
 
+// Sin ruta: un plan con pagos o asignaciones se desactiva, no se elimina.
 export const eliminarPlan = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const plan = await Plan.findByPk(id);
+    const plan = await Plan.findByPk(req.params.id);
 
     if (!plan) {
       return res.status(404).json({
@@ -105,14 +75,6 @@ export const eliminarPlan = async (req, res) => {
       mensaje: "Plan eliminado correctamente",
     });
   } catch (error) {
-    console.error(
-      "Error al eliminar plan:",
-      error.message
-    );
-
-    res.status(500).json({
-      ok: false,
-      mensaje: "No se pudo eliminar el plan",
-    });
+    responderError(res, error, "Error al eliminar plan", "No se pudo eliminar el plan", 500);
   }
 };

@@ -43,6 +43,14 @@ const Asistencia = sequelize.define(
   {
     tableName: "asistencias",
     timestamps: true,
+    // Una misma clase no se registra dos veces el mismo día.
+    indexes: [
+      {
+        name: "asistencias_asignacion_fecha_unico",
+        unique: true,
+        fields: ["asignacionId", "fecha"],
+      },
+    ],
   }
 );
 

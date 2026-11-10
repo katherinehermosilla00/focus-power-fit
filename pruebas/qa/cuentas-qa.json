@@ -1,0 +1,13 @@
+{
+  "nota": "Cuentas ficticias que existen solo en el entorno QA desechable (Docker, proyecto fpf-qa). No sirven en el sistema real.",
+  "admin": {
+    "nombre": "Administrador QA",
+    "email": "qa.admin@focuspowerfit.test",
+    "password": "QaAdmin-Pruebas-2026"
+  },
+  "cliente": {
+    "nombre": "Cliente QA Pruebas",
+    "email": "qa.cliente@focuspowerfit.test",
+    "password": "QaCliente-Pruebas-2026"
+  }
+}

@@ -1,0 +1,31 @@
+# Revisión semanal de dependencias. Dependabot abre una solicitud de cambio
+# cuando hay una versión con correcciones; la revisión automática la prueba
+# antes de que alguien la acepte.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Santiago
+    open-pull-requests-limit: 5
+    groups:
+      menores-frontend:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Santiago
+    open-pull-requests-limit: 5
+    groups:
+      menores-backend:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

@@ -23,11 +23,12 @@ El proyecto contempla los siguientes módulos:
 - Asignación de profesores, planes y horarios.
 - Registro y control de asistencias.
 - Digitalización y consulta de contratos.
-- Gestión de cancelaciones, recuperaciones y congelamientos de planes.
+- Orientación sobre cancelaciones, recuperaciones y congelamientos de planes a través de FitBot.
 - Registro administrativo de pagos efectuados fuera de la plataforma.
 - Recordatorios automáticos de clases por correo electrónico.
 - Cuentas de clientes con permisos limitados.
 - Chatbot FitBot para preguntas frecuentes y orientación.
+- Recuperación de contraseña por correo.
 - Administración centralizada de la información.
 
 > Las funcionalidades se encuentran en distintas etapas de desarrollo, integración y validación. Su inclusión en esta lista no implica que todas hayan completado las pruebas finales.
@@ -60,38 +61,31 @@ La solución considera las condiciones establecidas en los contratos de prestaci
 
 ### Backend
 
-- Node.js.
-- Express.js.
-- Sequelize ORM.
-- Base de datos SQL.
-- Redis.
-- Swagger / OpenAPI.
+- Node.js y Express 5.
+- Sequelize ORM con MySQL (SQLite en memoria solo para pruebas).
+- JWT y bcryptjs para autenticación.
+- Helmet y express-rate-limit para protección HTTP.
 - Multer para gestión de archivos.
 - Nodemailer para envío de correos.
-- Node.js Test Runner para pruebas automatizadas.
-- Docker y Docker Compose.
+- ExcelJS para importar clientes.
+- Node.js Test Runner y Supertest para pruebas automatizadas.
 
 ### Frontend
 
-- React 19.
-- TypeScript.
-- Next.js 16.4.1 con App Router.
-- Turbopack.
-- Bootstrap 5.
-- Material Icons.
-- Axios.
-- Context API para autenticación.
-- Componentes CRUD reutilizables.
-- CSS Grid y Flexbox.
-- Diseño responsive mobile-first.
-- Vitest.
-- React Testing Library.
-- Docker y Docker Compose.
+- React 19, TypeScript y Next.js con App Router.
+- Tailwind CSS y CSS propio.
+- Axios y Context API para autenticación.
+- Vitest y React Testing Library.
+
+### Infraestructura
+
+- Docker y Docker Compose. Hoy n8n corre en Docker; el resto se completa para el despliegue.
 
 ### Automatización
 
 - n8n para el flujo del chatbot FitBot.
 - JavaScript para la lógica de respuestas del chatbot.
+- Ollama con `llama3.2:3b` para interpretar preguntas que las reglas no reconocen.
 - Nodemailer para las notificaciones por correo electrónico.
 
 ### Herramientas de desarrollo
@@ -99,33 +93,24 @@ La solución considera las condiciones establecidas en los contratos de prestaci
 - Visual Studio Code.
 - Git.
 - GitHub.
-- Swagger.
 - ESLint.
 - TypeScript.
 - Scrum para gestión del proyecto.
 
 ## Chatbot FitBot
 
-**FitBot** es el chatbot de orientación desarrollado para Focus Power Fit.
+**FitBot** responde preguntas frecuentes de clientes nuevos y existentes sobre sucursales, planes, horarios, cancelaciones, recuperación de sesiones, congelamientos, pagos, contratos y contacto. Está disponible en la página principal y en la cuenta del cliente.
 
-Su propósito es responder preguntas frecuentes de clientes nuevos y existentes, facilitando el acceso a información general sobre los servicios del gimnasio.
+Funciona en **n8n**. Primero responden reglas en JavaScript. Si no reconocen la pregunta, una **IA local con Ollama** elige el tema más cercano entre categorías cerradas y el bot entrega un texto ya aprobado. La IA no redacta respuestas, no tiene herramientas y no accede a datos de clientes; si falla, responde el mensaje original. El navegador se comunica con el backend, que actúa de intermediario hacia n8n.
 
-El chatbot fue desarrollado utilizando **n8n y JavaScript**, e integrado a la interfaz del CRM mediante componentes React.
-
-### Funcionalidades
-
-- Responder preguntas frecuentes.
-- Orientar a clientes sobre los servicios disponibles.
-- Entregar información general del gimnasio y sus sucursales.
-- Proporcionar respuestas automatizadas mediante un flujo de n8n.
+La instalación, la publicación y la solución de problemas están en [`n8n/README.md`](n8n/README.md).
 
 ### Archivos relacionados
 
-- `n8n/fitbot-workflow.json`: exportación del flujo de automatización.
-- `FitBot.tsx`: componente React del chatbot.
-- `FitBot.module.css`: estilos del chatbot.
-
-El flujo y la interfaz se encuentran desarrollados e integrados. La documentación de pruebas debe incluir evidencia de su funcionamiento dentro del CRM.
+- `n8n/fitbot-workflow.json`: flujo oficial publicado en n8n.
+- `n8n/probar-fitbot.mjs`: prueba de preguntas frecuentes y de la IA.
+- `frontend/app/components/FitBot.tsx`: componente del chat.
+- `backend/src/routes/fitbot.js`: intermediario entre el CRM y n8n.
 
 ## Recordatorios automáticos por correo
 
@@ -148,31 +133,30 @@ Las credenciales reales deben configurarse localmente y no publicarse en el repo
 
 ## Arquitectura del sistema
 
-El proyecto utiliza una arquitectura modular que separa las principales responsabilidades del sistema.
+**Frontend:** interfaz web con Next.js, React y TypeScript (`frontend/`).
 
-**Frontend:** interfaz web desarrollada con Next.js, React y TypeScript.
+**Backend:** API con Node.js y Express (`backend/src/`), que concentra reglas de negocio, permisos y acceso a datos.
 
-**Backend:** API desarrollada con Node.js y Express para gestionar las reglas de negocio y la comunicación con la base de datos.
+**Persistencia:** MySQL mediante Sequelize ORM.
 
-**Persistencia:** almacenamiento de información mediante una base de datos SQL y Sequelize ORM.
-
-**Servicios complementarios:** Redis, Nodemailer, Multer y n8n.
-
-Esta separación facilita el mantenimiento, la integración de componentes y la incorporación de futuras funcionalidades.
+**Servicios complementarios:** Nodemailer para correo, Multer para archivos, n8n para FitBot y Ollama para su IA local.
 
 ## Estructura del proyecto
 
 ```text
 focus-power-fit/
-├── ccbackend/             # API, lógica de negocio y persistencia
-├── ccfrontend/            # Interfaz web del CRM
-├── n8n/                   # Flujos de automatización de FitBot
+├── frontend/               # Interfaz web (Next.js)
+│   ├── app/                # Páginas y componentes
+│   ├── public/             # Imágenes y archivos estáticos
+│   └── tests/              # Pruebas del frontend
+├── backend/                # API, lógica de negocio y persistencia
+│   ├── src/                # Código y pruebas
+│   └── crear-admin.mjs     # Creación del administrador
+├── n8n/                    # Flujo de FitBot
 ├── Documentacion CAPSTONE/ # Evidencias e informes académicos
-├── GUIA_PROYECTO.md       # Documentación técnica complementaria
-└── README.md              # Presentación general del proyecto
+├── docs/iso/ # Diagnóstico y documentos de ISO/IEC 27001 e ISO 9001
+└── README.md
 ```
-
-La estructura puede variar según las actualizaciones del repositorio.
 
 ## Instalación y ejecución
 
@@ -194,13 +178,34 @@ cd focus-power-fit
 ### 2. Configurar el backend
 
 ```bash
-cd ccbackend
+cd backend
 npm install
+cp .env.example .env
 ```
 
-Configurar las variables de entorno necesarias para la conexión a la base de datos, autenticación y servicios complementarios.
+Completa `.env` con la base de datos, la clave JWT y el correo.
 
-Iniciar el servidor:
+Si la base de datos ya existía, respáldala y ejecuta una vez:
+
+```bash
+npm run migrar:seguridad
+```
+
+Si informa fichas repetidas por clientes importados en dos sucursales, simula cómo quedarían. Este comando no cambia nada:
+
+```bash
+npm run unir:duplicados
+```
+
+Para aplicarlo, indica el nombre de la base, que debe coincidir con `DB_NAME`, y vuelve a ejecutar la migración:
+
+```bash
+npm run unir:duplicados -- --aplicar --base=NOMBRE_DE_LA_BASE
+```
+
+Para respaldar la base y los archivos, configura `RESPALDOS_DIR` y `RESPALDO_CLAVE`, y sigue el [procedimiento de respaldos](docs/iso/03-procedimientos.md#p4-respaldos).
+
+Inicia el servidor:
 
 ```bash
 npm run dev
@@ -211,56 +216,42 @@ npm run dev
 Desde la raíz del repositorio:
 
 ```bash
-cd ccfrontend
+cd frontend
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
-Abrir la dirección local indicada por Next.js en la terminal.
+Abre la dirección local indicada por Next.js.
 
 ### 4. Configurar FitBot
 
-El workflow de FitBot se encuentra en:
-
-```text
-n8n/fitbot-workflow.json
-```
-
-Para utilizarlo en un nuevo entorno, es necesario importar el archivo en n8n y configurar las conexiones correspondientes entre el flujo y la interfaz del CRM.
+Sigue los pasos de [`n8n/README.md`](n8n/README.md).
 
 ## Pruebas y aseguramiento de calidad
 
-El proyecto incorpora pruebas automatizadas y herramientas de revisión de calidad.
+```bash
+cd backend && npm test
+cd ../frontend && npm run lint && npx tsc --noEmit && npm test && npm run build
+```
 
-### Backend
+Las pruebas del backend no necesitan `.env` ni MySQL y cubren autenticación, control de acceso, registro, recuperación de contraseña, contratos, cargas, recordatorios y migración. Los resultados de cada ejecución se guardan en `Documentacion CAPSTONE/Fase 03/Evidencias Seguridad/`.
 
-- Node.js Test Runner.
-- Pruebas de autenticación.
-- Validaciones de registro.
-- Consultas de información.
-- Verificación de autorización por roles.
+Las pruebas son evidencia de calidad, no una garantía de ausencia de fallas.
 
-**Último resultado documentado:** 7 de 7 pruebas aprobadas.
+### Automatización de calidad y respaldos
 
-### Frontend
+- **Revisión automática:** en cada cambio que llega a GitHub, [GitHub Actions](.github/workflows/ci.yml) ejecuta lint, tipos, pruebas y compilación del frontend, y las pruebas y la auditoría de dependencias del backend. No usa la base real ni envía correos.
+- **Dependencias:** [Dependabot](.github/dependabot.yml) revisa cada lunes si hay versiones con correcciones y abre una solicitud de cambio, que pasa por la revisión automática.
+- **Respaldos:** un respaldo cifrado diario y una prueba de restauración semanal, programados con [scripts/programar-respaldos.ps1](scripts/programar-respaldos.ps1). Ver el [procedimiento de respaldos](docs/iso/03-procedimientos.md#p4-respaldos).
 
-- Vitest.
-- React Testing Library.
-- jest-dom.
-- jsdom.
+### Notas para el despliegue
 
-**Último resultado documentado:** 1 prueba de componente aprobada.
+El sistema completo (MySQL, API, sitio, n8n y HTTPS) se despliega con Docker siguiendo la [guía de despliegue](deploy/README.md).
 
-### Verificaciones complementarias
-
-- ESLint.
-- Comprobación de tipos con TypeScript.
-- Compilación de producción.
-- Auditoría de dependencias.
-
-En la última revisión documentada, la auditoría de dependencias de producción no detectó vulnerabilidades. Este resultado no reemplaza futuras revisiones de seguridad.
-
-Las pruebas existentes constituyen evidencia de avance y no representan todavía una cobertura completa del CRM.
+- Detrás de un proxy HTTPS (Caddy o Nginx), define `TRUST_PROXY=1` en `backend/.env`. Sin eso, los límites de intentos de inicio de sesión y de FitBot serían uno solo para todos los visitantes.
+- Ejecuta **una sola instancia** del backend. Los códigos de registro y recuperación se guardan en memoria: al reiniciar el backend se pierden, y quien estaba registrándose debe pedir un código nuevo. Conviene reiniciar fuera del horario de atención.
+- Define `CORS_ORIGINS` con el dominio real del sitio y `NEXT_PUBLIC_API_URL` con la dirección pública de la API.
 
 ## Metodología de trabajo
 
@@ -313,10 +304,8 @@ La interfaz considera los requisitos visuales definidos por Focus Power Fit:
 
 La documentación complementaria del proyecto se encuentra en:
 
-- `GUIA_PROYECTO.md`.
 - `Documentacion CAPSTONE/`.
-- Swagger para la documentación de endpoints del backend.
-- `n8n/fitbot-workflow.json` para el flujo del chatbot.
+- `n8n/README.md` para el chatbot.
 
 ## Estado actual del proyecto
 
@@ -339,7 +328,6 @@ Entre los avances documentados se encuentran:
 - Verificar integralmente las reglas contractuales.
 - Ampliar las pruebas funcionales y automatizadas.
 - Consolidar la integración de todos los módulos.
-- Registrar evidencias de validación de FitBot dentro del CRM.
 - Completar la documentación y validación final del proyecto.
 
 ## Alcance de los pagos

@@ -1,4 +1,4 @@
-﻿Ô£ö POST /api/auth/login devuelve JWT v├ílido (311.603ms)
+Ô£ö POST /api/auth/login devuelve JWT v├ílido (311.603ms)
 Ô£ö POST /api/auth/login distingue email no registrado (10.2647ms)
 Ô£ö POST /api/auth/login informa contrase├▒a incorrecta (83.6039ms)
 Ô£ö GET /api/clientes/mi-dashboard busca al cliente por correo (93.4958ms)

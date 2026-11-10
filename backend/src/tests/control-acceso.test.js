@@ -90,7 +90,7 @@ test("Bloquea el acceso de un usuario inactivo", async () => {
     .get("/api/clientes/mi-dashboard")
     .set("Authorization", `Bearer ${token}`);
 
-  assert.equal(respuesta.status, 403);
+  assert.equal(respuesta.status, 401);
   assert.equal(respuesta.body.ok, false);
   assert.equal(respuesta.body.mensaje, "Usuario inactivo");
 });

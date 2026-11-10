@@ -6,7 +6,14 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "node --test"
+    "test": "node --import ./src/tests/preparar-entorno.js --test",
+    "migrar:seguridad": "node src/scripts/migrarSeguridad.js",
+    "unir:duplicados": "node src/scripts/unirDuplicados.js",
+    "respaldo:crear": "node src/scripts/respaldos.js crear",
+    "respaldo:probar": "node src/scripts/respaldos.js probar",
+    "respaldo:restaurar": "node src/scripts/respaldos.js restaurar",
+    "respaldo:cifrar": "node src/scripts/respaldos.js cifrar",
+    "respaldo:descifrar": "node src/scripts/respaldos.js descifrar"
   },
   "keywords": [],
   "author": "",

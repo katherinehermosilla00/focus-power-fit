@@ -1,0 +1,13 @@
+# Solo entra lo necesario para compilar el frontend: nada de dependencias
+# locales, compilaciones anteriores, pruebas ni claves.
+node_modules
+.next
+out
+tests
+coverage
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+Dockerfile
+.dockerignore

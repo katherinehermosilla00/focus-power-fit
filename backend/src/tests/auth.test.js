@@ -64,14 +64,14 @@ test('POST /api/auth/login devuelve JWT válido', async () => {
   assert.equal(res.body.user.rol, 'admin');
 });
 
-test('POST /api/auth/login distingue email no registrado', async () => {
+test('POST /api/auth/login no revela si el correo está registrado', async () => {
   const res = await request(app)
     .post('/api/auth/login')
     .send({ email: 'inexistente@focuspowerfit.cl', password: 'Admin123' });
 
   assert.equal(res.status, 401);
-  assert.equal(res.body.codigo, 'EMAIL_NO_REGISTRADO');
-  assert.equal(res.body.mensaje, 'Email no registrado.');
+  assert.equal(res.body.codigo, 'CREDENCIALES_INVALIDAS');
+  assert.equal(res.body.mensaje, 'Correo o contraseña incorrectos.');
 });
 
 test('POST /api/auth/login informa contraseña incorrecta', async () => {

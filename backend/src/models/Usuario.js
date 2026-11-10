@@ -34,7 +34,7 @@ const Usuario = sequelize.define(
     },
 
     rol: {
-      type: DataTypes.ENUM("admin", "cliente", "profesor"),
+      type: DataTypes.ENUM("admin", "cliente"),
       allowNull: false,
       defaultValue: "cliente",
     },
@@ -43,6 +43,12 @@ const Usuario = sequelize.define(
       type: DataTypes.ENUM("activo", "inactivo"),
       allowNull: false,
       defaultValue: "activo",
+    },
+
+    // Fecha en que aceptó los términos y el tratamiento de sus datos.
+    terminosAceptadosAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   },
   {
