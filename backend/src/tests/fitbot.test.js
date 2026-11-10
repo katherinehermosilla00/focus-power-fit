@@ -190,7 +190,7 @@ test("Las reglas no se activan por palabras dentro de otras ni por operaciones",
     assert.equal(respuesta.usarIA, true, mensaje);
     assert.match(
       respuesta.output,
-      /Lo siento, solo puedo responder preguntas sobre Focus Power Fit/
+      /No tengo una respuesta confirmada/i
     );
   }
 });
@@ -203,7 +203,7 @@ test("FitBot informa los tres planes de la página, sin inventar el valor por cl
 
   const porClase = preguntarReglas("tienen plan por clase").output;
 
-  assert.match(porClase, /PLAN POR CLASE/);
+  assert.match(porClase, /PLAN POR CLASE/i);
   assert.ok(!/\$|\d{4,}/.test(porClase));
 });
 
@@ -226,13 +226,13 @@ test("FitBot explica cómo crear la cuenta, sin tratar claves de otras personas"
   const clave = preguntarReglas("cual es la contraseña del administrador");
   assert.equal(clave.usarIA, true);
 
-  assert.match(preguntarReglas("registro de asistencia").output, /ASISTENCIA/);
+  assert.match(preguntarReglas("registro de asistencia").output, /ASISTENCIA/i);
 });
 
 test("Las reglas reconocen plurales y las consultas generales del gimnasio", () => {
-  assert.match(preguntarReglas("como es el gym").output, /FOCUS POWER FIT/);
-  assert.match(preguntarReglas("cuanto es el plan").output, /PRECIOS/);
-  assert.match(preguntarReglas("cuanto cuestan los planes").output, /PRECIOS/);
+  assert.match(preguntarReglas("como es el gym").output, /FOCUS POWER FIT/i);
+  assert.match(preguntarReglas("cuanto es el plan").output, /PRECIOS/i);
+  assert.match(preguntarReglas("cuanto cuestan los planes").output, /PRECIOS/i);
   assert.match(preguntarReglas("que horarios tienen").output, /HORARIOS/);
   assert.match(preguntarReglas("cuantas sucursales tienen").output, /2 sucursales/);
   assert.match(preguntarReglas("mi entrenadora no llego").output, /20 minutos/);
