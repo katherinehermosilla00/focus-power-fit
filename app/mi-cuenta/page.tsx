@@ -9,11 +9,28 @@ import "./mi-cuenta.css";
 type PerfilCliente = {
   cliente: {
     id: number;
+    sucursalId: number | null;
+    numeroCliente: string | null;
+    nombres: string | null;
+    apellidos: string | null;
     nombre: string;
     email: string;
     rut: string | null;
     telefono: string | null;
+    telefonoSecundario: string | null;
+    direccion: string | null;
+    comuna: string | null;
+    ciudad: string | null;
+    edad: number | null;
+    genero: string | null;
+    fechaNacimiento: string | null;
+    fechaCreacionOrigen: string | null;
+    plan: string | null;
     estado: string;
+    sucursal: {
+      id: number;
+      nombre: string;
+    } | null;
   } | null;
   asignacion: {
     id: number;
@@ -65,38 +82,31 @@ type PerfilCliente = {
   } | null;
 };
 
-// Vista previa exclusivamente local. Nunca consulta datos privados sin token.
-const MODO_DEMO = process.env.NODE_ENV === "development";
-
-const PERFIL_DEMO: PerfilCliente = {
-  cliente: { id: 0, nombre: "Cliente de prueba", email: "cliente.demo@ejemplo.cl", rut: null, telefono: null, estado: "Activa" },
-  asignacion: { id: 0, fechaInicio: "2026-11-01", fechaTermino: "2027-01-01", fechaTerminoVigencia: "2027-01-01", estado: "Activa", sesionesTotales: 12, sesionesUtilizadas: 4, sesionesRestantes: 8 },
-  asistencias: [
-    { id: 1, fecha: "2026-11-02", estado: "Presente", observaciones: null },
-    { id: 2, fecha: "2026-10-30", estado: "Presente", observaciones: null },
-    { id: 3, fecha: "2026-10-28", estado: "Justificada", observaciones: "Sesión justificada (ejemplo)" },
-  ],
-  plan: { id: 0, nombre: "Plan Individual 12 clases", descripcion: "Entrenamiento personalizado de demostración.", duracionMeses: 2, modalidad: "Individual", precio: 216000 },
-  profesor: { id: 0, nombre: "Profesor de ejemplo", especialidad: "Entrenamiento personalizado", email: null, telefono: null },
-  horario: { id: 0, diaSemana: "Lunes y miércoles", horaInicio: "18:00", horaFin: "19:00", modalidad: "Presencial" },
-  contrato: null,
-};
+const API_BASE = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
+).replace(/\/+$/, "");
 
 function mostrarFecha(fecha: string) {
   const [anio, mes, dia] = fecha.slice(0, 10).split("-");
   return `${dia}/${mes}/${anio}`;
 }
 
+function mostrarDato(valor: string | number | null | undefined) {
+  return valor === null || valor === undefined || valor === ""
+    ? "No informado"
+    : valor;
+}
+
 export default function MiCuentaPage() {
   const router = useRouter();
   const { usuario, cargando, token, logout } = useAuth();
 
-  const [perfil, setPerfil] = useState<PerfilCliente | null>(MODO_DEMO ? PERFIL_DEMO : null);
-  const [cargandoPerfil, setCargandoPerfil] = useState(!MODO_DEMO);
+  const [perfil, setPerfil] = useState<PerfilCliente | null>(null);
+  const [cargandoPerfil, setCargandoPerfil] = useState(true);
   const [errorContrato, setErrorContrato] = useState("");
+  const [errorPerfil, setErrorPerfil] = useState("");
 
   useEffect(() => {
-    if (MODO_DEMO) return;
     if (cargando) return;
 
     if (!usuario) {
@@ -111,8 +121,9 @@ export default function MiCuentaPage() {
 
     const cargarPerfil = async () => {
       try {
+        setErrorPerfil("");
         const respuesta = await fetch(
-          "http://localhost:3001/api/clientes/mi-dashboard",
+          `${API_BASE}/api/clientes/mi-dashboard`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -121,7 +132,10 @@ export default function MiCuentaPage() {
         );
 
         if (!respuesta.ok) {
-          throw new Error("No se pudo cargar la información del cliente");
+          const data = await respuesta.json();
+          throw new Error(
+            data.mensaje || "No se pudo cargar la información del cliente."
+          );
         }
 
         const data = await respuesta.json();
@@ -129,6 +143,11 @@ export default function MiCuentaPage() {
         setPerfil(data);
       } catch (error) {
         console.error("Error al cargar dashboard:", error);
+        setErrorPerfil(
+          error instanceof Error
+            ? error.message
+            : "No se pudo cargar la información de tu cuenta."
+        );
       } finally {
         setCargandoPerfil(false);
       }
@@ -138,15 +157,11 @@ export default function MiCuentaPage() {
   }, [usuario, cargando, token, router]);
 
   const cerrarSesion = () => {
-    if (MODO_DEMO) {
-      router.push("/");
-      return;
-    }
     logout();
     router.replace("/login");
   };
 
-  if (!MODO_DEMO && (cargando || cargandoPerfil)) {
+  if (cargando || cargandoPerfil) {
     return (
       <main className="estilo1">
         <p>Cargando información de tu cuenta...</p>
@@ -154,7 +169,7 @@ export default function MiCuentaPage() {
     );
   }
 
-  if (!MODO_DEMO && (!usuario || usuario.rol !== "cliente")) {
+  if (!usuario || usuario.rol !== "cliente") {
     return (
       <main className="estilo1">
         <p>Verificando acceso...</p>
@@ -163,7 +178,7 @@ export default function MiCuentaPage() {
   }
 
   const abrirContrato = async () => {
-    if (MODO_DEMO || !perfil?.contrato || !token) return;
+    if (!perfil?.contrato || !token) return;
 
     const ventana = window.open("about:blank", "_blank");
     if (!ventana) {
@@ -174,7 +189,7 @@ export default function MiCuentaPage() {
     try {
       setErrorContrato("");
       const respuesta = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/contratos/${perfil.contrato.id}/archivo`,
+        `${API_BASE}/api/contratos/${perfil.contrato.id}/archivo`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -213,7 +228,7 @@ export default function MiCuentaPage() {
               onClick={cerrarSesion}
               className="estilo10"
             >
-              {MODO_DEMO ? "Salir de vista previa" : "Cerrar sesión"}
+              Cerrar sesión
             </button>
           </div>
         </div>
@@ -225,21 +240,26 @@ export default function MiCuentaPage() {
           <div>
             <p className="estilo14">Tu espacio personal</p>
             <h1 className="estilo15">
-              ¡Hola, <span className="estilo7">{perfil?.cliente?.nombre || usuario?.nombre || "Cliente"}</span>!
+              ¡Hola, <span className="estilo7">{perfil?.cliente?.nombre || usuario.nombre}</span>!
             </h1>
             <p className="estilo16">
-              Aquí puedes consultar tu plan, tus sesiones y todo lo relacionado con tu entrenamiento.
+              Aquí puedes consultar tus datos y la información asociada a tu cuenta.
             </p>
           </div>
           <div className="estilo17">
             <p className="estilo18">Estado de cuenta</p>
-            <p className="estilo19">{perfil?.cliente?.estado || "Activa"}</p>
+            <p className="estilo19">{perfil?.cliente?.estado || "No disponible"}</p>
           </div>
         </div>
       </section>
 
       <div className="estilo20">
       <section className="estilo21">
+        {errorPerfil && (
+          <p role="alert" className="estilo42">
+            {errorPerfil}
+          </p>
+        )}
         <div>
           <p className="estilo22">Tu entrenamiento</p>
           <h2 className="estilo23">Resumen de mi cuenta</h2>
@@ -344,20 +364,32 @@ export default function MiCuentaPage() {
 
           <ul className="estilo34">
             <li>
-              <span className="estilo35">Nombre:</span>{" "}
-              {perfil?.cliente?.nombre || "No disponible"}
+              <span className="estilo35">Nombre completo:</span>{" "}
+              {mostrarDato(perfil?.cliente?.nombre)}
             </li>
             <li>
-              <span className="estilo35">Email:</span>{" "}
-              {perfil?.cliente?.email || "No disponible"}
+              <span className="estilo35">Correo:</span>{" "}
+              {mostrarDato(perfil?.cliente?.email)}
             </li>
             <li>
               <span className="estilo35">RUT:</span>{" "}
-              {perfil?.cliente?.rut || "No disponible"}
+              {mostrarDato(perfil?.cliente?.rut)}
             </li>
             <li>
               <span className="estilo35">Teléfono:</span>{" "}
-              {perfil?.cliente?.telefono || "No disponible"}
+              {mostrarDato(perfil?.cliente?.telefono)}
+            </li>
+            <li>
+              <span className="estilo35">Dirección:</span>{" "}
+              {mostrarDato(perfil?.cliente?.direccion)}
+            </li>
+            <li>
+              <span className="estilo35">Sucursal:</span>{" "}
+              {mostrarDato(perfil?.cliente?.sucursal?.nombre)}
+            </li>
+            <li>
+              <span className="estilo35">Plan registrado:</span>{" "}
+              {mostrarDato(perfil?.cliente?.plan)}
             </li>
           </ul>
         </div>

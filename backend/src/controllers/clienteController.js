@@ -407,7 +407,34 @@ export const obtenerMiDashboard = async (req, res) => {
   try {
     const cliente = await Cliente.findOne({
       where: { email: req.usuario.email },
-      attributes: ["id", "nombre", "email", "rut", "telefono", "estado"],
+      attributes: [
+        "id",
+        "sucursalId",
+        "numeroCliente",
+        "nombres",
+        "apellidos",
+        "nombre",
+        "email",
+        "rut",
+        "telefono",
+        "telefonoSecundario",
+        "direccion",
+        "comuna",
+        "ciudad",
+        "edad",
+        "genero",
+        "fechaNacimiento",
+        "fechaCreacionOrigen",
+        "plan",
+        "estado",
+      ],
+      include: [
+        {
+          model: Sucursal,
+          as: "sucursal",
+          attributes: ["id", "nombre"],
+        },
+      ],
     });
 
     if (!cliente) {

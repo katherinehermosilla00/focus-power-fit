@@ -45,6 +45,13 @@ test.before(async () => {
     email: 'cliente@focuspowerfit.cl',
     rut: '12345678-9',
     telefono: '912345678',
+    telefonoSecundario: '912345679',
+    direccion: 'Av. Prueba 123',
+    comuna: 'Ñuñoa',
+    ciudad: 'Santiago',
+    edad: 30,
+    genero: 'No informado',
+    fechaNacimiento: '1996-05-10',
     estado: 'Activo',
   });
 });
@@ -97,7 +104,16 @@ test('GET /api/clientes/mi-dashboard busca al cliente por correo', async () => {
   assert.equal(res.status, 200);
   assert.equal(res.body.cliente.id, 75);
   assert.equal(res.body.cliente.nombre, 'Nombre desde Clientes');
+  assert.equal(res.body.cliente.nombres, 'Nombre');
+  assert.equal(res.body.cliente.apellidos, 'desde Clientes');
   assert.equal(res.body.cliente.rut, '12345678-9');
+  assert.equal(res.body.cliente.telefonoSecundario, '912345679');
+  assert.equal(res.body.cliente.direccion, 'Av. Prueba 123');
+  assert.equal(res.body.cliente.comuna, 'Ñuñoa');
+  assert.equal(res.body.cliente.ciudad, 'Santiago');
+  assert.equal(res.body.cliente.edad, 30);
+  assert.equal(res.body.cliente.genero, 'No informado');
+  assert.equal(res.body.cliente.fechaNacimiento, '1996-05-10');
 });
 
 test('POST /api/auth/register rechaza un RUT inválido por Módulo 11', async () => {

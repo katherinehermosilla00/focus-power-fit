@@ -174,6 +174,8 @@ export const registrarUsuario = async (req, res) => {
 
     registrosPendientes.set(emailNormalizado, {
       nombre: nombreCompleto,
+      nombres: nombreNormalizado,
+      apellidos: apellidosNormalizados,
       email: emailNormalizado,
       passwordHash,
       rut: rutNormalizado,
@@ -257,6 +259,8 @@ export const verificarRegistro = async (req, res) => {
 
     await Cliente.create(
       {
+        nombres: pendiente.nombres,
+        apellidos: pendiente.apellidos,
         nombre: pendiente.nombre,
         email: pendiente.email,
         rut: pendiente.rut,
