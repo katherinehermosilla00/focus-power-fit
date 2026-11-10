@@ -1,11 +1,17 @@
 services:
   n8n:
-    image: docker.n8n.io/n8nio/n8n:latest
+    # Versión fija: actualizarla es una decisión revisada, no algo automático.
+    image: docker.n8n.io/n8nio/n8n:2.39.5
     container_name: focus-power-fit-n8n
     restart: unless-stopped
 
     ports:
-      - "5679:5678"
+      # Solo accesible desde este equipo; el backend actúa de intermediario.
+      - "127.0.0.1:5679:5678"
+
+    # Permite a n8n llamar a Ollama, que corre en el equipo anfitrión.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     environment:
       - TZ=America/Santiago
@@ -16,6 +22,9 @@ services:
       - N8N_PROTOCOL=http
       - N8N_EDITOR_BASE_URL=http://localhost:5679
       - WEBHOOK_URL=http://localhost:5679/
+      # Las ejecuciones pueden contener mensajes de clientes: se borran a los 7 días.
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168
 
     volumes:
       - focus_n8n_data:/home/node/.n8n

@@ -1,4 +1,18 @@
+import Cliente from "../models/cliente.js";
+import Maquina from "../models/maquina.js";
+import Profesor from "../models/profesor.js";
 import Sucursal from "../models/sucursal.js";
+import { responderError, soloCampos, validarSucursal } from "../utils/reglas.js";
+
+const CAMPOS_EDITABLES = [
+  "nombre",
+  "direccion",
+  "comuna",
+  "ciudad",
+  "horarioAtencion",
+  "telefono",
+  "estado",
+];
 
 export const obtenerSucursales = async (req, res) => {
   try {
@@ -8,73 +22,29 @@ export const obtenerSucursales = async (req, res) => {
 
     res.json(sucursales);
   } catch (error) {
-    console.error(
-      "Error al obtener sucursales:",
-      error.message
-    );
-
-    res.status(500).json({
-      ok: false,
-      mensaje: "Error al obtener sucursales",
-    });
+    responderError(res, error, "Error al obtener sucursales", "Error al obtener sucursales", 500);
   }
 };
 
 export const crearSucursal = async (req, res) => {
   try {
-    const {
-      nombre,
-      direccion,
-      comuna,
-      telefono,
-      estado,
-    } = req.body;
-
-    if (!nombre || !comuna) {
-      return res.status(400).json({
-        ok: false,
-        mensaje:
-          "Nombre y comuna son obligatorios",
-      });
-    }
-
-    const sucursal = await Sucursal.create({
-      nombre,
-      direccion: direccion || null,
-      comuna,
-      telefono: telefono || null,
-      estado: estado || "Activa",
-    });
+    const sucursal = await Sucursal.create(
+      validarSucursal(soloCampos(req.body, CAMPOS_EDITABLES))
+    );
 
     res.status(201).json({
       ok: true,
-      mensaje:
-        "Sucursal registrada correctamente",
+      mensaje: "Sucursal registrada correctamente",
       sucursal,
     });
   } catch (error) {
-    console.error(
-      "Error al crear sucursal:",
-      error.message
-    );
-
-    res.status(400).json({
-      ok: false,
-      mensaje:
-        "No se pudo registrar la sucursal",
-      error: error.message,
-    });
+    responderError(res, error, "Error al crear sucursal", "No se pudo registrar la sucursal");
   }
 };
 
-export const actualizarSucursal = async (
-  req,
-  res
-) => {
+export const actualizarSucursal = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const sucursal = await Sucursal.findByPk(id);
+    const sucursal = await Sucursal.findByPk(req.params.id);
 
     if (!sucursal) {
       return res.status(404).json({
@@ -83,42 +53,44 @@ export const actualizarSucursal = async (
       });
     }
 
-    await sucursal.update(req.body);
+    const cambios = soloCampos(req.body, CAMPOS_EDITABLES);
+
+    await sucursal.update(validarSucursal({ ...sucursal.get(), ...cambios }, cambios));
 
     res.json({
       ok: true,
-      mensaje:
-        "Sucursal actualizada correctamente",
+      mensaje: "Sucursal actualizada correctamente",
       sucursal,
     });
   } catch (error) {
-    console.error(
-      "Error al actualizar sucursal:",
-      error.message
-    );
-
-    res.status(400).json({
-      ok: false,
-      mensaje:
-        "No se pudo actualizar la sucursal",
-      error: error.message,
-    });
+    responderError(res, error, "Error al actualizar sucursal", "No se pudo actualizar la sucursal");
   }
 };
 
-export const eliminarSucursal = async (
-  req,
-  res
-) => {
+// Borrar una sucursal con datos borraría sus máquinas y dejaría a sus clientes
+// y profesores sin sucursal.
+export const eliminarSucursal = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const sucursal = await Sucursal.findByPk(id);
+    const sucursal = await Sucursal.findByPk(req.params.id);
 
     if (!sucursal) {
       return res.status(404).json({
         ok: false,
         mensaje: "Sucursal no encontrada",
+      });
+    }
+
+    const where = { sucursalId: sucursal.id };
+    const [clientes, profesores, maquinas] = await Promise.all([
+      Cliente.count({ where }),
+      Profesor.count({ where }),
+      Maquina.count({ where }),
+    ]);
+
+    if (clientes + profesores + maquinas > 0) {
+      return res.status(409).json({
+        ok: false,
+        mensaje: `La sucursal tiene ${clientes} cliente(s), ${profesores} profesor(es) y ${maquinas} máquina(s). Desactívala para conservar sus datos.`,
       });
     }
 
@@ -126,21 +98,10 @@ export const eliminarSucursal = async (
 
     res.json({
       ok: true,
-      mensaje:
-        "Sucursal eliminada correctamente",
+      mensaje: "Sucursal eliminada correctamente",
     });
   } catch (error) {
-    console.error(
-      "Error al eliminar sucursal:",
-      error.message
-    );
-
-    res.status(500).json({
-      ok: false,
-      mensaje:
-        "No se pudo eliminar la sucursal",
-      error: error.message,
-    });
+    responderError(res, error, "Error al eliminar sucursal", "No se pudo eliminar la sucursal", 500);
   }
 };
 
@@ -162,14 +123,12 @@ export const obtenerSucursalesPublicas = async (req, res) => {
 
     res.json(sucursales);
   } catch (error) {
-    console.error(
-      "Error al obtener sucursales publicas:",
-      error.message
+    responderError(
+      res,
+      error,
+      "Error al obtener sucursales publicas",
+      "Error al obtener sucursales",
+      500
     );
-
-    res.status(500).json({
-      ok: false,
-      mensaje: "Error al obtener sucursales",
-    });
   }
 };

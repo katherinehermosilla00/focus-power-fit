@@ -1,0 +1,1275 @@
+{
+  "info": {
+    "name": "Focus Power Fit - API (QA)",
+    "description": "Pruebas funcionales y de seguridad de la API. Usar solo contra el entorno QA con datos ficticios.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Sufijo único por ejecución y fecha de hoy (hora de Chile).",
+          "if (!pm.collectionVariables.get(\"sufijo\")) {",
+          "  pm.collectionVariables.set(\"sufijo\", Date.now().toString(36));",
+          "}",
+          "const ahora = new Date(new Date().toLocaleString(\"en-US\", { timeZone: \"America/Santiago\" }));",
+          "const dos = (n) => String(n).padStart(2, \"0\");",
+          "pm.collectionVariables.set(\"hoy\", ahora.getFullYear() + \"-\" + dos(ahora.getMonth() + 1) + \"-\" + dos(ahora.getDate()));"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "sufijo",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Salud y acceso público",
+      "item": [
+        {
+          "name": "API-01 El servidor y la base de datos responden",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"La base de datos está conectada\", () => pm.expect(pm.response.json().database).to.eql(\"conectada\"));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          }
+        },
+        {
+          "name": "API-02 Las sucursales públicas se listan sin sesión",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "const datos = pm.response.json();",
+                  "const lista = Array.isArray(datos) ? datos : datos.sucursales;",
+                  "pm.test(\"Entrega una lista de sucursales\", () => pm.expect(lista).to.be.an(\"array\").that.is.not.empty);",
+                  "pm.collectionVariables.set(\"sucursalId\", lista[0].id);",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/sucursales"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Autenticación",
+      "item": [
+        {
+          "name": "API-03 Inicio de sesión del administrador con datos correctos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "const datos = pm.response.json();",
+                  "pm.test(\"Entrega un token JWT\", () => pm.expect(datos.token).to.match(/^[\\w-]+\\.[\\w-]+\\.[\\w-]+$/));",
+                  "pm.test(\"El rol es admin\", () => pm.expect(datos.user.rol).to.eql(\"admin\"));",
+                  "pm.test(\"No entrega el hash de la contraseña\", () => pm.expect(JSON.stringify(datos)).to.not.include(\"passwordHash\"));",
+                  "pm.collectionVariables.set(\"tokenAdmin\", datos.token);",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "API-04 Inicio de sesión con contraseña incorrecta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"No entrega token\", () => pm.expect(pm.response.json().token).to.be.undefined);",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"ClaveIncorrecta-123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "API-05 Inicio de sesión sin datos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "API-06 Inicio de sesión del cliente QA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "const datos = pm.response.json();",
+                  "pm.test(\"El rol es cliente\", () => pm.expect(datos.user.rol).to.eql(\"cliente\"));",
+                  "pm.collectionVariables.set(\"tokenCliente\", datos.token);",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{clienteEmail}}\",\n  \"password\": \"{{clientePassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "API-07 Ruta protegida sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/clientes"
+          }
+        },
+        {
+          "name": "API-08 Ruta protegida con token falso",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer token.invalido.qa"
+              }
+            ],
+            "url": "{{baseUrl}}/api/clientes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Control de acceso por rol",
+      "item": [
+        {
+          "name": "API-09 Un cliente no puede listar los clientes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/clientes"
+          }
+        },
+        {
+          "name": "API-10 Un cliente no puede crear planes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Plan no autorizado\",\n  \"duracionMeses\": 1,\n  \"sesiones\": 4,\n  \"precio\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/planes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Planes",
+      "item": [
+        {
+          "name": "API-11 Crear un plan válido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "const plan = pm.response.json();",
+                  "pm.test(\"Queda activo\", () => pm.expect(plan.estado).to.eql(\"Activo\"));",
+                  "pm.collectionVariables.set(\"planId\", plan.id);",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Plan Postman {{sufijo}}\",\n  \"descripcion\": \"Plan ficticio de prueba\",\n  \"duracionMeses\": 1,\n  \"sesiones\": 8,\n  \"precio\": 25000,\n  \"modalidad\": \"Individual\"\n}"
+            },
+            "url": "{{baseUrl}}/api/planes"
+          }
+        },
+        {
+          "name": "API-12 Rechaza un plan con precio negativo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Explica el error\", () => pm.expect(pm.response.json().mensaje).to.match(/negativo/i));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Plan inválido\",\n  \"duracionMeses\": 1,\n  \"sesiones\": 4,\n  \"precio\": -100\n}"
+            },
+            "url": "{{baseUrl}}/api/planes"
+          }
+        },
+        {
+          "name": "API-13 Editar el precio del plan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"precio\": 27000\n}"
+            },
+            "url": "{{baseUrl}}/api/planes/{{planId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Profesores y horarios",
+      "item": [
+        {
+          "name": "API-14 Crear un profesor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"profesorId\", pm.response.json().profesor.id);",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Profesor Postman {{sufijo}}\",\n  \"especialidad\": \"Pruebas de API\",\n  \"sucursalId\": \"{{sucursalId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/profesores"
+          }
+        },
+        {
+          "name": "API-15 Crear un horario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"horarioId\", pm.response.json().id);",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profesorId\": \"{{profesorId}}\",\n  \"diaSemana\": \"Sábado\",\n  \"horaInicio\": \"07:00\",\n  \"horaFin\": \"08:00\",\n  \"modalidad\": \"Individual\"\n}"
+            },
+            "url": "{{baseUrl}}/api/horarios"
+          }
+        },
+        {
+          "name": "API-16 Rechaza un horario que termina antes de empezar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profesorId\": \"{{profesorId}}\",\n  \"diaSemana\": \"Sábado\",\n  \"horaInicio\": \"10:00\",\n  \"horaFin\": \"09:00\",\n  \"modalidad\": \"Individual\"\n}"
+            },
+            "url": "{{baseUrl}}/api/horarios"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Clientes",
+      "item": [
+        {
+          "name": "API-17 Crear un cliente ficticio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"clienteId\", pm.response.json().cliente.id);",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cliente Postman {{sufijo}}\",\n  \"email\": \"postman.{{sufijo}}@focuspowerfit.test\",\n  \"sucursalId\": \"{{sucursalId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/clientes"
+          }
+        },
+        {
+          "name": "API-18 Rechaza un cliente con un correo ya registrado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cliente Duplicado\",\n  \"email\": \"postman.{{sufijo}}@focuspowerfit.test\",\n  \"sucursalId\": \"{{sucursalId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/clientes"
+          }
+        },
+        {
+          "name": "API-19 Rechaza un cliente sin sucursal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cliente sin sucursal\"\n}"
+            },
+            "url": "{{baseUrl}}/api/clientes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 Asignaciones y asistencia",
+      "item": [
+        {
+          "name": "API-20 Asignar plan y horario al cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"asignacionId\", pm.response.json().id);",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{clienteId}}\",\n  \"planId\": \"{{planId}}\",\n  \"horarioId\": \"{{horarioId}}\",\n  \"fechaInicio\": \"{{hoy}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/asignaciones"
+          }
+        },
+        {
+          "name": "API-21 Rechaza una segunda asignación activa del mismo cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{clienteId}}\",\n  \"planId\": \"{{planId}}\",\n  \"horarioId\": \"{{horarioId}}\",\n  \"fechaInicio\": \"{{hoy}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/asignaciones"
+          }
+        },
+        {
+          "name": "API-22 Registrar asistencia de hoy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"asignacionId\": \"{{asignacionId}}\",\n  \"fecha\": \"{{hoy}}\",\n  \"estado\": \"Presente\"\n}"
+            },
+            "url": "{{baseUrl}}/api/asistencias"
+          }
+        },
+        {
+          "name": "API-23 Rechaza asistencia en una fecha futura",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"asignacionId\": \"{{asignacionId}}\",\n  \"fecha\": \"2099-01-01\",\n  \"estado\": \"Presente\"\n}"
+            },
+            "url": "{{baseUrl}}/api/asistencias"
+          }
+        },
+        {
+          "name": "API-24 Rechaza asistencia duplicada el mismo día",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"asignacionId\": \"{{asignacionId}}\",\n  \"fecha\": \"{{hoy}}\",\n  \"estado\": \"Presente\"\n}"
+            },
+            "url": "{{baseUrl}}/api/asistencias"
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 Pagos",
+      "item": [
+        {
+          "name": "API-25 Registrar un pago",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Queda vigente\", () => pm.expect(pm.response.json().pago.estado).to.eql(\"Vigente\"));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{clienteId}}\",\n  \"planId\": \"{{planId}}\",\n  \"monto\": 27000,\n  \"fechaPago\": \"{{hoy}}\",\n  \"fechaVencimiento\": \"2099-12-31\",\n  \"metodoPago\": \"Transferencia\"\n}"
+            },
+            "url": "{{baseUrl}}/api/pagos"
+          }
+        },
+        {
+          "name": "API-26 Rechaza un pago con monto cero",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": \"{{clienteId}}\",\n  \"planId\": \"{{planId}}\",\n  \"monto\": 0,\n  \"fechaPago\": \"{{hoy}}\",\n  \"fechaVencimiento\": \"2099-12-31\",\n  \"metodoPago\": \"Efectivo\"\n}"
+            },
+            "url": "{{baseUrl}}/api/pagos"
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 Mi cuenta y cancelación de clases",
+      "item": [
+        {
+          "name": "API-27 El cliente ve su plan y su próxima clase",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "const datos = pm.response.json();",
+                  "pm.test(\"Trae el plan\", () => pm.expect(datos.plan).to.be.an(\"object\"));",
+                  "pm.test(\"Trae la próxima clase con su límite de cancelación\", () => {",
+                  "  pm.expect(datos.proximaClase.fecha).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);",
+                  "  pm.expect(datos.proximaClase.horasMinimasCancelacion).to.eql(6);",
+                  "});",
+                  "pm.collectionVariables.set(\"fechaProximaClase\", datos.proximaClase.fecha);",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/clientes/mi-dashboard"
+          }
+        },
+        {
+          "name": "API-28 Rechaza cancelar con una fecha mal escrita",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fecha\": \"10-11-2026\"\n}"
+            },
+            "url": "{{baseUrl}}/api/clientes/mi-clase/cancelar"
+          }
+        },
+        {
+          "name": "API-29 Cancelar la próxima clase con más de 6 horas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Queda justificada: no pierde la clase\", () => pm.expect(pm.response.json().estado).to.eql(\"Justificada\"));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fecha\": \"{{fechaProximaClase}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/clientes/mi-clase/cancelar"
+          }
+        },
+        {
+          "name": "API-30 No permite cancelar la misma clase dos veces",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fecha\": \"{{fechaProximaClase}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/clientes/mi-clase/cancelar"
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 FitBot",
+      "item": [
+        {
+          "name": "API-31 FitBot responde una pregunta frecuente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde con los horarios\", () => pm.expect(pm.response.json().output).to.match(/HORARIOS/));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatInput\": \"¿Qué horarios tienen?\",\n  \"sessionId\": \"{{$guid}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/fitbot/chat"
+          }
+        },
+        {
+          "name": "API-32 FitBot rechaza un identificador de sesión inválido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatInput\": \"Hola\",\n  \"sessionId\": \"no-es-un-uuid\"\n}"
+            },
+            "url": "{{baseUrl}}/api/fitbot/chat"
+          }
+        },
+        {
+          "name": "API-33 FitBot rechaza mensajes de más de 500 caracteres",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"mensajeLargo\", \"a\".repeat(501));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatInput\": \"{{mensajeLargo}}\",\n  \"sessionId\": \"{{$guid}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/fitbot/chat"
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 Seguridad",
+      "item": [
+        {
+          "name": "API-34 Cabeceras de seguridad en las respuestas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HSTS activo (HTTPS obligatorio)\", () => pm.response.to.have.header(\"Strict-Transport-Security\"));",
+                  "pm.test(\"X-Content-Type-Options: nosniff\", () => pm.expect(pm.response.headers.get(\"X-Content-Type-Options\")).to.eql(\"nosniff\"));",
+                  "pm.test(\"Tiene política de contenido (CSP)\", () => pm.response.to.have.header(\"Content-Security-Policy\"));",
+                  "pm.test(\"No revela la tecnología del servidor\", () => {",
+                  "  pm.expect(pm.response.headers.has(\"X-Powered-By\")).to.be.false;",
+                  "  pm.expect(pm.response.headers.has(\"Server\")).to.be.false;",
+                  "});",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/sucursales"
+          }
+        },
+        {
+          "name": "API-35 No permite abrir contratos por su ruta directa",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 403 o 404\", () => pm.expect([403, 404]).to.include(pm.response.code));",
+                  "pm.test(\"No entrega un PDF\", () => pm.expect(pm.response.headers.get(\"Content-Type\") || \"\").to.not.include(\"pdf\"));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/uploads/contratos/contrato.pdf"
+          }
+        },
+        {
+          "name": "API-36 Inyección SQL en el inicio de sesión",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"No inicia sesión\", () => pm.expect([400, 401]).to.include(pm.response.code));",
+                  "pm.test(\"No entrega token\", () => pm.expect(pm.response.json().token).to.be.undefined);",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"' OR '1'='1' -- \",\n  \"password\": \"' OR '1'='1\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "API-37 Un cliente no puede ver el panel de otro rol ni datos ajenos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/pagos"
+          }
+        },
+        {
+          "name": "API-38 Bloquea el inicio de sesión tras demasiados intentos",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// 10 intentos fallidos seguidos antes de esta petición.",
+                  "for (let i = 0; i < 10; i++) {",
+                  "  pm.sendRequest({",
+                  "    url: pm.variables.replaceIn(\"{{baseUrl}}/api/auth/login\"),",
+                  "    method: \"POST\",",
+                  "    header: { \"Content-Type\": \"application/json\" },",
+                  "    body: { mode: \"raw\", raw: JSON.stringify({ email: pm.variables.get(\"adminEmail\"), password: \"ClaveIncorrecta-123\" }) },",
+                  "  }, () => {});",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 429 (demasiadas solicitudes)\", () => pm.response.to.have.status(429));",
+                  "pm.test(\"Explica que debe esperar\", () => pm.expect(pm.response.json().mensaje).to.match(/15 minutos/));",
+                  "pm.test(\"Responde en menos de 3 segundos\", () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"ClaveIncorrecta-123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        }
+      ]
+    }
+  ]
+}

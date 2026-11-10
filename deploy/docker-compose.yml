@@ -1,0 +1,159 @@
+# Focus Power Fit completo: MySQL, API, sitio web, n8n (FitBot) y HTTPS.
+# Instrucciones en deploy/README.md. Los valores van en deploy/.env, que nunca
+# se sube a GitHub (copia de .env.example).
+#
+#   docker compose up -d --build        levantar o actualizar
+#   docker compose ps                    estado
+#   docker compose logs -f backend       registros de la API
+#
+# Solo Caddy publica puertos (80 y 443). MySQL y la API no son accesibles
+# desde fuera; el editor de n8n solo desde el propio servidor.
+
+name: focus-power-fit
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    # La misma configuración que la base actual: el sistema compara correos
+    # sin distinguir mayúsculas ni tildes gracias a esta intercalación.
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-focus_power_fit}
+      MYSQL_USER: ${DB_USER:?Define DB_USER en deploy/.env}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en deploy/.env}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Define DB_ROOT_PASSWORD en deploy/.env}
+      TZ: America/Santiago
+    volumes:
+      # Los datos viven en el volumen: borrar o actualizar el contenedor no los toca.
+      - datos-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  backend:
+    build:
+      context: ../backend
+      target: api
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      TZ: America/Santiago
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-focus_power_fit}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      # true solo la primera vez con una base vacía, para crear las tablas.
+      DB_SYNC: ${DB_SYNC:-false}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en deploy/.env}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      CORS_ORIGINS: ${URL_PUBLICA}
+      # Caddy está delante: la dirección real del visitante viene de él.
+      TRUST_PROXY: 1
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_SECURE: ${EMAIL_SECURE:-false}
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_PASS: ${EMAIL_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      FITBOT_WEBHOOK_URL: http://n8n:5678/webhook/e46ddba5-479d-4fb9-bf0d-806ab54a6344/chat
+    volumes:
+      - subidas:/app/backend/uploads
+
+  frontend:
+    build:
+      context: ../frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${URL_PUBLICA:?Define URL_PUBLICA en deploy/.env}
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  n8n:
+    # Versión fija: actualizarla es una decisión revisada, no algo automático.
+    image: docker.n8n.io/n8nio/n8n:2.39.5
+    restart: unless-stopped
+    ports:
+      # Editor solo desde el propio servidor (por ejemplo, con un túnel SSH).
+      - "127.0.0.1:${N8N_PUERTO:-5679}:5678"
+    # Ollama (IA de FitBot) corre en el servidor, fuera de Docker. Si no está,
+    # FitBot responde solo con sus reglas.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      TZ: America/Santiago
+      GENERIC_TIMEZONE: America/Santiago
+      N8N_SECURE_COOKIE: "false"
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      N8N_EDITOR_BASE_URL: http://localhost:${N8N_PUERTO:-5679}
+      WEBHOOK_URL: http://localhost:${N8N_PUERTO:-5679}/
+      # Las ejecuciones pueden contener mensajes de clientes: se borran a los 7 días.
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: 168
+    volumes:
+      - datos-n8n:/home/node/.n8n
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "${PUERTO_HTTP:-80}:80"
+      - "${PUERTO_HTTPS:-443}:443"
+    environment:
+      DOMINIO: ${DOMINIO:?Define DOMINIO en deploy/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificados HTTPS: se conservan entre reinicios.
+      - caddy-datos:/data
+      - caddy-config:/config
+
+  # Tarea de respaldos: no queda corriendo. La ejecuta deploy/respaldo.sh
+  # (cron) o una persona:
+  #   docker compose run --rm respaldos crear
+  #   docker compose run --rm respaldos probar
+  respaldos:
+    build:
+      context: ../backend
+      target: respaldos
+    profiles: ["respaldos"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      TZ: America/Santiago
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-focus_power_fit}
+      # La prueba de restauración crea y borra una base temporal: necesita root.
+      DB_USER: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD}
+      RESPALDOS_DIR: /respaldos
+      RESPALDO_CLAVE: ${RESPALDO_CLAVE:-}
+      RESPALDO_DIAS: ${RESPALDO_DIAS:-30}
+      RESPALDO_UPLOADS_DIR: /app/backend/uploads
+    volumes:
+      - subidas:/app/backend/uploads
+      # Carpeta del servidor, fuera del proyecto. Copiarla también fuera del servidor.
+      - ${RESPALDOS_HOST_DIR:?Define RESPALDOS_HOST_DIR en deploy/.env}:/respaldos
+
+volumes:
+  datos-mysql:
+  subidas:
+  datos-n8n:
+  caddy-datos:
+  caddy-config:

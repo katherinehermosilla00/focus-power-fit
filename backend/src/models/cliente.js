@@ -43,11 +43,14 @@ const Cliente = sequelize.define(
     rut: {
       type: DataTypes.STRING(20),
       allowNull: true,
+      unique: "clientes_rut_unico",
     },
 
+    // La cuenta de acceso se vincula a la ficha por correo: debe ser único.
     email: {
       type: DataTypes.STRING(150),
       allowNull: true,
+      unique: "clientes_email_unico",
     },
 
     telefono: {

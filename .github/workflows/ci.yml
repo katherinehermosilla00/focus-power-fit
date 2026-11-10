@@ -1,0 +1,91 @@
+# Revisión automática: cada cambio que llega a GitHub pasa por lint, tipos,
+# pruebas y compilación antes de poder integrarse.
+name: Revisión automática
+
+on:
+  push:
+    branches: [main, "dev/**"]
+  pull_request:
+  workflow_dispatch:
+
+# Solo lectura del repositorio: el flujo no publica ni modifica nada.
+permissions:
+  contents: read
+
+# Si llega un cambio nuevo a la misma rama, se cancela la revisión anterior.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Una solicitud de cambio desde una rama dev/ de este repositorio ya se revisa
+# con el push de esa rama, así que no se ejecuta dos veces (condición «if» de
+# cada trabajo). Sí se revisan las de Dependabot y las de otros repositorios.
+jobs:
+  frontend:
+    name: Frontend (lint, tipos, pruebas y compilación)
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository || !startsWith(github.head_ref, 'dev/') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tipos
+        run: npx tsc --noEmit
+
+      - name: Pruebas
+        run: npm test
+
+      - name: Compilación
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+  backend:
+    name: Backend (pruebas de API)
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository || !startsWith(github.head_ref, 'dev/') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    # Las pruebas usan SQLite en memoria y un servidor de correo inexistente:
+    # no tocan la base real ni envían correos.
+    env:
+      TZ: America/Santiago
+      EMAIL_HOST: 127.0.0.1
+      EMAIL_PORT: 9
+      EMAIL_USER: ficticio@prueba.cl
+      EMAIL_PASS: ficticio
+      EMAIL_FROM: ficticio@prueba.cl
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Pruebas
+        run: npm test
+
+      - name: Dependencias de producción sin vulnerabilidades altas
+        run: npm audit --omit=dev --audit-level=high

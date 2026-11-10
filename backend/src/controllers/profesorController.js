@@ -1,4 +1,5 @@
 
+import Horario from "../models/horario.js";
 import Profesor from "../models/profesor.js";
 import Sucursal from "../models/sucursal.js";
 
@@ -148,7 +149,6 @@ export const crearProfesor = async (req, res) => {
     return res.status(400).json({
       ok: false,
       mensaje: "No se pudo crear el profesor",
-      error: error.message,
     });
   }
 };
@@ -308,7 +308,6 @@ export const actualizarProfesor = async (req, res) => {
     return res.status(400).json({
       ok: false,
       mensaje: "No se pudo actualizar el profesor",
-      error: error.message,
     });
   }
 };
@@ -326,6 +325,17 @@ export const eliminarProfesor = async (req, res) => {
       return res.status(404).json({
         ok: false,
         mensaje: "Profesor no encontrado",
+      });
+    }
+
+    // Borrar un profesor con horarios borraría las asignaciones y asistencias
+    // de sus alumnos.
+    const horarios = await Horario.count({ where: { profesorId: profesor.id } });
+
+    if (horarios > 0) {
+      return res.status(409).json({
+        ok: false,
+        mensaje: `El profesor tiene ${horarios} horario(s). Desactívalo para conservar el historial de sus alumnos.`,
       });
     }
 

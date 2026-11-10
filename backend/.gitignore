@@ -1,9 +1,7 @@
 node_modules/
 .env
-<<<<<<< HEAD
+!.env.example
 # Datos reales / importaciones locales
-backend/data/
+data/
+uploads/
 *.sql
-=======
-backend/.env
->>>>>>> origin/main

@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+/frontend/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -11,14 +11,14 @@
 !.yarn/versions
 
 # testing
-/coverage
+/frontend/coverage
 
 # next.js
-/.next/
-/out/
+/frontend/.next/
+/frontend/out/
 
 # production
-/build
+/frontend/build
 
 # misc
 .DS_Store
@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -51,3 +52,10 @@ backend/data/
 *.sql
 # Respaldos locales de codigo
 *.backup
+
+# Archivo que Next.js crea solo al ejecutar "next dev"; no es parte del proyecto.
+AGENTS.md
+
+# Pruebas de QA: dependencias y resultados (pueden contener datos del entorno QA)
+pruebas/node_modules/
+pruebas/resultados/

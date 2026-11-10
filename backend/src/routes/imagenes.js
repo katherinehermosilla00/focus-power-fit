@@ -42,6 +42,15 @@ router.get(
 
 router.get(
   "/:id/archivo",
+  (req, res, next) => {
+    // El sitio y la API usan orígenes distintos; sin esto
+    // el navegador bloquea las imágenes públicas.
+    res.setHeader(
+      "Cross-Origin-Resource-Policy",
+      "cross-origin"
+    );
+    next();
+  },
   obtenerArchivoImagen
 );
 

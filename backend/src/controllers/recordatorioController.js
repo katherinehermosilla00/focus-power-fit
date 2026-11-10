@@ -1,5 +1,26 @@
 import Recordatorio from "../models/recordatorio.js";
 import Cliente from "../models/cliente.js";
+import {
+  errorDatos,
+  responderError,
+  soloCampos,
+  validarRecordatorio,
+} from "../utils/reglas.js";
+
+const CAMPOS_EDITABLES = [
+  "clienteId",
+  "tipo",
+  "titulo",
+  "mensaje",
+  "fechaEnvio",
+  "estado",
+];
+
+const exigirCliente = async (clienteId) => {
+  if (!(await Cliente.findByPk(clienteId))) {
+    throw errorDatos(404, "Cliente no encontrado");
+  }
+};
 
 export const obtenerRecordatorios = async (
   req,
@@ -46,47 +67,14 @@ export const crearRecordatorio = async (
   res
 ) => {
   try {
-    const {
-      clienteId,
-      tipo,
-      titulo,
-      mensaje,
-      fechaEnvio,
-    } = req.body;
+    const datos = validarRecordatorio({
+      ...soloCampos(req.body, CAMPOS_EDITABLES),
+      estado: "Pendiente",
+    });
 
-    if (
-      !clienteId ||
-      !tipo ||
-      !titulo ||
-      !mensaje ||
-      !fechaEnvio
-    ) {
-      return res.status(400).json({
-        ok: false,
-        mensaje:
-          "Todos los campos son obligatorios",
-      });
-    }
+    await exigirCliente(datos.clienteId);
 
-    const cliente =
-      await Cliente.findByPk(clienteId);
-
-    if (!cliente) {
-      return res.status(404).json({
-        ok: false,
-        mensaje: "Cliente no encontrado",
-      });
-    }
-
-    const recordatorio =
-      await Recordatorio.create({
-        clienteId,
-        tipo,
-        titulo,
-        mensaje,
-        fechaEnvio,
-        estado: "Pendiente",
-      });
+    const recordatorio = await Recordatorio.create(datos);
 
     res.status(201).json({
       ok: true,
@@ -95,17 +83,12 @@ export const crearRecordatorio = async (
       recordatorio,
     });
   } catch (error) {
-    console.error(
-      "Error al crear recordatorio:",
-      error.message
+    responderError(
+      res,
+      error,
+      "Error al crear recordatorio",
+      "No se pudo registrar el recordatorio"
     );
-
-    res.status(400).json({
-      ok: false,
-      mensaje:
-        "No se pudo registrar el recordatorio",
-      error: error.message,
-    });
   }
 };
 
@@ -127,7 +110,15 @@ export const actualizarRecordatorio = async (
       });
     }
 
-    await recordatorio.update(req.body);
+    const cambios = soloCampos(req.body, CAMPOS_EDITABLES);
+
+    if (cambios.clienteId !== undefined) {
+      await exigirCliente(cambios.clienteId);
+    }
+
+    await recordatorio.update(
+      validarRecordatorio({ ...recordatorio.get(), ...cambios }, cambios)
+    );
 
     res.json({
       ok: true,
@@ -136,17 +127,12 @@ export const actualizarRecordatorio = async (
       recordatorio,
     });
   } catch (error) {
-    console.error(
-      "Error al actualizar recordatorio:",
-      error.message
+    responderError(
+      res,
+      error,
+      "Error al actualizar recordatorio",
+      "No se pudo actualizar el recordatorio"
     );
-
-    res.status(400).json({
-      ok: false,
-      mensaje:
-        "No se pudo actualizar el recordatorio",
-      error: error.message,
-    });
   }
 };
 

@@ -1,0 +1,18 @@
+{
+  "name": "focus-power-fit-pruebas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pruebas de QA: Postman (Newman), Playwright, Chrome DevTools (Lighthouse) y FitBot (n8n). Instrucciones en README.md.",
+  "type": "module",
+  "scripts": {
+    "postman": "newman run postman/focus-power-fit.postman_collection.json -e postman/entorno-qa.postman_environment.json --insecure --reporters cli,htmlextra,junit --reporter-htmlextra-export resultados/postman/informe-postman.html --reporter-htmlextra-omitResponseBodies --reporter-htmlextra-omitHeaders --reporter-junit-export resultados/postman/resultado-postman.xml",
+    "playwright": "playwright test",
+    "devtools": "node devtools/auditar.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "lighthouse": "^13.6.0",
+    "newman": "^6.2.3",
+    "newman-reporter-htmlextra": "^1.23.1"
+  }
+}
