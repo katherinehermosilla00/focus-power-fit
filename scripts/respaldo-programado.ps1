@@ -1,4 +1,4 @@
-﻿# Ejecuta un respaldo o su prueba desde el Programador de tareas de Windows.
+# Ejecuta un respaldo o su prueba desde el Programador de tareas de Windows.
 # Lo instala scripts/programar-respaldos.ps1; también se puede ejecutar a mano:
 #   powershell -ExecutionPolicy Bypass -File scripts\respaldo-programado.ps1 -Accion crear
 #

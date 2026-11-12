@@ -5703,3 +5703,63 @@ html, body { width: 100%; min-height: 100%; }
     font-size: 16px !important;
   }
 }
+
+/* ==========================================
+   VENTANA «VER» EN MODO TARJETA
+   Cada dato del detalle se muestra como una tarjeta,
+   igual que en el detalle de Clientes.
+   ========================================== */
+body [role="dialog"] :is(.clientes-detalles, .horarios-detalle, .asistencia-detalle, .admin-imagenes-detalles):has(> p) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+body [role="dialog"] :is(.clientes-detalles, .horarios-detalle, .asistencia-detalle, .admin-imagenes-detalles) > p {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid #303030;
+  border-radius: 8px;
+  background: #000000;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+body [role="dialog"] :is(.clientes-detalles, .horarios-detalle, .asistencia-detalle, .admin-imagenes-detalles) > p > strong:first-child {
+  color: #a1a1aa;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 560px) {
+  body [role="dialog"] :is(.clientes-detalles, .horarios-detalle, .asistencia-detalle, .admin-imagenes-detalles):has(> p) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================
+   ESTADO INACTIVO EN ROJO
+   Inactivo / Inactiva / Fuera de servicio se destacan en rojo
+   en las tablas, en las etiquetas y en la ventana «Ver».
+   ========================================== */
+.estado-inactivo,
+body .clientes-estado-inactivo {
+  color: #ef4444 !important;
+  font-weight: 700;
+}
+
+body .admin-modulo-estado--inactivo {
+  background: rgba(220, 38, 38, 0.18) !important;
+  border: 1px solid #dc2626 !important;
+  color: #f87171 !important;
+}

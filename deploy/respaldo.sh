@@ -5,7 +5,7 @@
 #   30 22 * * 0 /srv/focus-power-fit/deploy/respaldo.sh probar
 #
 # Registra fecha, totales y resultado en REGISTRO, sin datos de clientes.
-# Una línea FALLO se trata como incidente (docs/iso/03-procedimientos.md, P5).
+# Una línea FALLO se trata como incidente: avisar al responsable y revisar el respaldo.
 
 set -u
 accion="${1:-crear}"

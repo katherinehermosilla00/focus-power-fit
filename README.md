@@ -154,7 +154,6 @@ focus-power-fit/
 │   └── crear-admin.mjs     # Creación del administrador
 ├── n8n/                    # Flujo de FitBot
 ├── Documentacion CAPSTONE/ # Evidencias e informes académicos
-├── docs/iso/ # Diagnóstico y documentos de ISO/IEC 27001 e ISO 9001
 └── README.md
 ```
 
@@ -203,7 +202,7 @@ Para aplicarlo, indica el nombre de la base, que debe coincidir con `DB_NAME`, y
 npm run unir:duplicados -- --aplicar --base=NOMBRE_DE_LA_BASE
 ```
 
-Para respaldar la base y los archivos, configura `RESPALDOS_DIR` y `RESPALDO_CLAVE`, y sigue el [procedimiento de respaldos](docs/iso/03-procedimientos.md#p4-respaldos).
+Para respaldar la base y los archivos, configura `RESPALDOS_DIR` y `RESPALDO_CLAVE`, y sigue la sección [Respaldos](#respaldos).
 
 Inicia el servidor:
 
@@ -243,7 +242,49 @@ Las pruebas son evidencia de calidad, no una garantía de ausencia de fallas.
 
 - **Revisión automática:** en cada cambio que llega a GitHub, [GitHub Actions](.github/workflows/ci.yml) ejecuta lint, tipos, pruebas y compilación del frontend, y las pruebas y la auditoría de dependencias del backend. No usa la base real ni envía correos.
 - **Dependencias:** [Dependabot](.github/dependabot.yml) revisa cada lunes si hay versiones con correcciones y abre una solicitud de cambio, que pasa por la revisión automática.
-- **Respaldos:** un respaldo cifrado diario y una prueba de restauración semanal, programados con [scripts/programar-respaldos.ps1](scripts/programar-respaldos.ps1). Ver el [procedimiento de respaldos](docs/iso/03-procedimientos.md#p4-respaldos).
+- **Respaldos:** un respaldo cifrado diario y una prueba de restauración semanal, programados con [scripts/programar-respaldos.ps1](scripts/programar-respaldos.ps1). Ver [Respaldos](#respaldos).
+
+### Respaldos
+
+Se respaldan la base de datos, los contratos y las imágenes, cifrados con AES-256-GCM. Configura `RESPALDOS_DIR` (carpeta fuera del proyecto) y `RESPALDO_CLAVE` en `backend/.env`, y guarda la clave fuera del servidor: sin ella no se puede recuperar nada.
+
+**Automático:** desde la raíz del proyecto, crea las tareas «Respaldo diario» (22:00) y «Prueba semanal de respaldo» (domingo, 22:30) en el Programador de tareas de Windows. Para quitarlas, agrega `-Quitar`.
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts\programar-respaldos.ps1
+```
+
+Cada ejecución deja fecha, totales y resultado en `RESPALDOS_DIR\registro-respaldos.log`, sin datos de clientes. Revísalo cada semana: una línea `FALLO` se trata como incidente.
+
+**Manual**, desde `backend`:
+
+```bash
+npm run respaldo:crear
+```
+
+```bash
+npm run respaldo:probar
+```
+
+La prueba descifra el último respaldo, lo restaura en una base y carpeta temporales, compara los totales y las elimina.
+
+**Recuperar datos:** restaura siempre en una base y carpeta vacías, revisa el resultado y solo entonces cambia `DB_NAME` y mueve los archivos. La herramienta nunca escribe sobre datos existentes.
+
+```bash
+npm run respaldo:restaurar -- --respaldo=CARPETA_DEL_RESPALDO --base=BASE_VACIA --archivos=CARPETA_VACIA
+```
+
+**Archivos sueltos con datos reales** (Excel o respaldos antiguos): cífralos y comprueba que se recuperan idénticos antes de borrar el original.
+
+```bash
+npm run respaldo:cifrar -- --archivo=RUTA_DEL_ARCHIVO
+```
+
+```bash
+npm run respaldo:descifrar -- --archivo=RUTA.cif --destino=RUTA_NUEVA
+```
+
+En el servidor con Docker, los respaldos se programan con `deploy/respaldo.sh` (ver la [guía de despliegue](deploy/README.md#respaldos)).
 
 ### Notas para el despliegue
 

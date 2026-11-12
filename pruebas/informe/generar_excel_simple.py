@@ -34,7 +34,7 @@ def respuesta_limpia(texto):
     # El registro corta en 130 unidades de JavaScript (un emoji cuenta como 2).
     if len(original.encode("utf-16-le")) // 2 >= 130:
         ultimo = original.strip().split(" ")[-1]
-        if re.fullmatch(r"https?://\S*|[\U0001F000-\U0001FAFF☀-➿⬀-⯿️‍⃣\d]+", ultimo):
+        if re.fullmatch(r"https?://\S*|[\U0001F000-\U0001FAFF☀-➿⬀-⯿️⃣\d]+", ultimo):
             # El corte cayó en un enlace o un emoji: el texto visible está completo.
             limpio += "…"
         else:

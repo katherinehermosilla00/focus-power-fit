@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../auth/AuthContext";
 
 import Link from "next/link";
+import { useCerrarSolo } from "../../components/useCerrarSolo";
 
 type Cliente = {
 
@@ -156,6 +157,7 @@ export default function AsignacionesPage() {
   const [guardando, setGuardando] = useState(false);
 
   const [mensaje, setMensaje] = useState("");
+  useCerrarSolo(mensaje, setMensaje);
 
   const [errorFormulario, setErrorFormulario] = useState("");
 
@@ -165,6 +167,7 @@ export default function AsignacionesPage() {
   const [pagina, setPagina] = useState(1);
   const [procesandoId, setProcesandoId] = useState<number | null>(null);
   const [mensajeListado, setMensajeListado] = useState("");
+  useCerrarSolo(mensajeListado, setMensajeListado);
   const [errorListado, setErrorListado] = useState("");
 
   useEffect(() => {
@@ -607,7 +610,20 @@ export default function AsignacionesPage() {
                   {h.diaSemana}, {horaCorta(h.horaInicio)}–{horaCorta(h.horaFin)} · {h.profesor?.nombre ?? "Profesor no disponible"} · {h.modalidad}
                 </option>)}
               </select>
-              {!cargandoDatos && horariosCompatibles.length === 0 && <small>No hay horarios activos compatibles con el plan seleccionado.</small>}
+              {!cargandoDatos && horariosActivos.length === 0 && (
+                <small>
+                  No hay horarios activos. Crea o activa uno en{" "}
+                  <Link href="/admin/horarios">Gestión de horarios</Link>{" "}
+                  para poder asignar profesor y horario al cliente.
+                </small>
+              )}
+              {!cargandoDatos && horariosActivos.length > 0 && horariosCompatibles.length === 0 && (
+                <small>
+                  No hay horarios {planSeleccionado?.modalidad === "Compartido" ? "compartidos (dupla)" : "individuales"} activos
+                  para este plan. Crea uno en{" "}
+                  <Link href="/admin/horarios">Gestión de horarios</Link>.
+                </small>
+              )}
             </div>
             <div className="asig-date-grid">
               <div className="asig-field">

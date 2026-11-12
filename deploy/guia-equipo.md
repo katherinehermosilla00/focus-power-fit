@@ -2,7 +2,7 @@
 
 Con esta guía levantas el sistema completo en Docker (sitio, API, MySQL y FitBot) con una copia de la base de datos real. Mientras no exista el servidor, cada integrante trabaja con **su propia copia**: lo que cambies en tu computador no lo ven los demás.
 
-> ⚠️ **La copia tiene datos personales reales de clientes.** Úsala solo para el proyecto, no la copies a otros lugares ni la compartas, y bórrala cuando ya no la necesites (sección «Borrar la copia»). Los correos van **siempre apagados** en tu computador (paso 3), para que el sistema nunca escriba a clientes reales.
+**La copia tiene datos personales reales de clientes.** Úsala solo para el proyecto, no la copies a otros lugares ni la compartas, y bórrala cuando ya no la necesites (sección «Borrar la copia»). Los correos van **siempre apagados** en tu computador (paso 3), para que el sistema nunca escriba a clientes reales.
 
 ## Lo que necesitas
 

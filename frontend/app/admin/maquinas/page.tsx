@@ -853,7 +853,7 @@ export default function MaquinasAdminPage() {
           <Toast
             mensaje={mensaje}
             tipo="success"
-            duracion={3000}
+            duracion={5000}
             onCerrar={() => setMensaje("")}
           />
         )}
@@ -1497,7 +1497,7 @@ export default function MaquinasAdminPage() {
                 </p>
                 <p>
                   <strong>Estado:</strong>{" "}
-                  {detalle.estado}
+                  <span className={detalle.estado === "Fuera de servicio" ? "estado-inactivo" : undefined}>{detalle.estado}</span>
                 </p>
                 <p>
                   <strong>Última mantención:</strong>{" "}

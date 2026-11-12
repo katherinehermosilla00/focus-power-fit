@@ -12,6 +12,7 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../auth/AuthContext";
+import { useCerrarSolo } from "../../components/useCerrarSolo";
 
 const API_URL = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api`;
 const POR_PAGINA = 10;
@@ -127,6 +128,7 @@ export default function PagosPage() {
   const [cargandoDatos, setCargandoDatos] = useState(true);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
+  useCerrarSolo(mensaje, setMensaje);
 
   const config = useMemo(
     () => ({

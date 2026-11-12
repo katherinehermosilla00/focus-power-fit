@@ -12,6 +12,7 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../auth/AuthContext";
+import { useCerrarSolo } from "../../components/useCerrarSolo";
 
 type EstadoPlan = "Activo" | "Inactivo";
 type ModalidadPlan = "Individual" | "Compartido";
@@ -115,6 +116,7 @@ export default function PlanesPage() {
 
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
+  useCerrarSolo(mensaje, setMensaje);
 
   const esAdmin = usuario?.rol === "admin";
 
@@ -1111,7 +1113,7 @@ export default function PlanesPage() {
 
                 <p>
                   <strong>Estado:</strong>{" "}
-                  {planDetalle.estado}
+                  <span className={planDetalle.estado.startsWith("Inactiv") ? "estado-inactivo" : undefined}>{planDetalle.estado}</span>
                 </p>
               </div>
 

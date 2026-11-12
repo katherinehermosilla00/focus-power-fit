@@ -19,6 +19,9 @@ type EstadoCliente = "Activo" | "Inactivo";
 
 type Aviso = { texto: string; tipo: ToastTipo };
 
+// Paquetes de clases de los planes Individual y Dupla (mismos nombres que en Planes).
+const PAQUETES_CLASES = [5, 8, 12, 20, 24, 36, 72, 96, 120];
+
 const mensajeDe = (error: unknown, porDefecto: string) =>
   (axios.isAxiosError(error) && error.response?.data?.mensaje) || porDefecto;
 
@@ -418,7 +421,7 @@ export default function ClientesPage() {
         <Toast
           mensaje={aviso.texto}
           tipo={aviso.tipo}
-          duracion={aviso.tipo === "success" ? 3000 : 0}
+          duracion={aviso.tipo === "success" ? 5000 : 0}
           onCerrar={() => setAviso(null)}
         />
       )}
@@ -540,18 +543,18 @@ export default function ClientesPage() {
                 onChange={(e) => setPlan(e.target.value)}
               >
                 <option value="">Sin plan asignado</option>
-                <option value="Personal Training">
-                  Personal Training
-                </option>
-                <option value="Plan Mensual">
-                  Plan Mensual
-                </option>
-                <option value="Plan Trimestral">
-                  Plan Trimestral
-                </option>
-                <option value="Plan Semestral">
-                  Plan Semestral
-                </option>
+                {["Individual", "Dupla"].map((tipo) => (
+                  <optgroup key={tipo} label={`Plan ${tipo} (paquetes de clases)`}>
+                    {PAQUETES_CLASES.map((clases) => (
+                      <option key={clases} value={`Plan ${tipo} - ${clases} clases`}>
+                        {`Plan ${tipo} - ${clases} clases`}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+                <optgroup label="Plan por Clase">
+                  <option value="Plan por Clase">Plan por Clase</option>
+                </optgroup>
               </select>
             </div>
 
@@ -991,7 +994,15 @@ function Detalle({
   return (
     <div className="clientes-detalle">
       <span>{titulo}</span>
-      <strong>{valor || "No informado"}</strong>
+      <strong
+        className={
+          titulo === "Estado" && valor?.startsWith("Inactiv")
+            ? "estado-inactivo"
+            : undefined
+        }
+      >
+        {valor || "No informado"}
+      </strong>
     </div>
   );
 }

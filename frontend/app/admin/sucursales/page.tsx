@@ -23,6 +23,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { useAuth, fetchConSesion } from "../../auth/AuthContext";
+import { useCerrarSolo } from "../../components/useCerrarSolo";
 
 
 
@@ -235,6 +236,7 @@ export default function SucursalesPage() {
   const [error, setError] = useState("");
 
   const [mensaje, setMensaje] = useState("");
+  useCerrarSolo(mensaje, setMensaje);
 
   const esAdmin = usuario?.rol === "admin";
 
@@ -2498,7 +2500,7 @@ export default function SucursalesPage() {
 
                   <strong>Estado:</strong>{" "}
 
-                  {sucursalDetalle.estado}
+                  <span className={sucursalDetalle.estado.startsWith("Inactiv") ? "estado-inactivo" : undefined}>{sucursalDetalle.estado}</span>
 
                 </p>
 
