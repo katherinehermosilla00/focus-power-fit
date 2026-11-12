@@ -12,6 +12,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../../auth/AuthContext";
+import { useCerrarSolo } from "../../components/useCerrarSolo";
 
 
 type Estado = "Activo" | "Inactivo";
@@ -124,6 +125,7 @@ export default function HorariosPage() {
   const [errorCarga, setErrorCarga] = useState("");
   const [errorFormulario, setErrorFormulario] = useState("");
   const [mensaje, setMensaje] = useState("");
+  useCerrarSolo(mensaje, setMensaje);
 
   useEffect(() => {
     if (cargando) return;
@@ -418,7 +420,10 @@ export default function HorariosPage() {
     setMensaje("");
     setHorarioDetalle(null);
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Lleva al formulario de edición, no al inicio de la página.
+    document
+      .getElementById("formulario-horarios")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const cambiarEstado = async (horario: Horario) => {
@@ -847,7 +852,7 @@ export default function HorariosPage() {
 
       <div className="horarios-distribucion">
         {/* FORMULARIO */}
-        <section className="horarios-panel">
+        <section id="formulario-horarios" className="horarios-panel">
           <h2 className="horarios-panel-titulo">
             {horarioEditandoId === null
               ? "Registrar horario"
@@ -1180,7 +1185,7 @@ export default function HorariosPage() {
                             className={
                               horario.estado === "Activo"
                                 ? "text-green-400 font-semibold"
-                                : "text-gray-400 font-semibold"
+                                : "estado-inactivo font-semibold"
                             }
                           >
                             {horario.estado}
@@ -1334,7 +1339,7 @@ export default function HorariosPage() {
               </p>
 
               <p>
-                <strong>Estado:</strong> {horarioDetalle.estado}
+                <strong>Estado:</strong> <span className={horarioDetalle.estado.startsWith("Inactiv") ? "estado-inactivo" : undefined}>{horarioDetalle.estado}</span>
               </p>
             </div>
 

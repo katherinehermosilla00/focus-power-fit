@@ -13,6 +13,7 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../auth/AuthContext";
+import { useCerrarSolo } from "../../components/useCerrarSolo";
 
 type EstadoProfesor = "Activo" | "Inactivo";
 type TurnoProfesor = "AM" | "PM" | "AM y PM";
@@ -163,6 +164,7 @@ export default function ProfesoresPage() {
 
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
+  useCerrarSolo(mensaje, setMensaje);
 
   const esAdmin = usuario?.rol === "admin";
 
@@ -1272,7 +1274,7 @@ export default function ProfesoresPage() {
 
                 <p>
                   <strong>Estado:</strong>{" "}
-                  {profesorDetalle.estado}
+                  <span className={profesorDetalle.estado.startsWith("Inactiv") ? "estado-inactivo" : undefined}>{profesorDetalle.estado}</span>
                 </p>
               </div>
 

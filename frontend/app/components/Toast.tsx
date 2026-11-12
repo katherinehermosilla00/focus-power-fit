@@ -14,7 +14,7 @@ interface ToastProps {
 export default function Toast({
   mensaje,
   tipo = "success",
-  duracion = 3000,
+  duracion = 5000,
   onCerrar,
 }: ToastProps) {
   useEffect(() => {

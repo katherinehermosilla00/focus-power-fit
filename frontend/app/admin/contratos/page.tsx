@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../auth/AuthContext";
 import "../modulo-oscuro.css";
+import { useCerrarSolo } from "../../components/useCerrarSolo";
 
 const API_URL = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api`;
 const TAMANO_MAXIMO = 10 * 1024 * 1024;
@@ -70,6 +71,7 @@ export default function ContratosPage() {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
+  useCerrarSolo(mensaje, setMensaje);
 
   const campoArchivo = useRef<HTMLInputElement>(null);
 

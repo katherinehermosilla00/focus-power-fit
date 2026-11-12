@@ -1,4 +1,4 @@
-﻿# Programa los respaldos automaticos en el Programador de tareas de Windows,
+# Programa los respaldos automaticos en el Programador de tareas de Windows,
 # para el usuario actual (no requiere administrador):
 #   - Respaldo cifrado todos los dias.
 #   - Prueba de restauracion una vez por semana.

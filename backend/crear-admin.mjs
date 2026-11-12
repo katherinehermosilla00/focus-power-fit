@@ -1,4 +1,4 @@
-﻿
+
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import readline from "node:readline/promises";

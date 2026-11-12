@@ -15,7 +15,7 @@ const planesIndividuales: Paquete[] = [
   { clases: 5, precio: 100000, vigencia: 60 },
   { clases: 8, precio: 152000, vigencia: 60 },
   { clases: 12, precio: 216000, vigencia: 60 },
-  { clases: 20, precio: 340000, vigencia: null },
+  { clases: 20, precio: 340000, vigencia: 60 },
   { clases: 24, precio: 388800, vigencia: 90 },
   { clases: 36, precio: 558000, vigencia: 120 },
   { clases: 72, precio: 1036800, vigencia: 240 },
@@ -26,16 +26,18 @@ const planesDupla: Paquete[] = [
   { clases: 5, precio: 150000, vigencia: 60 },
   { clases: 8, precio: 232000, vigencia: 60 },
   { clases: 12, precio: 336000, vigencia: 60 },
-  { clases: 20, precio: 540000, vigencia: null },
+  { clases: 20, precio: 540000, vigencia: 60 },
   { clases: 24, precio: 628800, vigencia: 90 },
   { clases: 36, precio: 918000, vigencia: 120 },
   { clases: 72, precio: 1684800, vigencia: 240 },
   { clases: 96, precio: 2188800, vigencia: 360 },
   { clases: 120, precio: 2544000, vigencia: 360 },
 ];
-const planesPorClase: Paquete[] = [
-  { clases: 1, precio: null, vigencia: null },
-];
+// Valor de cada clase según el paquete individual (precio total / clases).
+const planesPorClase: Paquete[] = planesIndividuales.map((paquete) => ({
+  ...paquete,
+  precio: paquete.precio === null ? null : Math.round(paquete.precio / paquete.clases),
+}));
 const formatoPrecio = (valor: number) =>
   new Intl.NumberFormat("es-CL", {
     style: "currency",
@@ -163,7 +165,7 @@ function TablaPlanes({
           <thead>
             <tr>
               <th scope="col">Clases</th>
-              <th scope="col">Precio total</th>
+              <th scope="col">{porClase ? "Valor por clase" : "Precio total"}</th>
               <th scope="col">Vigencia</th>
             </tr>
           </thead>
@@ -183,7 +185,7 @@ function TablaPlanes({
                 <td>
                   {paquete.vigencia !== null
                     ? `${paquete.vigencia} días`
-                    : "Por confirmar"}
+                    : "—"}
                 </td>
               </tr>
             ))}

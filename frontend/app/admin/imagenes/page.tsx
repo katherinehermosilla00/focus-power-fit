@@ -21,6 +21,7 @@ import type { FormEvent } from "react";
 import Link from "next/link";
 
 import axios from "axios";
+import { useCerrarSolo } from "../../components/useCerrarSolo";
 
 const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001").replace(/\/+$/, "");
 
@@ -399,6 +400,7 @@ export default function AdministrarImagenes() {
   const [error, setError] = useState("");
 
   const [exito, setExito] = useState("");
+  useCerrarSolo(exito, setExito);
 
   const inputArchivo = useRef<HTMLInputElement>(null);
 

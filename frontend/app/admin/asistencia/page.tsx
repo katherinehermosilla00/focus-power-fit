@@ -11,6 +11,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../auth/AuthContext";
 import Link from "next/link";
+import { useCerrarSolo } from "../../components/useCerrarSolo";
 
 type EstadoAsistencia = "Presente" | "Ausente" | "Justificada";
 
@@ -129,6 +130,7 @@ export default function AsistenciaPage() {
   const [guardando, setGuardando] = useState(false);
 
   const [mensaje, setMensaje] = useState("");
+  useCerrarSolo(mensaje, setMensaje);
   const [errorFormulario, setErrorFormulario] = useState("");
   const [errorCarga, setErrorCarga] = useState("");
 
@@ -361,10 +363,10 @@ export default function AsistenciaPage() {
     setErrorFormulario("");
     setAsistenciaDetalle(null);
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    // Lleva al formulario de edición, no al inicio de la página.
+    document
+      .getElementById("formulario-asistencia")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   if (cargando) {
@@ -422,7 +424,7 @@ export default function AsistenciaPage() {
 
       <div className="asistencia-distribucion">
         {/* FORMULARIO */}
-        <section className="asistencia-panel">
+        <section id="formulario-asistencia" className="asistencia-panel">
           <h2 className="admin-modulo-panel-titulo">
             {asistenciaEditandoId === null
               ? "Registrar asistencia"
