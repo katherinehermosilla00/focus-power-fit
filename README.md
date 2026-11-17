@@ -234,7 +234,7 @@ cd backend && npm test
 cd ../frontend && npm run lint && npx tsc --noEmit && npm test && npm run build
 ```
 
-Las pruebas del backend no necesitan `.env` ni MySQL y cubren autenticación, control de acceso, registro, recuperación de contraseña, contratos, cargas, recordatorios y migración. Los resultados de cada ejecución se guardan en `Documentacion CAPSTONE/Fase 03/Evidencias Seguridad/`.
+Las pruebas del backend no necesitan `.env` ni MySQL y cubren autenticación, control de acceso, registro, recuperación de contraseña, contratos, cargas, recordatorios y migración. Las evidencias de las pruebas están en `Documentacion CAPSTONE/Fase 2/Evidencias Proyecto/Evidencias de sistema/Aplicación/`.
 
 Las pruebas son evidencia de calidad, no una garantía de ausencia de fallas.
 
