@@ -2,12 +2,6 @@
 //
 // Simular (no cambia nada):  npm run unir:duplicados
 // Aplicar:                   npm run unir:duplicados -- --aplicar --base=NOMBRE_DE_LA_BASE
-//
-// Solo une una pareja si tiene el mismo correo y nombre, los RUT no se
-// contradicen y ninguna ficha tiene pagos, asignaciones, contratos o
-// recordatorios. Queda la ficha con la fecha de creación más reciente de los
-// Excel, completada con los datos que le falten. Todo lo demás se informa para
-// revisarlo a mano. Por privacidad imprime solo ID. Respalda antes la base.
 
 import "dotenv/config";
 import fs from "node:fs";

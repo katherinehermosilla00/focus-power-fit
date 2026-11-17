@@ -1,17 +1,3 @@
-// Prepara una base de datos existente para las medidas de seguridad.
-// Se puede ejecutar más de una vez: npm run migrar:seguridad
-//
-// 1. Agrega usuarios.terminosAceptadosAt.
-// 2. Convierte correos y RUT vacíos en NULL, quita espacios sobrantes y pasa los
-//    correos a minúsculas.
-// 3. Crea índices únicos para correo y RUT de clientes.
-// 4. Quita el rol "profesor" de usuarios, que ya no tiene acceso al sistema.
-// 5. Crea un índice único para no registrar dos veces la misma asistencia.
-//
-// Si hay duplicados no crea el índice, y si hay cuentas de profesor no cambia el
-// rol: informa los ID para corregirlos. Por privacidad no imprime correos ni RUT.
-// Respalda antes la base.
-
 import "dotenv/config";
 import path from "node:path";
 import { DataTypes, QueryTypes } from "sequelize";
