@@ -249,6 +249,9 @@ export default function FitBot() {
   const requestController =
     useRef<AbortController | null>(null);
   const sendingRef = useRef(false);
+  // Cambia cada vez que se cierra el chat: así una respuesta que llega
+  // tarde no se agrega a la conversación nueva.
+  const conversacionRef = useRef(0);
 
   // ===================================================
   // IDENTIFICADOR DE CONVERSACIÓN
@@ -267,6 +270,23 @@ export default function FitBot() {
       requestController.current?.abort();
     };
   }, []);
+
+  // ===================================================
+  // CERRAR Y REINICIAR LA CONVERSACIÓN
+  // ===================================================
+
+  // Al cerrar el chat la conversación empieza de cero: se borran los
+  // mensajes y se usa un identificador nuevo, para que FitBot tampoco
+  // recuerde preguntas pendientes de la conversación anterior.
+  function cerrarChat() {
+    requestController.current?.abort();
+    conversacionRef.current += 1;
+    sessionId.current = nuevoSessionId();
+    setMessages([INITIAL_MESSAGE]);
+    setMessage("");
+    setErrorMessage("");
+    setIsOpen(false);
+  }
 
   // ===================================================
   // SCROLL AUTOMÁTICO
@@ -326,6 +346,7 @@ export default function FitBot() {
 
     const controller = new AbortController();
     requestController.current = controller;
+    const conversacion = conversacionRef.current;
 
     const timeoutId = setTimeout(() => {
       controller.abort();
@@ -417,6 +438,11 @@ export default function FitBot() {
         throw new Error("FITBOT_INVALID_ANSWER");
       }
 
+      // El chat se cerró mientras FitBot respondía.
+      if (conversacion !== conversacionRef.current) {
+        return;
+      }
+
       setMessages(prev => [
         ...prev,
         {
@@ -425,6 +451,10 @@ export default function FitBot() {
         },
       ]);
     } catch {
+      if (conversacion !== conversacionRef.current) {
+        return;
+      }
+
       const errorText = controller.signal.aborted
         ? "La respuesta está tardando demasiado. " +
           "Intenta nuevamente en unos momentos."
@@ -494,7 +524,7 @@ export default function FitBot() {
             <button
               type="button"
               className={styles.closeButton}
-              onClick={() => setIsOpen(false)}
+              onClick={cerrarChat}
               aria-label="Cerrar chatbot"
             >
               ✕

@@ -333,3 +333,27 @@ test("Ante cualquier salida inválida se entrega el mensaje original", () => {
     assert.equal(resultado.output, "MENSAJE ORIGINAL", contenido);
   }
 });
+
+test("FitBot entiende modismos chilenos para responder sí, no, saludar y despedirse", () => {
+  const memoria = {};
+  const conversar = (mensaje) =>
+    ejecutarNodo("Code in JavaScript", {
+      $input: { all: () => [{ json: { chatInput: mensaje, sessionId: "modismos" } }] },
+      $getWorkflowStaticData: () => memoria,
+    }).output;
+
+  for (const si of ["oka", "ok", "dale", "dale po", "ya po", "siii po", "okis", "demas", "listo"]) {
+    conversar("sucursales");
+    assert.match(conversar(si), /NUESTRAS UBICACIONES/, si);
+  }
+
+  conversar("sucursales");
+  assert.match(conversar("no po"), /Necesitas algo más/);
+
+  for (const saludo of ["wena", "holaaa", "hola po"]) {
+    assert.match(conversar(saludo), /Hola/, saludo);
+  }
+  assert.match(conversar("gracias po"), /De nada/);
+  assert.match(conversar("chao po"), /Hasta pronto/);
+  assert.match(conversar("eso seria todo"), /Gracias por comunicarte/);
+});
