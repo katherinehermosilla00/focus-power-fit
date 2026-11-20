@@ -56,16 +56,8 @@ backend/data/
 # Archivo que Next.js crea solo al ejecutar "next dev"; no es parte del proyecto.
 AGENTS.md
 
-# Pruebas de QA: dependencias y resultados (pueden contener datos del entorno QA)
-pruebas/node_modules/
-pruebas/resultados/
-
-# Pruebas QA dentro de Documentacion CAPSTONE
-/Documentacion CAPSTONE/pruebas/node_modules/
-/Documentacion CAPSTONE/pruebas/resultados/
-
-# Cuentas y credenciales de pruebas QA
-/Documentacion CAPSTONE/pruebas/qa/cuentas-qa.json
-
-# Cuentas y credenciales de pruebas QA
-/Documentacion CAPSTONE/pruebas/qa/cuentas-qa.json
+# Pruebas de QA (en Documentacion CAPSTONE/Fase 2/.../Aplicación/pruebas):
+# dependencias, resultados y cuentas, que pueden contener datos del entorno QA
+**/pruebas/node_modules/
+**/pruebas/resultados/
+**/pruebas/qa/cuentas-qa.json

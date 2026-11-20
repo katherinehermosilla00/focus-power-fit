@@ -4,17 +4,17 @@ Pruebas automatizadas de Focus Power Fit con cinco herramientas:
 
 | Herramienta | Qué prueba | Archivos |
 |---|---|---|
-| n8n | Las 52 conversaciones de FitBot y el flujo publicado | `../n8n/probar-fitbot.mjs`, `n8n/capturar-n8n.mjs` |
+| n8n | Las 52 conversaciones de FitBot y el flujo publicado | `../../../../../../n8n/probar-fitbot.mjs`, `n8n/capturar-n8n.mjs` |
 | Postman (Newman) | 38 casos de la API: funcionales, permisos y seguridad | `postman/` |
 | Chrome DevTools | Lighthouse en celular y escritorio; consola, red, rendimiento, TLS y HAR | `devtools/auditar.mjs` |
 | Playwright | 34 pruebas de punta a punta en escritorio y celular | `playwright/`, `playwright.config.mjs` |
 | OWASP ZAP | Escaneo pasivo y escaneo activo con sesión de administrador | `zap/plan-activo.yaml` |
 
-> ⚠️ **Siempre contra el entorno QA, nunca contra el sistema real.** El escaneo activo de ZAP ataca de verdad la aplicación, y Postman y Playwright crean registros. El entorno QA es una instalación Docker aparte que se borra al terminar.
+> **Siempre contra el entorno QA, nunca contra el sistema real.** El escaneo activo de ZAP ataca de verdad la aplicación, y Postman y Playwright crean registros. El entorno QA es una instalación Docker aparte que se borra al terminar.
 
 ## 1. Levantar el entorno QA
 
-Es la misma instalación de `deploy/`, con otro nombre de proyecto (`fpf-qa`), los correos apagados y el certificado también para `host.docker.internal` (para que ZAP llegue desde su contenedor). Se crea un archivo de configuración fuera del repositorio, por ejemplo `C:\FocusPowerFit\env-qa`, como el de la [guía para el equipo](../deploy/guia-equipo.md), con estos cambios:
+Es la misma instalación de `deploy/`, con otro nombre de proyecto (`fpf-qa`), los correos apagados y el certificado también para `host.docker.internal` (para que ZAP llegue desde su contenedor). Se crea un archivo de configuración fuera del repositorio, por ejemplo `C:\FocusPowerFit\env-qa`, como el de la [guía para el equipo](../../../../../../deploy/guia-equipo.md), con estos cambios:
 
 ```env
 DOMINIO=localhost, host.docker.internal
@@ -31,7 +31,7 @@ docker compose -p fpf-qa --env-file C:\FocusPowerFit\env-qa up -d --build
 Carga FitBot (paso 6 de la guía, agregando `-p fpf-qa --env-file C:\FocusPowerFit\env-qa`) y crea las cuentas y datos ficticios de QA. Este comando también reinicia las cancelaciones del cliente QA, así que se repite antes de cada ronda de pruebas:
 
 ```bash
-docker compose -p fpf-qa --env-file C:\FocusPowerFit\env-qa cp ../pruebas/qa/. backend:/app/backend/qa
+docker compose -p fpf-qa --env-file C:\FocusPowerFit\env-qa cp "../Documentacion CAPSTONE/Fase 2/Evidencias Proyecto/Evidencias de sistema/Aplicación/pruebas/qa/." backend:/app/backend/qa
 ```
 
 ```bash
@@ -61,7 +61,7 @@ Los resultados quedan en `resultados/`, que no se sube a GitHub.
 **n8n (FitBot):**
 
 ```bash
-node ../n8n/probar-fitbot.mjs http://localhost:5680/webhook/e46ddba5-479d-4fb9-bf0d-806ab54a6344/chat
+node ../../../../../../n8n/probar-fitbot.mjs http://localhost:5680/webhook/e46ddba5-479d-4fb9-bf0d-806ab54a6344/chat
 ```
 
 ```bash

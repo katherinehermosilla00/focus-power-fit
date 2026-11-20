@@ -11,7 +11,7 @@ El código de Focus Power Fit CRM está en la raíz del repositorio, para que se
 | [`backend/src/tests/`](../../../../../backend/src/tests) | 126 pruebas automatizadas del backend | Node.js Test Runner y Supertest |
 | [`n8n/`](../../../../../n8n) | Flujo del chatbot FitBot | n8n |
 | [`deploy/`](../../../../../deploy) | Despliegue con Docker, HTTPS y respaldos cifrados | Docker Compose y Caddy |
-| [`pruebas/`](../../../../../pruebas) | Campaña de QA: Postman, Playwright, Chrome DevTools, OWASP ZAP y n8n | — |
+| [`pruebas/`](pruebas) | Campaña de QA: Postman, Playwright, Chrome DevTools, OWASP ZAP y n8n | — |
 | [`.github/workflows/ci.yml`](../../../../../.github/workflows/ci.yml) | Revisión automática en cada cambio: lint, tipos, pruebas y compilación | GitHub Actions |
 
 La base de datos se documenta en la carpeta hermana [`Base de datos`](../Base%20de%20datos).

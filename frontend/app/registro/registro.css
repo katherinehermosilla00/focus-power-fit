@@ -18,14 +18,17 @@
   font-family: inherit;
 }
 
-/* FONDO NEGRO ANIMADO */
+/* FONDO CON FOTO DEL GIMNASIO, OSCURECIDA PARA QUE SE LEA EL FORMULARIO */
 
 .registro-fondo {
   position: absolute;
   inset: 0;
   z-index: -1;
   overflow: hidden;
-  background: #09090f;
+  background:
+    linear-gradient(rgba(9, 9, 15, 0.78), rgba(9, 9, 15, 0.92)),
+    url("/focus-dashboard.webp") center 30% / cover no-repeat,
+    #09090f;
   pointer-events: none;
 }
 

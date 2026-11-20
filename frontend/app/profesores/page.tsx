@@ -233,7 +233,7 @@ function TarjetaProfesor({
 
       <div
 
-        className="pointer-events-none relative z-1 mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border text-2xl font-black tracking-wide transition-all duration-300 group-hover:scale-105"
+        className="pointer-events-none relative z-1 mb-5 flex h-32 w-32 items-center justify-center overflow-hidden rounded-2xl border text-3xl font-black tracking-wide transition-all duration-300 group-hover:scale-105"
 
         style={{
 
@@ -264,7 +264,7 @@ function TarjetaProfesor({
           <img
             src={fotoUrl}
             alt={`Fotografía de ${nombre}`}
-            className="h-full w-full rounded-2xl object-cover"
+            className="h-full w-full rounded-2xl object-cover object-[center_15%]"
             onError={(evento) => {
               // Si el archivo no carga, recuperar las iniciales sin romper la tarjeta.
               const elemento = evento.currentTarget;
