@@ -1,6 +1,6 @@
 # Focus Power Fit CRM
 
-Sistema CRM desarrollado para **Focus Power Fit**, orientado a digitalizar, centralizar y optimizar la gestión de clientes, sucursales, profesores, planes de entrenamiento y procesos administrativos del gimnasio.
+Este proyecto consiste en la implementación de un **sistema de gestión con enfoque CRM** para **Focus Power Fit**, un gimnasio de entrenamiento personalizado. Su propósito es digitalizar, centralizar y optimizar la gestión de clientes, sucursales, profesores, planes de entrenamiento y procesos administrativos del gimnasio.
 
 La plataforma ofrece una interfaz web responsive, con acceso diferenciado para administradores y clientes. Su objetivo es mejorar la organización de la información, automatizar tareas y facilitar la gestión operativa del gimnasio.
 
@@ -79,7 +79,7 @@ La solución considera las condiciones establecidas en los contratos de prestaci
 
 ### Infraestructura
 
-- Docker y Docker Compose. Hoy n8n corre en Docker; el resto se completa para el despliegue.
+- Docker y Docker Compose: el sistema completo (sitio, API, MySQL, n8n y respaldos) se instala con un solo archivo, con Caddy para HTTPS automático. Ver [`deploy/README.md`](deploy/README.md).
 
 ### Automatización
 
@@ -350,26 +350,23 @@ La documentación complementaria del proyecto se encuentra en:
 
 ## Estado actual del proyecto
 
-🚧 **Proyecto en desarrollo y validación — Fase 2 de Capstone.**
+✅ **Proyecto en etapa de cierre y validación final — Fase 3 de Capstone.**
 
 Entre los avances documentados se encuentran:
 
-- Desarrollo de la arquitectura frontend y backend.
-- Implementación de módulos administrativos del CRM.
-- Gestión de autenticación y permisos.
-- Integración de componentes y servicios.
-- Desarrollo e integración del chatbot FitBot con n8n.
-- Incorporación de pruebas automatizadas.
-- Uso de GitHub para seguimiento y control de versiones.
-- Elaboración de documentación técnica y evidencias de avance.
+- Arquitectura frontend y backend implementada, con base de datos MySQL de 13 tablas.
+- Panel de administración con sus módulos: clientes, sucursales, profesores, planes, horarios, asignaciones, asistencia, contratos, pagos, recordatorios, máquinas e imágenes.
+- Portal del cliente («Mi cuenta»), con registro verificado por correo y recuperación de contraseña.
+- Autenticación con JWT, contraseñas cifradas y permisos por rol.
+- Chatbot FitBot integrado con n8n, con reglas en JavaScript e IA local con Ollama.
+- Recordatorios automáticos de clases por correo.
+- Pruebas automatizadas del backend y del frontend, y una campaña de QA con Postman, Playwright, Chrome DevTools, OWASP ZAP y n8n.
+- Instalación con Docker y HTTPS comprobada, y respaldos cifrados con prueba de restauración.
+- Documentación y evidencias de cada fase en `Documentacion CAPSTONE/`.
 
 ### Actividades pendientes o en consolidación
 
-- Completar y validar el módulo de sucursales.
-- Verificar integralmente las reglas contractuales.
-- Ampliar las pruebas funcionales y automatizadas.
-- Consolidar la integración de todos los módulos.
-- Completar la documentación y validación final del proyecto.
+- Publicar el sistema en el hosting del cliente y conectarlo a su dominio. La publicación se hará desde la rama `focuspowerfit`, que por ahora cumple el papel de `main` para el sistema en uso. Así se mantiene un mayor control cuando el cliente empiece a usarlo y se pueden registrar los cambios que pida a futuro. Si no se requieren más cambios, el hosting se conectará directamente a `main`.
 
 ## Alcance de los pagos
 

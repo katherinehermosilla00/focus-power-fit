@@ -209,6 +209,63 @@ type Conteos = {
   sinSucursal: number;
 };
 
+type AsignacionResumen = {
+  clienteId: number;
+  planId: number;
+  fechaTermino: string | null;
+  estado: string;
+};
+
+type AsistenciaResumen = {
+  fecha: string;
+  estado: string;
+};
+
+type Actividad = {
+  planesVigentes: number;
+  clientesConPlan: number;
+  presentesMes: number;
+  ausentesMes: number;
+};
+
+// Fecha del computador en formato AAAA-MM-DD, sin pasar por UTC.
+function fechaLocalTexto(fecha: Date) {
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dia = String(fecha.getDate()).padStart(2, "0");
+  return `${fecha.getFullYear()}-${mes}-${dia}`;
+}
+
+// Un plan está vigente si su asignación está activa y no ha terminado.
+// Un cliente con varios horarios del mismo plan cuenta como un solo plan.
+function calcularActividad(
+  asignaciones: AsignacionResumen[],
+  asistencias: AsistenciaResumen[],
+  hoy: Date
+): Actividad {
+  const hoyTexto = fechaLocalTexto(hoy);
+  const mesActual = hoyTexto.slice(0, 7);
+
+  const vigentes = asignaciones.filter(
+    (asignacion) =>
+      asignacion.estado === "Activa" &&
+      (!asignacion.fechaTermino ||
+        String(asignacion.fechaTermino).slice(0, 10) >= hoyTexto)
+  );
+
+  const delMes = asistencias.filter(
+    (asistencia) => String(asistencia.fecha).slice(0, 7) === mesActual
+  );
+
+  return {
+    planesVigentes: new Set(
+      vigentes.map((asignacion) => `${asignacion.clienteId}-${asignacion.planId}`)
+    ).size,
+    clientesConPlan: new Set(vigentes.map((asignacion) => asignacion.clienteId)).size,
+    presentesMes: delMes.filter((asistencia) => asistencia.estado === "Presente").length,
+    ausentesMes: delMes.filter((asistencia) => asistencia.estado === "Ausente").length,
+  };
+}
+
 // Colores para el gráfico; se repiten si hay más sucursales que colores.
 const COLORES_SUCURSAL = ["#b91c1c", "#525252", "#f87171", "#a3a3a3", "#7f1d1d", "#d4d4d4"];
 
@@ -541,6 +598,8 @@ export default function AdminPage() {
 
   const [clientes, setClientes] = useState<Conteos | null>(null);
 
+  const [actividad, setActividad] = useState<Actividad | null>(null);
+
   const [errorDatos, setErrorDatos] = useState("");
 
   const [cargandoDatos, setCargandoDatos] = useState(true);
@@ -579,7 +638,7 @@ export default function AdminPage() {
 
         };
 
-        const [rClientes, rSucursales] = await Promise.all([
+        const [rClientes, rSucursales, rAsignaciones, rAsistencias] = await Promise.all([
 
           fetchConSesion(`${API}/api/clientes`, {
 
@@ -597,9 +656,30 @@ export default function AdminPage() {
 
           }),
 
+          fetchConSesion(`${API}/api/asignaciones`, {
+
+            headers,
+
+            signal: controller.signal,
+
+          }),
+
+          fetchConSesion(`${API}/api/asistencias`, {
+
+            headers,
+
+            signal: controller.signal,
+
+          }),
+
         ]);
 
-        if (!rClientes.ok || !rSucursales.ok) {
+        if (
+          !rClientes.ok ||
+          !rSucursales.ok ||
+          !rAsignaciones.ok ||
+          !rAsistencias.ok
+        ) {
 
           throw new Error(
 
@@ -617,11 +697,23 @@ export default function AdminPage() {
 
           await rSucursales.json();
 
+        const listaAsignaciones: AsignacionResumen[] =
+
+          await rAsignaciones.json();
+
+        const listaAsistencias: AsistenciaResumen[] =
+
+          await rAsistencias.json();
+
         if (
 
           !Array.isArray(listaClientes) ||
 
-          !Array.isArray(listaSucursales)
+          !Array.isArray(listaSucursales) ||
+
+          !Array.isArray(listaAsignaciones) ||
+
+          !Array.isArray(listaAsistencias)
 
         ) {
 
@@ -654,6 +746,10 @@ export default function AdminPage() {
             porSucursal,
             sinSucursal,
           });
+
+          setActividad(
+            calcularActividad(listaAsignaciones, listaAsistencias, new Date())
+          );
 
           setErrorDatos("");
 
@@ -804,9 +900,13 @@ export default function AdminPage() {
 
       nombre: "Planes Vigentes",
 
-      valor: "—",
+      valor: actividad?.planesVigentes.toLocaleString("es-CL") ?? "—",
 
-      detalle: "Datos aún no conectados",
+      detalle: actividad
+        ? `${actividad.clientesConPlan.toLocaleString("es-CL")} ${
+            actividad.clientesConPlan === 1 ? "cliente" : "clientes"
+          } con plan activo`
+        : "Asignaciones activas",
 
       icono: "planes" as IconoNombre,
 
@@ -816,9 +916,13 @@ export default function AdminPage() {
 
       nombre: "Asistencias (Mes)",
 
-      valor: "—",
+      valor: actividad?.presentesMes.toLocaleString("es-CL") ?? "—",
 
-      detalle: "Datos aún no conectados",
+      detalle: actividad
+        ? `Presentes este mes; ${actividad.ausentesMes.toLocaleString("es-CL")} ${
+            actividad.ausentesMes === 1 ? "ausencia" : "ausencias"
+          }`
+        : "Presentes este mes",
 
       icono: "asistencias" as IconoNombre,
 

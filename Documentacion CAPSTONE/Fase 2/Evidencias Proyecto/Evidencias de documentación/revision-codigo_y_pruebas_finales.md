@@ -167,7 +167,7 @@ Pendiente para cerrar VAL-08: probar en un teléfono físico.
 
 ## Campaña de pruebas de QA, 9 de noviembre de 2026
 
-**Entorno:** instalación aparte en Docker, igual a la de producción (`deploy/`): Caddy con HTTPS, sitio, API, MySQL y n8n. Usó una copia de la base restaurada desde un respaldo cifrado, con los correos apagados y cuentas de prueba ficticias. El entorno se borró al terminar. Los scripts están en `pruebas/` y las instrucciones para repetirlas, en `pruebas/README.md`. Las evidencias se guardan fuera del repositorio.
+**Entorno:** instalación aparte en Docker, igual a la de producción (`deploy/`): Caddy con HTTPS, sitio, API, MySQL y n8n. Usó una copia de la base restaurada desde un respaldo cifrado, con los correos apagados y cuentas de prueba ficticias. El entorno se borró al terminar. Los scripts están en `Evidencias de sistema/Aplicación/pruebas/` y las instrucciones para repetirlas, en su `README.md`. Las evidencias se guardan fuera del repositorio.
 
 | Herramienta | Qué se probó | Resultado |
 |---|---|---|
@@ -189,4 +189,4 @@ Después de cada corrección se repitieron las pruebas de Playwright como regres
 
 Mejora futura: la portada en celular queda en 83/100 por el JavaScript que se ejecuta al cargar. Se puede mejorar enviando menos JavaScript, con componentes de servidor de Next.js.
 
-Registro en ISO: NC-16, NC-17 y NC-18 en [04-registros.md](../iso/04-registros.md).
+Registro en ISO: NC-16, NC-17 y NC-18, en la tabla de no conformidades del informe ejecutivo de esta carpeta (`Focus_Power_Fit_Informe_Ejecutivo.docx`).

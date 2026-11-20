@@ -1,6 +1,6 @@
 // Crea las cuentas y datos ficticios que usan las pruebas de QA.
-// Se ejecuta DENTRO del contenedor backend del entorno QA (ver pruebas/README.md):
-//   docker compose -p fpf-qa cp ../pruebas/qa/. backend:/app/backend/qa
+// Se ejecuta DENTRO del contenedor backend del entorno QA (ver el README.md de la carpeta pruebas):
+//   docker compose -p fpf-qa cp "../Documentacion CAPSTONE/Fase 2/Evidencias Proyecto/Evidencias de sistema/Aplicación/pruebas/qa/." backend:/app/backend/qa
 //   docker compose -p fpf-qa exec -T backend node qa/crear-datos-qa.mjs
 // Nunca se ejecuta contra la base real: se niega si NODE_ENV no es production
 // dentro de Docker o si la base no se llama focus_power_fit del contenedor mysql.
