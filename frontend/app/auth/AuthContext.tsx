@@ -66,6 +66,44 @@ function venceEn(token: string): number | null {
   }
 }
 
+// La sesión vive solo en la pestaña donde se inició (sessionStorage): al
+// abrir otra pestaña o cerrar esta, hay que iniciar sesión de nuevo.
+const CLAVE_TOKEN = "focusPowerFitToken";
+const CLAVE_USUARIO = "focusPowerFitUsuario";
+
+export function leerToken(): string | null {
+  try {
+    return sessionStorage.getItem(CLAVE_TOKEN);
+  } catch {
+    return null;
+  }
+}
+
+function guardarSesion(token: string, usuario: Usuario) {
+  sessionStorage.setItem(CLAVE_TOKEN, token);
+  sessionStorage.setItem(CLAVE_USUARIO, JSON.stringify(usuario));
+}
+
+function borrarSesion() {
+  try {
+    sessionStorage.removeItem(CLAVE_TOKEN);
+    sessionStorage.removeItem(CLAVE_USUARIO);
+  } catch {
+    // Sin acceso al almacenamiento no hay nada que borrar.
+  }
+}
+
+// Versiones anteriores guardaban la sesión en localStorage, compartida entre
+// pestañas. Se borra para que ninguna pestaña la reutilice.
+function borrarSesionCompartida() {
+  try {
+    localStorage.removeItem(CLAVE_TOKEN);
+    localStorage.removeItem(CLAVE_USUARIO);
+  } catch {
+    // Sin acceso al almacenamiento no hay nada que borrar.
+  }
+}
+
 const EVENTO_SESION_RECHAZADA = "focus:sesion-rechazada";
 
 // Para pantallas que no usan la instancia global de axios: avisa que el
@@ -93,8 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [sesionExpirada, setSesionExpirada] = useState(false);
 
   const cerrarSesion = useCallback((expirada: boolean) => {
-    localStorage.removeItem("focusPowerFitToken");
-    localStorage.removeItem("focusPowerFitUsuario");
+    borrarSesion();
 
     setToken(null);
     setUsuario(null);
@@ -104,9 +141,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelado = false;
 
+    borrarSesionCompartida();
+
     try {
-      const tokenGuardado = localStorage.getItem("focusPowerFitToken");
-      const usuarioGuardado = localStorage.getItem("focusPowerFitUsuario");
+      const tokenGuardado = sessionStorage.getItem(CLAVE_TOKEN);
+      const usuarioGuardado = sessionStorage.getItem(CLAVE_USUARIO);
       const vencimiento = tokenGuardado ? venceEn(tokenGuardado) : null;
       const vencido = vencimiento !== null && vencimiento <= Date.now();
 
@@ -130,8 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Error al cargar la sesión:", error);
 
-      localStorage.removeItem("focusPowerFitToken");
-      localStorage.removeItem("focusPowerFitUsuario");
+      borrarSesion();
 
       queueMicrotask(() => {
         if (!cancelado) {
@@ -219,11 +257,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         rol: data.user.rol,
       };
 
-      localStorage.setItem("focusPowerFitToken", data.token);
-      localStorage.setItem(
-        "focusPowerFitUsuario",
-        JSON.stringify(usuarioLogueado)
-      );
+      guardarSesion(data.token, usuarioLogueado);
 
       setToken(data.token);
       setUsuario(usuarioLogueado);
@@ -308,11 +342,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         rol: data.user.rol,
       };
 
-      localStorage.setItem("focusPowerFitToken", data.token);
-      localStorage.setItem(
-        "focusPowerFitUsuario",
-        JSON.stringify(usuarioRegistrado)
-      );
+      guardarSesion(data.token, usuarioRegistrado);
 
       setToken(data.token);
       setUsuario(usuarioRegistrado);

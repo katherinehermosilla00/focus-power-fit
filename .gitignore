@@ -16,6 +16,7 @@
 # next.js
 /frontend/.next/
 /frontend/out/
+/frontend/sitio-cpanel/
 
 # production
 /frontend/build

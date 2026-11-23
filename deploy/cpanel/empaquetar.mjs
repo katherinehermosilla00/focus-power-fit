@@ -53,7 +53,8 @@ fs.mkdirSync(salida, { recursive: true });
 console.log(`\n1. Generando el sitio para https://${dominio} (API en ${apiUrl})...\n`);
 
 const frontend = path.join(raiz, "frontend");
-const out = path.join(frontend, "out");
+// Carpeta definida en frontend/next.config.ts (distDir) para SALIDA=estatica.
+const out = path.join(frontend, "sitio-cpanel");
 fs.rmSync(out, { recursive: true, force: true });
 
 execSync("npm run build", {

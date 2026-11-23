@@ -34,6 +34,9 @@ const nextConfig: NextConfig = {
 
   ...(esEstatico
     ? {
+        // Los archivos quedan en frontend/sitio-cpanel (y no en out/), carpeta
+        // que solo usa deploy/cpanel/empaquetar.mjs.
+        distDir: "sitio-cpanel",
         // Cada página queda como carpeta/index.html, que Apache entrega sin reglas extra.
         trailingSlash: true,
         // Sin servidor de Next.js no hay optimización de imágenes.

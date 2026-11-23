@@ -22,7 +22,7 @@ import Link from "next/link";
 
 import { useRouter } from "next/navigation";
 
-import { useAuth, fetchConSesion } from "../../auth/AuthContext";
+import { useAuth, fetchConSesion, leerToken } from "../../auth/AuthContext";
 import { useCerrarSolo } from "../../components/useCerrarSolo";
 
 
@@ -111,7 +111,7 @@ function obtenerToken(): string | null {
 
   }
 
-  return localStorage.getItem("focusPowerFitToken");
+  return leerToken();
 
 }
 

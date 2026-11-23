@@ -22,6 +22,7 @@ import Link from "next/link";
 
 import axios from "axios";
 import { useCerrarSolo } from "../../components/useCerrarSolo";
+import { leerToken } from "../../auth/AuthContext";
 
 const API = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001").replace(/\/+$/, "");
 
@@ -73,7 +74,7 @@ function obtenerToken() {
 
   if (typeof window === "undefined") return "";
 
-  return localStorage.getItem("focusPowerFitToken") || "";
+  return leerToken() || "";
 
 }
 

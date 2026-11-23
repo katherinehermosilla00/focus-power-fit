@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import { useAuth, fetchConSesion } from "../auth/AuthContext";
+import { useAuth, fetchConSesion, leerToken } from "../auth/AuthContext";
 
 type IconoNombre =
 
@@ -616,11 +616,7 @@ export default function AdminPage() {
 
       try {
 
-        const token = localStorage.getItem(
-
-          "focusPowerFitToken"
-
-        );
+        const token = leerToken();
 
         if (!token) {
 

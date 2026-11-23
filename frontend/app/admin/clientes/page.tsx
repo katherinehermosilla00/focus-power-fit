@@ -12,7 +12,7 @@ import {
 import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth, avisarSesionRechazada } from "../../auth/AuthContext";
+import { useAuth, avisarSesionRechazada, leerToken } from "../../auth/AuthContext";
 import Toast, { type ToastTipo } from "../../components/Toast";
 
 type EstadoCliente = "Activo" | "Inactivo";
@@ -62,7 +62,7 @@ const POR_PAGINA = 20;
 const api = axios.create();
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("focusPowerFitToken");
+  const token = leerToken();
 
   if (!token) {
     return Promise.reject(
