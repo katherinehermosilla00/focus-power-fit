@@ -13,7 +13,9 @@
     "respaldo:probar": "node src/scripts/respaldos.js probar",
     "respaldo:restaurar": "node src/scripts/respaldos.js restaurar",
     "respaldo:cifrar": "node src/scripts/respaldos.js cifrar",
-    "respaldo:descifrar": "node src/scripts/respaldos.js descifrar"
+    "respaldo:descifrar": "node src/scripts/respaldos.js descifrar",
+    "fitbot:reglas": "node src/scripts/generarReglasFitbot.js",
+    "recordatorios:enviar": "node src/scripts/enviarRecordatorios.js"
   },
   "keywords": [],
   "author": "",

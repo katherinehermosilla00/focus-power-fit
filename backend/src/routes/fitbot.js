@@ -1,6 +1,7 @@
 
 import { Router } from "express";
 import { rateLimit } from "express-rate-limit";
+import { responderConReglas } from "../fitbot/responderConReglas.js";
 
 const router = Router();
 
@@ -68,9 +69,11 @@ router.post("/chat", fitbotLimiter, async (req, res) => {
   // La URL permanece en el backend.
   const webhookUrl = process.env.FITBOT_WEBHOOK_URL;
 
+  // Sin n8n (por ejemplo, en un hosting compartido), la API responde con
+  // las mismas reglas del flujo, copiadas en src/fitbot/reglasN8n.js.
   if (!webhookUrl) {
-    return res.status(503).json({
-      error: "FitBot no está configurado",
+    return res.json({
+      output: responderConReglas(chatInput.trim(), sessionId),
     });
   }
 

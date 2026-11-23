@@ -395,7 +395,8 @@ app.use((error, req, res, next) => {
 // INICIAR SERVIDOR
 // ==========================================
 
-const iniciarServidor = async () => {
+// También la usa servidor.cjs, el archivo de inicio en el hosting con cPanel.
+export const iniciarServidor = async () => {
   try {
     if ((process.env.JWT_SECRET ?? "").length < 32) {
       throw new Error(
@@ -421,7 +422,11 @@ const iniciarServidor = async () => {
     }
 
     // Recordatorios de clases 24 horas antes (RF-15).
-    if (process.env.EMAIL_HOST) {
+    // En un hosting compartido la API se detiene cuando nadie la usa; ahí los
+    // envía una tarea programada (npm run recordatorios:enviar) y no la API.
+    if (process.env.RECORDATORIOS_CON_CRON === "true") {
+      console.log("Recordatorios a cargo de la tarea programada (cron)");
+    } else if (process.env.EMAIL_HOST) {
       iniciarRecordatorioScheduler();
       console.log("Recordatorios automáticos activos");
     } else {

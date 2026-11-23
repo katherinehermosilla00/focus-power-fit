@@ -1,5 +1,7 @@
 # Despliegue con Docker
 
+Para el hosting compartido con cPanel (V2Networks), sin Docker, ver [`deploy/cpanel/README.md`](cpanel/README.md).
+
 Todo el sistema corre en un servidor con Docker:
 
 | Servicio | Qué hace | Visible desde internet |

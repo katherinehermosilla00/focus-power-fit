@@ -69,12 +69,42 @@ test("FitBot rechaza mensajes vacíos, largos o sin sesión válida", async () =
   assert.equal((await enviar(mensaje({ sessionId: "no-es-uuid" }))).status, 400);
 });
 
-test("FitBot avisa si no está configurado", async () => {
+test("Sin n8n, FitBot responde con las reglas y recuerda la conversación", async () => {
   delete process.env.FITBOT_WEBHOOK_URL;
+  globalThis.fetch = async () => {
+    throw new Error("No debe llamarse a n8n");
+  };
 
-  const r = await enviar(mensaje());
+  const sessionId = randomUUID();
+  const ubicaciones = await enviar({ chatInput: "¿Dónde están?", sessionId });
 
-  assert.equal(r.status, 503);
+  assert.equal(ubicaciones.status, 200);
+  assert.deepEqual(Object.keys(ubicaciones.body), ["output"]);
+  assert.match(ubicaciones.body.output, /La Reina/);
+  assert.match(ubicaciones.body.output, /Peñalolén/);
+
+  // «oka» responde a la pregunta anterior: ofrece elegir la sucursal.
+  const confirmacion = await enviar({ chatInput: "oka", sessionId });
+  assert.match(confirmacion.body.output, /¿Con cuál sucursal/);
+
+  const contacto = await enviar({ chatInput: "1", sessionId });
+  assert.match(contacto.body.output, /WhatsApp/);
+
+  const otroTema = await enviar(mensaje({ chatInput: "cuál es la capital de Francia" }));
+  assert.equal(otroTema.status, 200);
+  assert.match(otroTema.body.output, /FitBot/);
+});
+
+test("Las reglas copiadas en la API coinciden con el flujo de n8n", async () => {
+  const { generarReglas, RUTA_FLUJO, RUTA_REGLAS } = await import(
+    "../scripts/generarReglasFitbot.js"
+  );
+
+  assert.equal(
+    fs.readFileSync(RUTA_REGLAS, "utf8"),
+    generarReglas(fs.readFileSync(RUTA_FLUJO, "utf8")),
+    "Ejecuta npm run fitbot:reglas después de cambiar el flujo de n8n"
+  );
 });
 
 test("Si n8n falla, no se exponen detalles internos", async () => {
