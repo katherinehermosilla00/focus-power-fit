@@ -100,9 +100,12 @@ test("Las reglas copiadas en la API coinciden con el flujo de n8n", async () => 
     "../scripts/generarReglasFitbot.js"
   );
 
+  // En Windows, Git puede guardar el archivo con saltos de línea CRLF.
+  const sinCRLF = (texto) => texto.replace(/\r\n/g, "\n");
+
   assert.equal(
-    fs.readFileSync(RUTA_REGLAS, "utf8"),
-    generarReglas(fs.readFileSync(RUTA_FLUJO, "utf8")),
+    sinCRLF(fs.readFileSync(RUTA_REGLAS, "utf8")),
+    sinCRLF(generarReglas(fs.readFileSync(RUTA_FLUJO, "utf8"))),
     "Ejecuta npm run fitbot:reglas después de cambiar el flujo de n8n"
   );
 });
