@@ -4,6 +4,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import multer from "multer";
+import { rateLimit } from "express-rate-limit";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -301,24 +302,36 @@ app.use("/api/auth", authRoutes);
 // ==========================================
 
 app.get("/", (req, res) => {
-  return res.json({
-    ok: true,
-    mensaje: "Backend Focus Power Fit funcionando",
-  });
+  return res.json({ ok: true });
 });
 
 // ==========================================
 // HEALTH CHECK
 // ==========================================
 
-app.get("/health", async (req, res) => {
+// Cada consulta revisa la base de datos, por eso tiene un límite por IP.
+const limiteHealth = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { ok: false },
+});
+
+app.get("/health", limiteHealth, async (req, res) => {
+  // En producción solo se informa si el servicio está disponible (200 o 503),
+  // sin detallar el estado de la base de datos.
+  const mostrarDetalle = process.env.NODE_ENV !== "production";
+
   try {
     await sequelize.authenticate();
 
     return res.json({
       ok: true,
-      backend: "activo",
-      database: "conectada",
+      ...(mostrarDetalle && {
+        backend: "activo",
+        database: "conectada",
+      }),
     });
   } catch (error) {
     console.error(
@@ -328,8 +341,10 @@ app.get("/health", async (req, res) => {
 
     return res.status(503).json({
       ok: false,
-      backend: "activo",
-      database: "sin conexión",
+      ...(mostrarDetalle && {
+        backend: "activo",
+        database: "sin conexión",
+      }),
     });
   }
 });

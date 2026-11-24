@@ -126,7 +126,7 @@ Si en vez de pasar datos quieres una base vacía, en el paso 4 pon `DB_SYNC=true
    No uses el botón «Run NPM Install»: instala también las herramientas de desarrollo.
 
 4. Vuelve a **Setup Node.js App** → **Restart**.
-5. Abre `https://api.focuspowerfit.cl/health`: debe decir `"database":"conectada"`. Si falla, revisa el archivo `stderr.log` de la carpeta de la app.
+5. Abre `https://api.focuspowerfit.cl/health`: debe decir `{"ok":true}`. Si responde 503 o un error, revisa el archivo `stderr.log` de la carpeta de la app.
 
 ## 6. Administrador
 
