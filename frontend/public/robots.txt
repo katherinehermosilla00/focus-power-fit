@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /mi-cuenta/
+Disallow: /bienvenida/
+
+Sitemap: https://focuspowerfit.cl/sitemap.xml

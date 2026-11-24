@@ -1,0 +1,5 @@
+# Contacto para informar problemas de seguridad (RFC 9116).
+Contact: https://focuspowerfit.cl/sucursales/
+Expires: 2027-11-24T23:59:59Z
+Preferred-Languages: es
+Canonical: https://focuspowerfit.cl/.well-known/security.txt
